@@ -1,0 +1,123 @@
+#ifndef CFG_TABLE_H
+#define CFG_TABLE_H
+
+#include "type.h"
+#include "access.h"
+
+
+typedef enum {
+    CFG_ID_STATE        = 0,
+    CFG_ID_PASSWD_USER  = 1,
+    CFG_ID_PASSWD_ADMIN = 2,
+    CFG_ID_MAIN_SETUP   = 3,
+    CFG_ID_MAIN_SWITCH  = 4,
+    CFG_ID_SIM_PIN      = 10,
+    CFG_ID_APN          = 11,
+    CFG_ID_TRACER_ADDR  = 20,
+    CFG_ID_TRACER_PARAM = 21,
+    CFG_ID_SERVER_ADDR  = 22,
+    CFG_ID_SERVER_KEY   = 23,
+    CFG_ID_UPDATE_SERVER_ADDR = 24,
+
+    CFG_ID_TIME_ZONE    = 30,
+
+    CFG_ID_DEVICE_NAME  = 40,
+
+    CFG_ID_USER1_NAME   = 51,
+    CFG_ID_USER2_NAME   = 52,
+    CFG_ID_USER3_NAME   = 53,
+    CFG_ID_USER4_NAME   = 54,
+
+    CFG_ID_USER1_PHONE  = 101,
+    CFG_ID_USER2_PHONE  = 102,
+    CFG_ID_USER3_PHONE  = 103,
+    CFG_ID_USER4_PHONE  = 104,
+
+    CFG_ID_EVENT_SETUP_000 = 200,
+    CFG_ID_EVENT_SETUP_001 = 201,
+    CFG_ID_EVENT_SETUP_002 = 202,
+    CFG_ID_EVENT_SETUP_003 = 203,
+    CFG_ID_EVENT_SETUP_004 = 204,
+    CFG_ID_EVENT_SETUP_005 = 205,
+    CFG_ID_EVENT_SETUP_006 = 206,
+    CFG_ID_EVENT_SETUP_007 = 207,
+    CFG_ID_EVENT_SETUP_008 = 208,
+    CFG_ID_EVENT_SETUP_009 = 209,
+    CFG_ID_EVENT_SETUP_010 = 210,
+    CFG_ID_EVENT_SETUP_011 = 211,
+    CFG_ID_EVENT_SETUP_012 = 212,
+    CFG_ID_EVENT_SETUP_013 = 213,
+    CFG_ID_EVENT_SETUP_014 = 214,
+    CFG_ID_EVENT_SETUP_015 = 215,
+
+    CFG_ID_TEXT_EVENT_NAME_000 = 300,
+    CFG_ID_TEXT_EVENT_NAME_001 = 301,
+    CFG_ID_TEXT_EVENT_NAME_002 = 302,
+    CFG_ID_TEXT_EVENT_NAME_003 = 303,
+    CFG_ID_TEXT_EVENT_NAME_004 = 304,
+    CFG_ID_TEXT_EVENT_NAME_005 = 305,
+    CFG_ID_TEXT_EVENT_NAME_006 = 306,
+    CFG_ID_TEXT_EVENT_NAME_007 = 307,
+    CFG_ID_TEXT_EVENT_NAME_008 = 308,
+    CFG_ID_TEXT_EVENT_NAME_009 = 309,
+    CFG_ID_TEXT_EVENT_NAME_010 = 310,
+    CFG_ID_TEXT_EVENT_NAME_011 = 311,
+    CFG_ID_TEXT_EVENT_NAME_012 = 312,
+    CFG_ID_TEXT_EVENT_NAME_013 = 313,
+    CFG_ID_TEXT_EVENT_NAME_014 = 314,
+    CFG_ID_TEXT_EVENT_NAME_015 = 315,
+    CFG_ID_TEXT_EVENT_NAME_016 = 316,
+    CFG_ID_TEXT_EVENT_NAME_017 = 317,
+    CFG_ID_TEXT_EVENT_NAME_018 = 318,
+    CFG_ID_TEXT_EVENT_NAME_019 = 319,
+    CFG_ID_TEXT_EVENT_NAME_020 = 320,
+    CFG_ID_TEXT_EVENT_NAME_021 = 321,
+    CFG_ID_TEXT_EVENT_NAME_022 = 322,
+    CFG_ID_TEXT_EVENT_NAME_023 = 323,
+    CFG_ID_TEXT_EVENT_NAME_024 = 324,
+    CFG_ID_TEXT_EVENT_NAME_025 = 325,
+    CFG_ID_TEXT_EVENT_NAME_026 = 326,
+    CFG_ID_TEXT_EVENT_NAME_027 = 327,
+    CFG_ID_TEXT_EVENT_NAME_028 = 328,
+    CFG_ID_TEXT_EVENT_NAME_029 = 329,
+    CFG_ID_TEXT_EVENT_NAME_030 = 330,
+    CFG_ID_TEXT_EVENT_NAME_031 = 331,
+
+    CFG_ID_TEXT_SOURCE_NAME_000 = 400,
+    CFG_ID_TEXT_SOURCE_NAME_001 = 401,
+    CFG_ID_TEXT_SOURCE_NAME_002 = 402,
+    CFG_ID_TEXT_SOURCE_NAME_003 = 403,
+    CFG_ID_TEXT_SOURCE_NAME_004 = 404,
+    CFG_ID_TEXT_SOURCE_NAME_005 = 405,
+    CFG_ID_TEXT_SOURCE_NAME_006 = 406,
+    CFG_ID_TEXT_SOURCE_NAME_007 = 407,
+    CFG_ID_TEXT_SOURCE_NAME_008 = 408,
+    CFG_ID_TEXT_SOURCE_NAME_009 = 409,
+    CFG_ID_TEXT_SOURCE_NAME_010 = 410,
+    CFG_ID_TEXT_SOURCE_NAME_011 = 411,
+    CFG_ID_TEXT_SOURCE_NAME_012 = 412,
+    CFG_ID_TEXT_SOURCE_NAME_013 = 413,
+    CFG_ID_TEXT_SOURCE_NAME_014 = 414,
+    CFG_ID_TEXT_SOURCE_NAME_015 = 415,
+
+    // max possible ID limited by _CFG_SIZE in storage.c memory layout (2048)
+    CFG_ID_END         = 0xFFFF
+} cfg_id_e;
+
+typedef struct {
+    const cfg_id_t cfg_id;  // storge index
+    const access_auth_t read_access;
+    const access_auth_t write_access;
+    const ascii *data; // default value
+} cfg_table_t;
+
+extern const cfg_table_t CFG_TABLE[];
+
+cfg_id_t cfg_table_get_id(u32 row);
+bool cfg_table_default(ascii *dest, cfg_id_t cfg_id);
+bool cfg_table_access_read(cfg_id_t cfg_id, access_auth_t access);
+bool cfg_table_access_write(cfg_id_t cfg_id, access_auth_t access);
+
+
+#endif // ! CFG_TABLE_H
+

@@ -1,0 +1,12 @@
+tags
+*.swp
+*.swo
+app/build/*
+bootloader/build/*
+ut/app_crc/obj/*
+ut/app_crc/app_crc.bin
+ut/app_container/obj/*
+ut/app_container/ac.bin
+ut/upload/obj/*
+ut/upload/upload.bin
+

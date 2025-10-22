@@ -1,0 +1,6 @@
+[submodule "lib/pdu"]
+	path = lib/pdu
+	url = git@github.com:hrabin/lib-pdu.git
+[submodule "sdk"]
+	path = sdk
+	url = git@github.com:hrabin/fw-stm32-sdk.git
