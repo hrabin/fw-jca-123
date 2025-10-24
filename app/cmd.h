@@ -13,6 +13,7 @@
 
 #define CMD_MAX_LEN (64) // max text length of single command 
 
+#define CMD_MIN_PASSWD_LENGTH (4)
 
 typedef enum {
 

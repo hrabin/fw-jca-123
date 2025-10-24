@@ -1,10 +1,11 @@
 #include "common.h"
-#include "const.h"
-#include "sms.h"
-#include "modem_main.h"
-#include "cmd.h"
-#include "log.h"
 #include "cfg.h"
+#include "cmd.h"
+#include "const.h"
+#include "log.h"
+#include "modem_main.h"
+#include "sms.h"
+#include "text_lib.h"
 
 LOG_DEF("SMSP");
 
@@ -49,7 +50,8 @@ void sms_parse(sms_struct_t *sms)
             result_sms.type = SMS_TYPE_AUTO;
             result_sms.sr   = false;
 
-            modem_main_sms_send (&result_sms);
+            if (text_is_valid_phone(result_sms.tel_num))
+                modem_main_sms_send (&result_sms);
         }
         else
         {   // no result, dont reply anything
@@ -96,10 +98,14 @@ bool sms_send_to_user(u16 user, buf_t *data)
     if (! cfg_read(&buf, CFG_ID_USER1_PHONE + user, ACCESS_SYSTEM))
         return (false);
 
-    if (strlen(sms.tel_num) <= 1)
+    if (! text_is_valid_phone(sms.tel_num))
     {
-        LOG_WARNING("empty phone");
-        return (true); // empty phone
+        if (sms.tel_num[0] == '\0')
+            LOG_WARNING("empty phone number");
+        else
+            LOG_ERROR("invalid phone number");
+
+        return (true); // return "true" == dont retry sending
     }
 
     sms.data = (u8 *)buf_data(data);

@@ -42,7 +42,10 @@ OS_TASK_DEF_STATIC(task_app_modem, 2048, OS_TASK_PRIO_NORM);
 
 static bool tasks_run = false;
 
-static access_t _uart_access = {ACCESS_SYSTEM}; // temporary acces from start
+static access_t _uart_access = {
+    .auth = ACCESS_SYSTEM,  // temporary acces from start
+    .source = EVENT_SOURCE_ADMIN
+};
 
 os_mutex_t spi1_mutex; // shared SPI mutex (FLASH / SHOCK)
 
@@ -227,7 +230,7 @@ void enter_sleep_mode(void)
 
 static void _tty_rx_parser(char *data)
 {
-    if (log_debug_level > 1)
+    if (log_debug_level > 2) // set level >2 using DL command
     {
         if (data[1] == '\0')
         {   // DEBUG commands (single character only)

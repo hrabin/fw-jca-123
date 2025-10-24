@@ -7,6 +7,9 @@ DEVICE=/dev/ttyUSB0
 cd ./app/
 make deploy
 
+echo "auth=\"uhlokRopnude\"" > $DEVICE
+sleep 0.2
+
 # command for reboot and stay in bootloader
 echo "REBOOT=1" > $DEVICE
 

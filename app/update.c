@@ -195,10 +195,11 @@ bool update_start(void)
     net_get_target_ip (&_server_ip.addr, &_server_port, cfg);
 
     buf_clear(&buf);
-    if (! cfg_read(&buf, CFG_ID_SERVER_KEY, ACCESS_SYSTEM))
+    if (! cfg_read(&buf, CFG_ID_UPDATE_SERVER_KEY, ACCESS_SYSTEM))
         return (false);
     
     hex_to_bin(_aes_key, cfg, sizeof(_aes_key));
+#warning "TODO: AES unused"
 
     _err_cnt = 0;
     _phase = 0;

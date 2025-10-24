@@ -7,7 +7,7 @@
 
 typedef enum {
     CFG_ID_STATE        = 0,
-    CFG_ID_PASSWD_USER  = 1,
+    CFG_ID_PASSWD_SYSTEM  = 1,
     CFG_ID_PASSWD_ADMIN = 2,
     CFG_ID_MAIN_SETUP   = 3,
     CFG_ID_MAIN_SWITCH  = 4,
@@ -18,11 +18,13 @@ typedef enum {
     CFG_ID_SERVER_ADDR  = 22,
     CFG_ID_SERVER_KEY   = 23,
     CFG_ID_UPDATE_SERVER_ADDR = 24,
+    CFG_ID_UPDATE_SERVER_KEY = 25,
 
     CFG_ID_TIME_ZONE    = 30,
 
     CFG_ID_DEVICE_NAME  = 40,
 
+    CFG_ID_ADMIN_NAME   = 50,
     CFG_ID_USER1_NAME   = 51,
     CFG_ID_USER2_NAME   = 52,
     CFG_ID_USER3_NAME   = 53,
@@ -32,6 +34,11 @@ typedef enum {
     CFG_ID_USER2_PHONE  = 102,
     CFG_ID_USER3_PHONE  = 103,
     CFG_ID_USER4_PHONE  = 104,
+
+    CFG_ID_USER1_PASS   = 151,
+    CFG_ID_USER2_PASS   = 152,
+    CFG_ID_USER3_PASS   = 153,
+    CFG_ID_USER4_PASS   = 154,
 
     CFG_ID_EVENT_SETUP_000 = 200,
     CFG_ID_EVENT_SETUP_001 = 201,

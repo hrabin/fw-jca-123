@@ -7,6 +7,7 @@
 #include "cmd.h"
 #include "sms.h"
 #include "sms_processing.h"
+#include "system.h"
 #include "rtc.h"
 
 LOG_DEF("EVENT");
@@ -61,6 +62,7 @@ static const event_source_setup_t EVENT_SOURCE_SETUP[] = {
     {EVENT_SOURCE_LOCK, CFG_ID_TEXT_SOURCE_NAME_006},
     {EVENT_SOURCE_CELL, CFG_ID_TEXT_SOURCE_NAME_007},
     {EVENT_SOURCE_BATTERY, CFG_ID_TEXT_SOURCE_NAME_008},
+    {EVENT_SOURCE_ADMIN, CFG_ID_ADMIN_NAME},
     {EVENT_SOURCE_USER1, CFG_ID_USER1_NAME},
     {EVENT_SOURCE_USER2, CFG_ID_USER2_NAME},
     {EVENT_SOURCE_USER3, CFG_ID_USER3_NAME},
@@ -158,6 +160,7 @@ bool event_create (event_id_e e, event_source_e s)
 
 void event_task(void)
 {
+    static u32 event_counter = 0;
     unsigned int ptr = _buf_rd_ptr;
 
     OS_ASSERT(_buf_wr_ptr < _EVENT_BUF_SIZE, "_buf_wr_ptr");
@@ -216,7 +219,9 @@ void event_task(void)
 
         }
 
-        LOG_DEBUG("buf %d, %s, %s", _buf_rd_ptr, _event_name(e->id), _source_name(e->source));
+        event_counter++;
+        LOG_INFO("E%d (B%d): %s, %s", event_counter, _buf_rd_ptr, _event_name(e->id), _source_name(e->source));
+        system_event(e->id);
 
         if (++ptr == _EVENT_BUF_SIZE)
             ptr = 0;

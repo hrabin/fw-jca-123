@@ -52,6 +52,7 @@ C_SOURCES +=  \
   $(DIR_ROOT)/sms_processing.c \
   $(DIR_ROOT)/storage.c \
   $(DIR_ROOT)/system.c \
+  $(DIR_ROOT)/system_input.c \
   $(DIR_ROOT)/text.c \
   $(DIR_ROOT)/tracer.c \
   $(DIR_ROOT)/tracer_h02.c \

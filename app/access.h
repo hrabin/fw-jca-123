@@ -2,6 +2,7 @@
 #define ACCESS_H
 
 #include "common.h"
+#include "event.h"
 
 #define ACCESS_NONE   BIT(0)
 #define ACCESS_USER   BIT(1)
@@ -18,8 +19,8 @@ typedef u8 access_auth_t;
 typedef struct {
     access_auth_t auth;
     os_timer_t time;
-    // TODO: source_id
-    // TODO: channel_id
+    event_source_e source;
+    event_source_e channel;
 } access_t;
 
 #endif // ! ACCESS_H

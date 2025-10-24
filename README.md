@@ -94,7 +94,7 @@ Note: For successful programming you need to flash app first and then bootloader
 
 # Function
 
-TBD
+TODO
 
 ## Command help
 ```
@@ -118,4 +118,24 @@ UNSET: switch to unset
 UPDATE: request to update FW from server
 VER: Request product information
 ```
+
+## Configuration
+
+Command 'cfg".
+
+* `CFG` read all accessible cfg according to authorization level
+* `CFG=<n>` for read one item
+* `CFG=<n>,"value"` for write item, i.e `CFG=11,"internet"` for APN setup
+
+See `app/cfg_table.c` for details.
+
+# BLE
+
+Supports BLE JDY-25M module.
+
+Requires set AT+BAUD set to 115200 (default).
+
+ * check version `BLE=AT+VERSION` (tested on `+VERSION=JDY-25M-V1.731`)
+ * Set pin `BLE=AT+PIN123456`.
+ * Set binding mode `BLE=AT+TYPE2`.
 

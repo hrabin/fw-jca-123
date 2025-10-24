@@ -1,7 +1,6 @@
 #include "common.h"
 #include "alarm.h"
 #include "app.h"
-#include "event.h"
 #include "io.h"
 #include "log.h"
 
@@ -34,6 +33,7 @@ static void _siren_off(void)
     if (_siren_state == OFF)
         return;
 
+    _siren_tmr = 0;
     _siren_state = OFF;
     io_set_out(IO_SIREN, _siren_state);
 }
@@ -89,13 +89,9 @@ void alarm_trigger(void)
     _siren_on();
 }
 
-void alarm_stop(event_source_e source)
+void alarm_stop(void)
 {
     _siren_off();
-    if (_state == ALARM_ACTIVE)
-    {
-        event_create(EVENT_ID_ALARM_CANCEL, source);
-    }
 
     _alarm_tmr = 0;
     _alarm_cnt = 0;

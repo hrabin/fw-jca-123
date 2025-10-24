@@ -32,25 +32,27 @@ LOG_DEF("CMD");
 #define _CMD CMD_DEF
 
 #define _CMD_TABLE_VALUES \
-    _CMD("DBG",       NULL,           _cmd_dbg,     0, ACCESS_ADMIN,   NULL), \
-    _CMD("AT",        NULL,           _cmd_at,      0, ACCESS_ADMIN,   "send AT-command"), \
+    /* Set of system commands */ \
+    _CMD("DBG",       NULL,           _cmd_dbg,     0, ACCESS_SYSTEM,   NULL), \
+    _CMD("AT",        NULL,           _cmd_at,      0, ACCESS_SYSTEM,  "send AT-command"), \
+    _CMD("BLE",       NULL,           _cmd_ble,     0, ACCESS_SYSTEM,  "send cmd to BLE module"), \
+    _CMD("DL",        _cmd_dl,        _cmd_dl_set,  0, ACCESS_SYSTEM,  "set debug level[,select]"), \
+    _CMD("ECHO",      _cmd_echo,      _cmd_echo_set,0, ACCESS_SYSTEM,  "get/set modem echo"), \
+    /* Set of normal user commands */ \
     _CMD("AUTH",      _cmd_auth,      _cmd_auth_set,0, ACCESS_NONE,    "authorize channel AUTH=\"pass\""), \
-    _CMD("BLE",       NULL,           _cmd_ble,     0, ACCESS_ADMIN,   "send cmd to BLE module"), \
     _CMD("CFG",       _cmd_cfg,       _cmd_cfg_set, 0, ACCESS_USER,    "CFG=<n>[,\"value\"]"), \
-    _CMD("DL",        _cmd_dl,        _cmd_dl_set,  0, ACCESS_ADMIN,   "set debug level[,select]"), \
-    _CMD("ECHO",      _cmd_echo,      _cmd_echo_set,0, ACCESS_ADMIN,   "get/set modem echo"), \
     _CMD("GPS",       _cmd_gps,       _cmd_gps_set, 0, ACCESS_USER,    "get GPS coordinates"), \
     _CMD("HELP",      _cmd_help,      NULL,         0, ACCESS_NONE,    "Show this help text"), \
     _CMD("IO",        _cmd_io,        NULL,         0, ACCESS_USER,    "get IO state"), \
     _CMD("LOCK",      _cmd_lock,      NULL,         0, ACCESS_USER,    "lock pulse"), \
     _CMD("UNLOCK",    _cmd_unlock,    NULL,         0, ACCESS_USER,    "unlock pulse"), \
     _CMD("NET",       _cmd_net,       NULL,         0, ACCESS_USER,    "Get network info"), \
-    _CMD("REBOOT",    NULL,        _cmd_reboot_set, 0, ACCESS_USER,    "REBOOT=<n>"), \
+    _CMD("REBOOT",    NULL,        _cmd_reboot_set, 0, ACCESS_ADMIN,   "REBOOT=<n>"), \
     _CMD("RTC",       _cmd_rtc,       NULL,         0, ACCESS_USER,    "get RTC time"), \
     _CMD("SET",       _cmd_set,       NULL,         0, ACCESS_USER,    "switch to set"), \
     _CMD("STATUS",    _cmd_status,    NULL,         0, ACCESS_USER,    "Get status info"), \
     _CMD("UNSET",     _cmd_unset,     NULL,         0, ACCESS_USER,    "switch to unset"), \
-    _CMD("UPDATE",    _cmd_update,    NULL,         0, ACCESS_USER,    "request to update FW from server"), \
+    _CMD("UPDATE",    _cmd_update,    NULL,         0, ACCESS_ADMIN,   "request to update FW from server"), \
     _CMD("VER",       _cmd_ver,       NULL,         0, ACCESS_NONE,    "Request product information"), \
 
 static const cmd_t _CMD_TABLE[];
@@ -85,6 +87,29 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
   
     switch (num)
     {
+    case 1: return net_connect(); 
+    case 2: modem_main_data_disconnect(); break;
+    case 3:
+        {
+            udp_packet_t p;
+            p.dst_ip.addr = (56<<24) + (216<<16) + (2<<8) + 81;
+            p.src_ip.addr = 0; // unused
+            p.data=(u8 *)"TEST";
+            p.dst_port=8085;
+            p.src_port=8085;
+            p.datalen=5;
+            return net_udp_tx(&p);
+        }
+    case 10:
+        return (tracer_test());
+
+    case 20: // simulate incomming SMS 
+        if (! cmd_fetch_separator(pptext))
+            return (false);
+
+        // DBG=20,1234 gps
+        return cmd_sms_process (result,  (ascii *)*pptext, "+420777123456", strlen(*pptext));
+
     case 30:
         alarm_trigger();
         break;
@@ -230,6 +255,10 @@ static bool _cmd_ble(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
 {
     // BLE=AT+VERSION
     // BLE=AT+PIN
+    
+    // for binding :
+    // BLE=AT+TYPE2
+    
     ble_cmd(*pptext);
     return (true);
 }
@@ -560,7 +589,7 @@ static bool _cmd_unlock(buf_t *result, const cmd_t *cmd, access_t *access)
     // also unset to avoid alarm
     if (system_state() != SECTION_ST_UNSET)
     {
-        system_unset();
+        system_unset(access);
     }
     io_set_out(IO_UNLOCK_OUT, true);
     OS_DELAY(_LOCK_TIME);
@@ -586,7 +615,7 @@ static bool _cmd_set(buf_t *result, const cmd_t *cmd, access_t *access)
     }
     else
     {
-        system_set();
+        system_set(access);
         buf_append_fmt(result, "%s OK", cmd->text);
     }
 
@@ -602,7 +631,7 @@ static bool _cmd_unset(buf_t *result, const cmd_t *cmd, access_t *access)
     }
     else
     {
-        system_unset();
+        system_unset(access);
         buf_append_fmt(result, "%s OK", cmd->text);
     }
 
@@ -950,17 +979,30 @@ bool cmd_process_text(buf_t *result, const char *ptext, access_t *access)
     return (true);
 }
 
+static bool _pass_valid(buf_t *buf)
+{
+    if (buf_length(buf) < CMD_MIN_PASSWD_LENGTH)
+        return (false);
+    // TODO: other password validation conditions ?
+    return (true);
+}
+
 size_t cmd_get_password_access(access_t *access, const ascii *text)
 {    // return number of characters used for password
     typedef struct {
         cfg_id_e cfg_id;
         access_auth_t auth;
+        event_source_e source;
     } passwd_table_t;
 
     // define possible passwords to compare
     static const passwd_table_t PASSWD_TABLE[] = {
-        {CFG_ID_PASSWD_ADMIN, ACCESS_ADMIN},
-        {CFG_ID_PASSWD_USER,  ACCESS_USER},
+        {CFG_ID_PASSWD_ADMIN,  ACCESS_ADMIN, EVENT_SOURCE_ADMIN},
+        {CFG_ID_PASSWD_SYSTEM, ACCESS_SYSTEM, EVENT_SOURCE_ADMIN},
+        {CFG_ID_USER1_PASS,    ACCESS_USER, EVENT_SOURCE_USER1},
+        {CFG_ID_USER2_PASS,    ACCESS_USER, EVENT_SOURCE_USER2},
+        {CFG_ID_USER3_PASS,    ACCESS_USER, EVENT_SOURCE_USER3},
+        {CFG_ID_USER4_PASS,    ACCESS_USER, EVENT_SOURCE_USER4},
 
         {0, ACCESS_NONE} // end of table
     };
@@ -969,6 +1011,7 @@ size_t cmd_get_password_access(access_t *access, const ascii *text)
     buf_t buf;
 
     access->auth = ACCESS_NONE;
+    access->source = EVENT_SOURCE_UNKNOWN;
 
     buf_init(&buf, code, sizeof(code));
 
@@ -980,10 +1023,15 @@ size_t cmd_get_password_access(access_t *access, const ascii *text)
         {
             return (0);
         }
-        if (strnicmp(text, code, buf_length(&buf)) == 0)
-        {   // we have found some valid password
-            access->auth = pt->auth;
-            return (buf_length(&buf));
+
+        if (_pass_valid(&buf))
+        {
+            if (strnicmp(text, code, buf_length(&buf)) == 0)
+            {   // we have found some valid password
+                access->auth = pt->auth;
+                access->source = pt->source;
+                return (buf_length(&buf));
+            }
         }
         pt++;
     }
@@ -1001,6 +1049,7 @@ bool cmd_sms_process (buf_t *result, ascii *sms_text, ascii *phone_num, u16 sms_
     if (access.auth <= ACCESS_NONE)
     {
         LOG_ERROR("invalid code");
+        // TODO: detect access by phone_num ?
         return (false);
     }
     _skip_spaces(&ptext);
