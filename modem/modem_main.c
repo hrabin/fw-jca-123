@@ -1,7 +1,6 @@
 #include "common.h"
 #include "hardware.h"
 #include "modem_main.h"
-#include "modem_cfg.h"
 #include "modem_at.h"
 #include "modem_sms.h"
 #include "modem.h"
