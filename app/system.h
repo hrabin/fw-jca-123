@@ -19,13 +19,14 @@ extern u32 system_io_state;
 
 #define SYSTEM_INT_POWER_FAIL BIT(0)
 #define SYSTEM_INT_BATT_LOW   BIT(1)
+#define SYSTEM_INT_BATT_FAIL  BIT(2)
 extern u32 system_int_state;
 
 bool system_init(void);
 void system_inp_activated(unsigned int n);
 void system_inp_deactivated(unsigned int n);
 void system_inp_signal(unsigned int n, alarm_reaction_e signal);
-
+void system_int_state_update(u32 bit, bool status);
 section_state_t system_state(void);
 void system_set(access_t *access);
 void system_unset(access_t *access);

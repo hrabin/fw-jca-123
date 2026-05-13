@@ -16,8 +16,8 @@ LOG_DEF("SYS");
 #define _DELAY_TMIN  (10) // [s]
 
 
-u32 system_io_state = 0;
-u32 system_int_state = 0;
+u32 system_io_state = 0;  // TODO
+u32 system_int_state = 0; // TODO
 
 static section_t section;
 
@@ -50,6 +50,14 @@ bool system_init(void)
 
     section.data.state = state;
     return (true);
+}
+
+void system_int_state_update(u32 bit, bool status)
+{
+    if (status)
+        system_int_state |= bit;
+    else
+        system_int_state &= ~bit;
 }
 
 section_state_t system_state(void)
@@ -143,7 +151,7 @@ void system_unset(access_t *access)
 }
 
 void system_event(event_id_e e)
-{
+{   // reaction to new events
     switch (e)
     {
     case EVENT_ID_SET:

@@ -52,13 +52,13 @@ static eb_ptr_t _buf_replace_prio (event_buf_t *buf, event_prio_e prio)
 	eb_ptr_t buf_index = buf->start_index;
 	event_prio_e lowest_prio = EVENT_PRIO_HI;
 
-	// nejdrive najdu nejnizsi prioritu v bufferu
+	// find the lowest existing priority in buffer 
 	for (i=0; i<(buf->size); i++)
 	{
 		if (buf->items[buf_index].flag == 0)
 		{
 			LOG_ERROR("inconsistent");
-			return (buf_index); // tohle by se stat nemelo
+			return (buf_index); // this should never happen 
 		}
 
 		if (buf->items[buf_index].prio < lowest_prio)
@@ -69,15 +69,15 @@ static eb_ptr_t _buf_replace_prio (event_buf_t *buf, event_prio_e prio)
 		buf_index = buf->items[buf_index].next_index;
 	}
 	if (lowest_prio>prio)
-		return (EVENT_BUF_INDEX_NIL); // vsechno v bufferu ma vyssi prioritu
+		return (EVENT_BUF_INDEX_NIL); // everything in buffer has higher priority
 
 	if (lowest_prio == prio)
-	{	// vsechno v bufferu ma stejnou prioritu
-		// preplacneme nejstarsi zaznam
+	{	// everything in buffer has the same priority
+		// replace oldest record
 		return (buf->start_index);
 	}
 	
-	// najdu nejstarisi zaznam s nejnizsi prioritou "lowest_prio"
+	// find the oldest record with lowest priority
 	buf_index = buf->start_index;
 	for (i=0; i<(buf->size); i++)
 	{
@@ -96,16 +96,16 @@ static void _delete_item (event_buf_t *buf, eb_ptr_t index)
 {
 	OS_ASSERT (index < (buf->size), "_delete_item() index>=(buf->size)");
 
- 	LOG_DEBUGL(LOG_SELECT_EB, "delete item %d", index);
+	LOG_DEBUGL(LOG_SELECT_EB, "delete item %d", index);
 
 	if (buf->items[index].flag == 0)
 	{
- 		LOG_ERROR("clear, i=%d", index);
+		LOG_ERROR("clear, i=%d", index);
 		return; 
 	}
 
 	buf->items[index].flag = 0;
- 	if (index != buf->start_index)
+	if (index != buf->start_index)
 	{	// it is not first record
 		OS_ASSERT (buf->items[index].prev_index < (buf->size), "_delete_item() prev_index>=(buf->size)");
 		buf->items[ buf->items[index].prev_index ].next_index = buf->items[index].next_index;
@@ -120,10 +120,10 @@ static void _delete_item (event_buf_t *buf, eb_ptr_t index)
 		return; 
 	}
 	// it is firs record
-	if (index != buf->last_index) 	
+	if (index != buf->last_index)
 	{	// not the last
 		buf->start_index = buf->items[index].next_index;
- 		OS_ASSERT (buf->items[buf->start_index].prev_index == index, "_delete_item() prev_index != index");
+		OS_ASSERT (buf->items[buf->start_index].prev_index == index, "_delete_item() prev_index != index");
 		buf->items[ buf->start_index ].prev_index = EVENT_BUF_INDEX_NIL;
 	}
 	else
@@ -174,11 +174,11 @@ bool event_buf_add_event (event_buf_t *buf, event_t *event, event_prio_e prio, u
 	{	// found used space with lower priority
 		LOG_DEBUGL(LOG_SELECT_EB, "replace prio wr=%d", wr_index);
 		// event which are not "active" delete quietly
- 		if (buf->items[wr_index].flag & EVENT_BUF_FLAG_ACTIVE)
+		if (buf->items[wr_index].flag & EVENT_BUF_FLAG_ACTIVE)
 		{
 			LOG_ERROR("EVENT DISCARD, n=%d", buf->items[wr_index].event.cnt);
 		}
-		_delete_item (buf, wr_index);		
+		_delete_item (buf, wr_index);
 	}
 	else
 	{
@@ -350,11 +350,11 @@ void event_buf_for_each (event_buf_t *buf, pfunc_for_each pfunc, int numargs, ..
 void event_buf_info (event_buf_t *buf)
 {
 	int i;
- 	eb_ptr_t buf_index=buf->start_index;
+	eb_ptr_t buf_index=buf->start_index;
 
 	OS_PRINTF(NL);
- 	OS_PRINTF("buf_start_index = %d" NL, buf->start_index);
- 	OS_PRINTF("buf_last_index  = %d" NL, buf->last_index);
+	OS_PRINTF("buf_start_index = %d" NL, buf->start_index);
+	OS_PRINTF("buf_last_index  = %d" NL, buf->last_index);
 
 	for (i=0; i<(buf->size); i++)
 	{
@@ -380,7 +380,7 @@ void event_buf_info (event_buf_t *buf)
 	for (i=0; i<(buf->size); i++)
 	{
 		OS_ASSERT (buf_index < (buf->size), "user_buf_info() buf_index>=(buf->size)");
-  		if (buf->items[i].flag)
+		if (buf->items[i].flag)
 		{	// 
 			OS_PRINTF(NL);
 			OS_PRINTF("buf: %d, flag=0x%02x", i, buf->items[i].flag);

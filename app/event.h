@@ -3,6 +3,7 @@
 
 #include "type.h"
 #include "rtc.h"
+#include "buf.h"
 
 #define EVENT_USER_NONE 0xFFFF
 
@@ -84,10 +85,11 @@ typedef struct
 } event_t;
 
 bool event_init(void);
-
+void event_set_cnt(u16 cnt);
 bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t *event_time);
 bool event_create (event_id_e e, event_source_e s);
 void event_task(void);
+void event_description(buf_t *buf, event_t *e);
 void event_comm_task(void);
 
 #endif // ! EVENT_H

@@ -7,13 +7,12 @@
 
 LOG_DEF("gpsbuf");
 
-#define	BUF_STORE_LIMIT STORAGE_GPS_RECORDS
+#define	SAVE_GRID_SIZE 32
+#define	BUF_STORE_LIMIT (STORAGE_GPS_RECORDS_SPACE / SAVE_GRID_SIZE) 
 
 #if ((BUF_STORE_LIMIT & (BUF_STORE_LIMIT-1)) != 0)
   #error "BUF_STORE_LIMIT must be a power of 2."
 #endif
-
-#define	SAVE_GRID_SIZE STORAGE_GPS_RECORD_SIZE
 
 #define	PTR_INVALID 0xFFFF
 volatile u16 buf_read_ptr = 0;

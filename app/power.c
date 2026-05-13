@@ -3,6 +3,8 @@
 #include "analog.h"
 #include "event.h"
 #include "io.h"
+#include "system.h"
+#include "power.h"
 
 #include "log.h"
 
@@ -27,7 +29,6 @@ static bool _init_needed = true;
 static bool _charging = false;
 static bool _batt_connected = false;
 static bool _power_ok = false;
-static bool _batt_ok = false;
 static bool _test_done = false;
 
 static os_timer_t charging_done_tm = 0;
@@ -77,6 +78,16 @@ static void _bat_discconnect(void)
     LOG_DEBUGL(3, "BAT disconnected");
 }
 
+static void _bat_status_set(bool pwr_ok)
+{
+    system_int_state_update(SYSTEM_INT_BATT_FAIL, !pwr_ok);
+}
+
+static void _power_status_set(bool pwr_ok)
+{
+    system_int_state_update(SYSTEM_INT_POWER_FAIL, !pwr_ok);
+}
+
 static void _bat_set_state(bool state)
 {
     if (_test_done == false)
@@ -87,11 +98,11 @@ static void _bat_set_state(bool state)
     }
     else
     {
-        if (_batt_ok == state)
+        if (power_bat_status() == state)
             return; // no change
         event_create(state ? EVENT_ID_FAULT_RECOVERY : EVENT_ID_FAULT, EVENT_SOURCE_BATTERY);
     }
-    _batt_ok = state;
+    _bat_status_set(state);
 }
 
 static void _batt_test(void)
@@ -156,7 +167,6 @@ static void _batt_test(void)
     _bat_set_state(true);
 }
 
-
 bool power_init (void)
 {
     _init_needed = true;
@@ -172,12 +182,21 @@ bool power_init (void)
     return (true);
 }
 
+bool power_bat_status(void)
+{
+    return (system_int_state & (SYSTEM_INT_BATT_LOW | SYSTEM_INT_BATT_FAIL) ? false : true);
+}
+
+bool power_status(void)
+{
+    return (system_int_state & SYSTEM_INT_POWER_FAIL ? false : true);
+}
+
 void power_task (void)
 {
 #define _TASK_PERIOD (100 * OS_TIMER_MS)
     static os_timer_t tm = 1 * OS_TIMER_SECOND;
     static u32 filter = 0;
-    static bool power_status;
 
     os_timer_t now = os_timer_get();
     u32 voltage_batt;
@@ -200,9 +219,6 @@ void power_task (void)
             tm = now + 10 * OS_TIMER_SECOND;
             return;
         }
-        // HW_PWR_BAT_ENA_ON;
-        // HW_PWR_BAT_CHARGE_ON;
-
         _init_needed = false;
         LOG_DEBUG("init done");
         return;
@@ -250,7 +266,6 @@ void power_task (void)
           && (_power_ok))
         {
             _bat_cconnect();
-            // _batt_ok = true; // TODO: keep false until test ?
         }
     }
 
@@ -274,7 +289,7 @@ void power_task (void)
     }
 
     // state change report with time filter
-    if (power_status == _power_ok)
+    if (power_status() == _power_ok)
     {
         filter = 0;
     }
@@ -285,7 +300,7 @@ void power_task (void)
             if (++filter >= 60*10)
             {
                 event_create(EVENT_ID_POWER_RECOVERY, EVENT_SOURCE_UNIT);
-                power_status = _power_ok;
+                _power_status_set(_power_ok);
             }
         }
         else
@@ -293,7 +308,7 @@ void power_task (void)
             if (++filter >= 10)
             {
                  event_create(EVENT_ID_POWER_FAIL, EVENT_SOURCE_UNIT);
-                power_status = _power_ok;
+                _power_status_set(_power_ok);
             }
         }
     }
@@ -306,6 +321,6 @@ bool power_batt_ok(void)
         if (_batt_connected)
             return (true);
     }
-    return (_batt_ok);
+    return (power_bat_status());
 }
 

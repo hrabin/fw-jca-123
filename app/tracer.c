@@ -629,7 +629,7 @@ static bool tracer_power_stop(void)
 {
     if (system_int_state & SYSTEM_INT_POWER_FAIL)
     { 
-        if ((system_int_state & SYSTEM_INT_BATT_LOW)
+        if ((system_int_state & (SYSTEM_INT_BATT_LOW | SYSTEM_INT_BATT_FAIL))
          || (tracer_end_mode == TRACER_END_POWER_FAIL))
         {
             return (true);

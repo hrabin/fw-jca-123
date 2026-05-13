@@ -40,6 +40,7 @@ C_SOURCES +=  \
   $(DIR_ROOT)/cmd.c \
   $(DIR_ROOT)/event.c \
   $(DIR_ROOT)/event_buf.c \
+  $(DIR_ROOT)/event_memory.c \
   $(DIR_ROOT)/gps.c \
   $(DIR_ROOT)/gps_buffer.c \
   $(DIR_ROOT)/gps_io.c \

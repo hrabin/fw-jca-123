@@ -6,6 +6,7 @@
 #include "buf.h"
 #include "cfg.h"
 #include "cmd.h"
+#include "event_memory.h"
 #include "gps.h"
 #include "gpreg.h"
 #include "flash_lib.h"
@@ -32,12 +33,6 @@ LOG_DEF("CMD");
 #define _CMD CMD_DEF
 
 #define _CMD_TABLE_VALUES \
-    /* Set of system commands */ \
-    _CMD("DBG",       NULL,           _cmd_dbg,     0, ACCESS_SYSTEM,   NULL), \
-    _CMD("AT",        NULL,           _cmd_at,      0, ACCESS_SYSTEM,  "send AT-command"), \
-    _CMD("BLE",       NULL,           _cmd_ble,     0, ACCESS_SYSTEM,  "send cmd to BLE module"), \
-    _CMD("DL",        _cmd_dl,        _cmd_dl_set,  0, ACCESS_SYSTEM,  "set debug level[,select]"), \
-    _CMD("ECHO",      _cmd_echo,      _cmd_echo_set,0, ACCESS_SYSTEM,  "get/set modem echo"), \
     /* Set of normal user commands */ \
     _CMD("AUTH",      _cmd_auth,      _cmd_auth_set,0, ACCESS_NONE,    "authorize channel AUTH=\"pass\""), \
     _CMD("CFG",       _cmd_cfg,       _cmd_cfg_set, 0, ACCESS_USER,    "CFG=<n>[,\"value\"]"), \
@@ -45,15 +40,23 @@ LOG_DEF("CMD");
     _CMD("HELP",      _cmd_help,      NULL,         0, ACCESS_NONE,    "Show this help text"), \
     _CMD("IO",        _cmd_io,        NULL,         0, ACCESS_USER,    "get IO state"), \
     _CMD("LOCK",      _cmd_lock,      NULL,         0, ACCESS_USER,    "lock pulse"), \
-    _CMD("UNLOCK",    _cmd_unlock,    NULL,         0, ACCESS_USER,    "unlock pulse"), \
+    _CMD("MEM",       _cmd_mem,       _cmd_mem_set, 0, ACCESS_USER,    "Get event memory"), \
     _CMD("NET",       _cmd_net,       NULL,         0, ACCESS_USER,    "Get network info"), \
     _CMD("REBOOT",    NULL,        _cmd_reboot_set, 0, ACCESS_ADMIN,   "REBOOT=<n>"), \
     _CMD("RTC",       _cmd_rtc,       NULL,         0, ACCESS_USER,    "get RTC time"), \
     _CMD("SET",       _cmd_set,       NULL,         0, ACCESS_USER,    "switch to set"), \
     _CMD("STATUS",    _cmd_status,    NULL,         0, ACCESS_USER,    "Get status info"), \
+    _CMD("UNLOCK",    _cmd_unlock,    NULL,         0, ACCESS_USER,    "unlock pulse"), \
     _CMD("UNSET",     _cmd_unset,     NULL,         0, ACCESS_USER,    "switch to unset"), \
     _CMD("UPDATE",    _cmd_update,    NULL,         0, ACCESS_ADMIN,   "request to update FW from server"), \
     _CMD("VER",       _cmd_ver,       NULL,         0, ACCESS_NONE,    "Request product information"), \
+    /* Set of system commands */ \
+    _CMD("AT",        NULL,           _cmd_at,      0, ACCESS_SYSTEM,  "send AT-command"), \
+    _CMD("BLE",       NULL,           _cmd_ble,     0, ACCESS_SYSTEM,  "send cmd to BLE module"), \
+    _CMD("DBG",       NULL,           _cmd_dbg,     0, ACCESS_SYSTEM,   NULL), \
+    _CMD("DL",        _cmd_dl,        _cmd_dl_set,  0, ACCESS_SYSTEM,  "set debug level[,select]"), \
+    _CMD("ECHO",      _cmd_echo,      _cmd_echo_set,0, ACCESS_SYSTEM,  "get/set modem echo"), \
+
 
 static const cmd_t _CMD_TABLE[];
 
@@ -100,6 +103,11 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
             p.datalen=5;
             return net_udp_tx(&p);
         }
+
+    case 5:
+        LOG_INFO("IO: %08x, INT: %08x", system_io_state, system_int_state);
+        break;
+
     case 10:
         return (tracer_test());
 
@@ -642,6 +650,61 @@ static bool _cmd_unset(buf_t *result, const cmd_t *cmd, access_t *access)
 static bool _cmd_update(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     return (update_start());
+}
+
+static void _append_mem(buf_t *result, size_t back_index, size_t num)
+{
+    event_t e;
+
+    for (size_t i=0; i<num; i++)
+    {
+        if (i)
+        {
+            buf_append_str(result, "; ");
+        }
+        if (event_memory_read(&e, back_index++))
+        {
+            // buf_append_fmt(result, "(%d)", e.cnt);
+            event_description(result, &e);
+        }
+        else
+        {
+            buf_append_str(result, "-");
+        }
+    }
+}
+
+static bool _cmd_mem(buf_t *result, const cmd_t *cmd, access_t *access)
+{
+    buf_append_str(result, "MEM: ");
+    _append_mem(result, 0, 3);
+    return (true);
+}
+
+static bool _cmd_mem_set(buf_t *result, const struct _cmd_t *cmd, const char **pptext, access_t *access)
+{
+    long index;
+    long num = 3;
+
+    if (! cmd_fetch_num(&index, pptext))
+        return (false);
+    
+    if (cmd_fetch_separator(pptext))
+    {
+        if (! cmd_fetch_num(&num, pptext))
+            return (false);
+
+        if (num < 1)
+            return (false);
+    }
+
+    if ((index<0) || (num > 50))
+        return (false);
+
+    buf_append_fmt(result, "MEM -%ld: ", index);
+    _append_mem(result, index, num);
+
+    return (true);
 }
 
 static bool _cmd_net(buf_t *result, const cmd_t *cmd, access_t *access)

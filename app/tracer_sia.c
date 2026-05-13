@@ -58,11 +58,9 @@ void tr_sia_packet_done (void)
 
 bool tr_sia_packet_reply_ok (u8 *data, u16 len)
 {
-	int a,b,c;
+	int a;
+	unsigned int b,c;
 
-	// if (sscanf(msg, "ACK\"%dL%X#%X[", &a, &b, &c) == 3)
-	// else if (sscanf(msg, "NAK\"%dL%X", &a, &b) == 2)
-	
 	if (! cms_sia_ip_rx(&sia_state, data, len))
 		return (false);
 

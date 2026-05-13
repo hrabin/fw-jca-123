@@ -2,6 +2,7 @@
 #include "const.h"
 #include "event.h"
 #include "event_buf.h"
+#include "event_memory.h"
 #include "log.h"
 #include "cfg.h"
 #include "cmd.h"
@@ -11,7 +12,6 @@
 #include "rtc.h"
 
 LOG_DEF("EVENT");
-OS_MUTEX(event_mutex);
 
 #define SMS_BUF_SIZE 20
 event_buf_item_t sms_items[SMS_BUF_SIZE];
@@ -22,6 +22,7 @@ event_buf_t sms_buf;
 static event_t _event_buffer[_EVENT_BUF_SIZE];
 static int _buf_rd_ptr = 0;
 static int _buf_wr_ptr = 0;
+static u16 _event_cnt = 0;
 
 typedef struct {
     u8 id;
@@ -69,19 +70,6 @@ static const event_source_setup_t EVENT_SOURCE_SETUP[] = {
     {EVENT_SOURCE_USER4, CFG_ID_USER4_NAME},
 };
 
-
-/*
-static void _buffer_lock (void)
-{
-    OS_MUTEX_LOCK(event_mutex);
-}
-
-static void _buffer_unlock (void)
-{
-    OS_MUTEX_UNLOCK(event_mutex);
-}
-*/
-
 static const ascii *_event_name(event_id_e id)
 {
     static ascii cfg[CFG_ITEM_SIZE];
@@ -114,17 +102,20 @@ static const ascii *_source_name(event_source_e id)
 
 bool event_init(void)
 {
-    OS_MUTEX_INIT(event_mutex);
     memset(&_event_buffer, 0, sizeof(_event_buffer));
     event_buf_init(&sms_buf, sms_items, SMS_BUF_SIZE);
-
+    event_memory_init();
     return (true);
+}
+
+void event_set_cnt(u16 cnt)
+{
+    _event_cnt = cnt;
 }
 
 bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t *event_time)
 {   // new event 
     // add it to primary buffer and proccess it later from event_task()
-    static u16 event_cnt = 0;
     event_t *event;
     unsigned int ptr = _buf_wr_ptr;
 
@@ -146,7 +137,7 @@ bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t
         memcpy(&event->time, event_time, sizeof(event->time));
     }
     LOG_DEBUG("E=%d, S=%d", e, s);
-    event->cnt    = ++event_cnt;
+    event->cnt    = ++_event_cnt;
     event->id     = e;
     event->source = s;
     _buf_wr_ptr = ptr; // atomic pointer update
@@ -177,6 +168,8 @@ void event_task(void)
         e = &_event_buffer[_buf_rd_ptr];
         OS_ASSERT(e->id < EVENT_ID_SIZE, "e->id");
         g = EVENT_SETUP[e->id].group;
+
+        event_memory_store(e);
 
         buf_init(&buf, cfg, sizeof(cfg));
         if (cfg_read(&buf, CFG_ID_EVENT_SETUP_000 + g, ACCESS_SYSTEM))
@@ -246,6 +239,11 @@ static void _buf_add_event(buf_t *buf, event_t *e)
     buf_append_str(buf, _event_name(e->id));
     buf_append_str(buf, ", ");
     buf_append_str(buf, _source_name(e->source));
+}
+
+void event_description(buf_t *buf, event_t *e)
+{
+    _buf_add_event(buf, e);
 }
 
 void event_comm_task(void)
