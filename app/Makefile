@@ -62,6 +62,7 @@ C_SOURCES +=  \
   $(DIR_HAL)/led.c \
   $(DIR_HAL)/log.c \
   $(DIR_HAL)/os.c \
+  $(DIR_HAL)/syscalls.c \
   $(DIR_HAL)/shock.c \
   $(DIR_HAL)/tty.c \
   $(DIR_HAL)/wdog.c \
