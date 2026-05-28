@@ -76,16 +76,19 @@ enum {
 
 typedef u8 event_prio_e;
 
+typedef u32 event_cnt_t;
+
 typedef struct
 {
+    event_cnt_t cnt;
     rtc_t time;
-    u16 cnt;
     event_id_e id;
     event_source_e source;
 } event_t;
 
 bool event_init(void);
-void event_set_cnt(u16 cnt);
+void event_set_cnt(event_cnt_t cnt);
+bool event_valid(event_t *e);
 bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t *event_time);
 bool event_create (event_id_e e, event_source_e s);
 void event_task(void);

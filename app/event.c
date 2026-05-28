@@ -22,7 +22,7 @@ event_buf_t sms_buf;
 static event_t _event_buffer[_EVENT_BUF_SIZE];
 static int _buf_rd_ptr = 0;
 static int _buf_wr_ptr = 0;
-static u16 _event_cnt = 0;
+static event_cnt_t _event_cnt = 0;
 
 typedef struct {
     u8 id;
@@ -108,9 +108,22 @@ bool event_init(void)
     return (true);
 }
 
-void event_set_cnt(u16 cnt)
+void event_set_cnt(event_cnt_t cnt)
 {
     _event_cnt = cnt;
+}
+
+bool event_valid(event_t *e)
+{
+    if (! rtc_valid(&e->time))
+        return (false);
+
+    if ((e->id >= EVENT_ID_SIZE)
+     || (e->source >= EVENT_SOURCE_SIZE))
+    {
+        return (false);
+    }
+    return (true);
 }
 
 bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t *event_time)
@@ -151,7 +164,6 @@ bool event_create (event_id_e e, event_source_e s)
 
 void event_task(void)
 {
-    static u32 event_counter = 0;
     unsigned int ptr = _buf_rd_ptr;
 
     OS_ASSERT(_buf_wr_ptr < _EVENT_BUF_SIZE, "_buf_wr_ptr");
@@ -212,8 +224,7 @@ void event_task(void)
 
         }
 
-        event_counter++;
-        LOG_INFO("E%d (B%d): %s, %s", event_counter, _buf_rd_ptr, _event_name(e->id), _source_name(e->source));
+        LOG_INFO("%d (B%d): %s, %s", e->cnt, _buf_rd_ptr, _event_name(e->id), _source_name(e->source));
         system_event(e->id);
 
         if (++ptr == _EVENT_BUF_SIZE)

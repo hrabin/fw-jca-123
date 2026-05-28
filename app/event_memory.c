@@ -32,15 +32,6 @@ static u32 _ptr_dec(u32 ptr)
     return (ptr);
 }
 
-static bool _event_valid(event_t *e)
-{
-    if (! rtc_valid(&e->time))
-        return (false);
-
-    // TODO: more checks
-    return (true);
-}
-
 bool event_memory_init(void)
 {
     event_t e;
@@ -57,7 +48,7 @@ bool event_memory_init(void)
             LOG_ERROR("read %u failed", i);
             return (false);
         }
-        if (! _event_valid(&e))
+        if (! event_valid(&e))
         {
             _event_memory_ptr = i;
             event_set_cnt(cnt_max);
@@ -72,7 +63,6 @@ bool event_memory_init(void)
     }
     event_set_cnt(cnt_max);
     _event_memory_ptr = _ptr_inc(ptr_max);
-    // STORAGE_EVENT_MEM_SPACE
     _EM_DEBUG("ptr=%u", _event_memory_ptr);
     return (true);
 }
@@ -102,7 +92,7 @@ bool event_memory_read(event_t *event, size_t back_index)
             _EM_DEBUG("rd ptr=%u", ptr);
             if (storage_read_event((u8 *)event, ptr, sizeof(event_t)))
             {
-                return (_event_valid(event));
+                return (event_valid(event));
             }
             break;
         }

@@ -384,7 +384,7 @@ void event_buf_info (event_buf_t *buf)
 		{	// 
 			OS_PRINTF(NL);
 			OS_PRINTF("buf: %d, flag=0x%02x", i, buf->items[i].flag);
-			OS_PRINTF(", n=%d", buf->items[i].event.cnt);
+			OS_PRINTF(", n=%ld", buf->items[i].event.cnt);
 			OS_PRINTF(", type=%d", buf->items[i].event.id);
 			OS_PRINTF(", next=%d", buf->items[i].next_index);
 			OS_PRINTF(", prev=%d", buf->items[i].prev_index);
