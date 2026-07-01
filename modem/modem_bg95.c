@@ -6,6 +6,7 @@
 #include "log.h"
 #include "ip4.h"
 #include "udp.h"
+#include "cfg.h"
 
 LOG_DEF("BG95");
 
@@ -84,15 +85,35 @@ static u8 rx_udp_socket = 0;
 |+QCFG: "dbgctl",(0-2)
 |+QCFG: "psm_rtc_adjust_ctrl",(0,1)
 |OK
+
+AT+QCFG="band"
++QCFG: "band",0xf,0x100002000000000f0e189f,0x10004200000000090e189f
+
+# For EU suitable setup :
+B20, B8, B3, B1, B28
+AT+QCFG="band",0xF,0x8080085,0x8080085
+
+0x8000084 B28
+  0x80000 B20
+     0x80 B8
+	  0x4 B3
+	  0x1 B1
+0x8080085
+
+# For USA 
+AT+QCFG="band",0xF,0x1a0a,0x1a0a
+
 */
 
-#define	_CFG_SCAN_SEQ   "020103"  // 01 GSM, 02 eMTC 03 NB-IoT (default 020301)
-#define	_CFG_SCAN_MODE  "1"  // 0 automatic, 1 GSM, 2 LTE, 3 LTE/NB (default ?)
+#define	_CFG_SCAN_MODE   "0"       // 0 automatic, 1 GSM, 2 LTE, 3 LTE/NB (default ?)
+#define	_CFG_SCAN_SEQ    "020103"  // 01 GSM, 02 eMTC 03 NB-IoT (default 020301)
+#define	_CFG_IOTOP_MODE  "0"       // 0 eMTC, 1 NB-IoT, 2 eMTC and NB-IoT
 
 static const modem_config_t MODEM_BG95_CONFIG[] = {
-	{"AT+QURCCFG=\"urcport\"", "+QURCCFG: \"urcport\",\"uart1\"",      "AT+QURCCFG=\"urcport\",\"uart1\"", MODEM_TIMEOUT_S},
-//  {"AT+QCFG=\"nwscanmode\"",  "+QCFG: \"nwscanmode\"," _CFG_SCAN_MODE,  "AT+QCFG=\"nwscanmode\"," _CFG_SCAN_MODE ",1", MODEM_TIMEOUT_S},
-	{"AT+QCFG=\"nwscanseq\"",  "+QCFG: \"nwscanseq\"," _CFG_SCAN_SEQ,  "AT+QCFG=\"nwscanseq\"," _CFG_SCAN_SEQ ",1", MODEM_TIMEOUT_S},
+	{"AT+QURCCFG=\"urcport\"", "+QURCCFG: \"urcport\",\"uart1\"",        "AT+QURCCFG=\"urcport\",\"uart1\"", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"nwscanmode\"", "+QCFG: \"nwscanmode\"," _CFG_SCAN_MODE,  "AT+QCFG=\"nwscanmode\"," _CFG_SCAN_MODE ",1", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"nwscanseq\"",  "+QCFG: \"nwscanseq\"," _CFG_SCAN_SEQ,    "AT+QCFG=\"nwscanseq\"," _CFG_SCAN_SEQ ",1", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"iotopmode\"",  "+QCFG: \"iotopmode\"," _CFG_IOTOP_MODE,  "AT+QCFG=\"iotopmode\"," _CFG_IOTOP_MODE ",1", MODEM_TIMEOUT_S},
 	
 	// some setup without response check
 	{NULL,NULL,"AT+QSCLK=1",MODEM_TIMEOUT_S}, // enable sleep mode (DTR wakeup)
@@ -118,6 +139,28 @@ static void _return_at_buf(buf_t *buf)
 }
 
 
+static bool _qcfg(modem_t *m, const ascii *cfg, const ascii *value, const ascii *tail)
+{	
+	ascii buffer[128];
+	bool qcfg_ok = false;
+
+	modem_at_lock(m);
+	snprintf(buffer, sizeof(buffer), "AT+QCFG=\"%s\"", cfg);
+	modem_at_cmd_nolock (m, buffer);
+
+	snprintf(buffer, sizeof(buffer), "+QCFG: \"%s\",%s", cfg, value);
+	LOG_INFO("set: %s", buffer);
+	if (modem_at_response (m, buffer, AT_ST_OK | AT_ST_ERROR, MODEM_TIMEOUT_S) & AT_ST_USER_STR)
+		qcfg_ok = true; // ok, dont need to write
+
+	modem_at_unlock(m);
+
+	if (qcfg_ok)
+		return (true);
+
+	return (modem_at_ok_cmd_fmt(m, "AT+QCFG=\"%s\",%s%s", cfg, value, tail));
+}
+
 bool modem_bg95_init(modem_t *m)
 {
 	LOG_DEBUGL(1, "init");
@@ -126,7 +169,13 @@ bool modem_bg95_init(modem_t *m)
 	if (! modem_config_table(m, MODEM_BG95_CONFIG))
 		return (false);
 
-	return (true);
+
+	ascii *band = cfg_read_static(CFG_ID_MODEM_BAND);
+
+	if (band == NULL)
+		return (false);
+
+	return (_qcfg(m, "band", band, ",1"));
 }
 
 bool modem_bg95_check(modem_t *m)
@@ -262,7 +311,8 @@ bool modem_bg95_urc(modem_t *m)
 		}
 		return (true);
 	}
-	if ((p = modem_parse_pattern(src, "POWERED DOWN")) != NULL)
+	if (((p = modem_parse_pattern(src, "NORMAL POWER DOWN")) != NULL)
+	 || ((p = modem_parse_pattern(src, "POWERED DOWN")) != NULL))
 	{
 		LOG_INFO("POWER DOWN");
 		m->flags &= ~(MODEM_FLAG_NET_READY | MODEM_FLAG_DATA_READY|
@@ -414,7 +464,7 @@ static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
 
 bool modem_bg95_udp_send(modem_t *m, udp_packet_t *packet)
 {
-    buf_t *buf;
+	buf_t *buf;
 	u8 socket;
 	bool result = false;
 
@@ -443,16 +493,16 @@ bool modem_bg95_udp_send(modem_t *m, udp_packet_t *packet)
 	tx_cnt++;
 	
 	buf_append_fmt(buf,"AT+QISENDEX=%d,\"", socket); // tmout 120s
-    buf_append_hex(buf, packet->data, packet->datalen);
-    buf_append_str(buf, "\",0");
+	buf_append_hex(buf, packet->data, packet->datalen);
+	buf_append_str(buf, "\",0");
 
- 	modem_at_lock(m);
+	modem_at_lock(m);
 	modem_at_cmd_nolock(m, buf_data(buf));
 	
 	if (modem_at_response(m, "SEND OK", AT_ST_ERROR | AT_ST_USER_STR, MODEM_TIMEOUT_LL) & AT_ST_USER_STR)
 		result = true;
 
- 	modem_at_unlock(m);
+	modem_at_unlock(m);
 	_return_at_buf(buf);
 
 	if (! result)
@@ -506,7 +556,7 @@ static void _socket_maintenace(modem_t *m)
 			
 			snprintf(buf, sizeof(buf), "@@AT+QIRD=%d", i); // tmout 120s
 			rx_udp_socket = i;
-	 		if (modem_at_ok_cmd(m, buf))
+			if (modem_at_ok_cmd(m, buf))
 			{
 				s->timer = now + 60*OS_TIMER_SECOND;
 			}

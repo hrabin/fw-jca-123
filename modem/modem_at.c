@@ -5,8 +5,11 @@
 #include "buf.h"
 #include "log.h"
 
+#include <stdarg.h>
+
 LOG_DEF("AT");
 
+#define AT_BUFFER_SIZE 128
 
 const ascii *modem_at_param_pos(const ascii * data, u16 n)
 {
@@ -34,6 +37,7 @@ void modem_at_init(modem_t *m)
 {
     memset(&(m->at), 0, sizeof(modem_at_t));
     OS_SEMAPHORE_INIT(m->at.semaphore);
+    // m->flags |= MODEM_FLAG_ECHO; // DEBUG
 }
 
 static void modem_at_wakeup(modem_t *m)
@@ -150,6 +154,7 @@ static bool _at_cmd_and_response_ok(modem_t *m, buf_t *dest, const ascii *at_cmd
         }
     }
     modem_at_cmd_nolock (m, at_cmd);
+
     response = modem_at_response (m, user_str, AT_ST_OK | AT_ST_ERROR, timeout);
     if (dest != NULL)
     {
@@ -198,6 +203,26 @@ bool modem_at_ok_cmd_nolock(modem_t * m, const ascii * at_cmd)
 {
     return (_at_cmd_and_response_ok(m, NULL, at_cmd, NULL));
 }
+
+bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...) 
+{
+    ascii buffer[AT_BUFFER_SIZE];
+    va_list args;
+
+    va_start(args, fmt);
+    int result = vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    if ((result < 0) || (result >= (int)sizeof(buffer))) 
+    {
+        // too long text
+        LOG_ERROR("AT usage fail");
+        return (false);
+    }
+
+    return (modem_at_ok_cmd(m, buffer));
+}
+
 
 bool modem_at_cmd_get_response(modem_t *m, buf_t *dest, const ascii *at_cmd, const ascii *user_str)
 {

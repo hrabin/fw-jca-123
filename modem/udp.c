@@ -1,7 +1,6 @@
 #include "common.h"
 #include "udp.h"
 #include "modem_main.h"
-#include "cfg.h"
 #include "net.h"
 #include "log.h"
 

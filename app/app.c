@@ -176,6 +176,7 @@ void app_main_siren_beep(u32 mask, u8 length)
 
 #define _REINIT_MAIN   (1 << 0)
 #define _REINIT_TRACER (1 << 1)
+#define _REINIT_MODEM  (1 << 2)
 
 static void _reinit_task(void)
 {
@@ -189,6 +190,9 @@ static void _reinit_task(void)
 
     if (mask & _REINIT_TRACER)
         tracer_reinit();
+
+    if (mask & _REINIT_MODEM)
+        modem_main_command(MODEM_COMMAND_RESET);
 
     _reinit_mask &= ~mask;
 }
@@ -288,6 +292,9 @@ void app_reinit_req(cfg_id_t id)
 
     case CFG_ID_MAIN_SETUP:
         _reinit_mask |= _REINIT_MAIN;
+        break;
+    case CFG_ID_MODEM_BAND:
+        _reinit_mask |= _REINIT_MODEM;
         break;
     default:
         break;

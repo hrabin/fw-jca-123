@@ -13,6 +13,7 @@ typedef enum {
     MODEM_MAIN_STATE_ERROR,
     MODEM_MAIN_STATE_INIT,
     MODEM_MAIN_STATE_NET_OK,
+    MODEM_MAIN_STATE_DEBUG,
 } modem_main_state_e;
 
 typedef enum {
@@ -23,7 +24,7 @@ typedef enum {
 	MODEM_COMMAND_OFF,
 	MODEM_COMMAND_RESET,
 	MODEM_COMMAND_HB,
-
+	MODEM_COMMAND_DEBUG, // 7
 } modem_command_e;
 
 bool modem_main_init(void);

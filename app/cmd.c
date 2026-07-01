@@ -54,6 +54,7 @@ LOG_DEF("CMD");
     _CMD("AT",        NULL,           _cmd_at,      0, ACCESS_SYSTEM,  "send AT-command"), \
     _CMD("BLE",       NULL,           _cmd_ble,     0, ACCESS_SYSTEM,  "send cmd to BLE module"), \
     _CMD("DBG",       NULL,           _cmd_dbg,     0, ACCESS_SYSTEM,   NULL), \
+    _CMD("MODEM",     NULL,           _cmd_modem,   0, ACCESS_SYSTEM,   NULL), \
     _CMD("DL",        _cmd_dl,        _cmd_dl_set,  0, ACCESS_SYSTEM,  "set debug level[,select]"), \
     _CMD("ECHO",      _cmd_echo,      _cmd_echo_set,0, ACCESS_SYSTEM,  "get/set modem echo"), \
 
@@ -121,6 +122,7 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
     case 30:
         alarm_trigger();
         break;
+
     case 40:
         shock_debug ^= 1;
         break;
@@ -135,6 +137,18 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
     return (true);
 }
 
+static bool _cmd_modem(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
+{
+    long num;
+
+    if (access->auth < ACCESS_ADMIN)
+        return (false);
+
+    if (! cmd_fetch_num(&num, pptext))
+        return (false);
+  
+    return (modem_main_command(num));
+}
 
 static void _cmd_mutex_lock(void)
 {

@@ -142,3 +142,17 @@ s32 cfg_read_nparam(cfg_id_t id, int n)
     return (0);
 }
 
+ascii *cfg_read_static(cfg_id_t id)
+{
+    static ascii data[CFG_ITEM_SIZE];
+    buf_t buf;
+
+    buf_init(&buf, data, sizeof(data));
+    if (! cfg_read(&buf, id, ACCESS_SYSTEM))
+    {
+        // OS_FATAL("cfg_read_static(%d) failed", id);
+        return (NULL);
+    }
+    return (data);
+}
+

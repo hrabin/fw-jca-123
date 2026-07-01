@@ -23,6 +23,7 @@ bool modem_at_cmd_nolock(modem_t *g, const ascii *at_cmd);
 bool modem_at_cmd(modem_t *m, const ascii *at_cmd);
 bool modem_at_ok_cmd(modem_t *g, const ascii *at_cmd);
 bool modem_at_ok_cmd_nolock(modem_t * m, const ascii * at_cmd);
+bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...);
 bool modem_at_response_ok(modem_t *m, const ascii *at_cmd, const ascii *user_str);
 bool modem_at_cmd_get_response(modem_t *m, buf_t *dest, const ascii *at_cmd, const ascii *user_str);
 u16 modem_at_read_line (modem_t *m, buf_t *dest, const ascii *user_str, u32 timeout);

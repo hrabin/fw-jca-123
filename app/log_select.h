@@ -10,5 +10,6 @@
 #define LOG_SELECT_SLEEP   16
 #define LOG_SELECT_PDU     17
 #define LOG_SELECT_EB      18
+#define LOG_SELECT_MODEM   19
 
 #endif // ! LOG_SELECT_H

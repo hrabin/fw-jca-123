@@ -163,8 +163,10 @@ static void _set_state(modem_main_state_e new_state)
     os_timer_t now;
 
     if (new_state == _ms.state)
+    {
         return;
-    
+    }
+
     now = os_timer_get();
 
     switch (new_state)
@@ -192,9 +194,14 @@ static void _set_state(modem_main_state_e new_state)
         _ms.tmout = now + 60 * OS_TIMER_SECOND;
         break;
 
+    case MODEM_MAIN_STATE_DEBUG:
+		break;
+
     default:
         return;
     }
+	LOG_DEBUGL(LOG_SELECT_MODEM, "new state: %d", new_state);
+
     _ms.state = new_state;
 }
 
@@ -231,6 +238,15 @@ static void _modem_command_exec(modem_command_e cmd)
     case MODEM_COMMAND_HB:
         break;
 
+    case MODEM_COMMAND_RESET:
+		MODEM.pfunc_off();
+		// keep it off, it will wake up on next check
+		break;
+
+    case MODEM_COMMAND_DEBUG:
+        _set_state(MODEM_MAIN_STATE_DEBUG);
+        break;
+
     default:
         break;
     }
@@ -247,6 +263,9 @@ static void _state_machine_task(void)
 
     switch (_ms.state)
     {
+    case MODEM_MAIN_STATE_DEBUG:
+        return; // no automatic actions in debug
+
     case MODEM_MAIN_STATE_OFF:
         if (now < _ms.tmout)
             break;
