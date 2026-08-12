@@ -25,26 +25,32 @@ Current setup for CPU STM32G4xx.
 
 ```
 ├── app                 # application main directory
-│   └── build           # application build directory
+│   ├── cms             # security-center communication (SIA over IP)
+│   ├── tracer          # tracking (H02 protocol, track point storage)
+│   └── build           # application build directory
 ├── bootloader          # bootloader main directory
-│   └── build           # bootloader build directory
+│   └── build           # bootloader build directory
 ├── doc                 # device documentation
 ├── hw                  # hardware definitions
 ├── lib                 # additional libraries
-│   └── pdu             # library for PDU manipulation
+│   ├── nmea            # NMEA-0183 sentence parser
+│   └── pdu             # library for PDU manipulation
+├── modem               # modem subsystem (AT commands, SMS, UDP transport)
+├── net                 # platform-independent IP/UDP primitives
 ├── sdk                 # submodule (fw-stm32-sdk.git)
 │   ├── common          # universal libraries
 │   ├── doc             # MCU documentation
 │   ├── drv_*           # drivers
 │   ├── hal             # HW abstraction layer (universal)
-│   ├── freertos        #
+│   ├── freertos        #
 │   └── stm32           # STM32 related source files
-│       ├── CMSIS       #
-│       │   ├── device  # MCU definitions
-│       │   ├── inc     # stm32 core definitions
-│       │   ├── linker  # linker files
-│       │   └── src     # stm32 core sources
-│       └── STM32*      # submodules (STMicroelectronics)
+│       ├── CMSIS       #
+│       │   ├── device  # MCU definitions
+│       │   ├── inc     # stm32 core definitions
+│       │   ├── linker  # linker files
+│       │   └── src     # stm32 core sources
+│       └── STM32*      # submodules (STMicroelectronics)
+├── tests               # host-side unit tests
 └── ut
     ├── app_container   # tool for build FW container
     ├── app_crc         # tool for FW crc calculation

@@ -19,7 +19,7 @@ INCLUDES   = -I./stubs \
              -I../lib/pdu \
              -I../modem \
              -I../net \
-             -I../cms \
+             -I../app/cms \
              -I../app
 
 # Source files under test (from the main project)
@@ -29,7 +29,7 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../sdk/common/util.c \
                  ../sdk/common/text_lib.c \
                  ../lib/pdu/pdu.c \
-                 ../cms/cms_sia_ip.c \
+                 ../app/cms/cms_sia_ip.c \
                  ../modem/modem.c \
                  ../modem/modem_at.c \
                  ../modem/multi_sms.c

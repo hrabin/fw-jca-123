@@ -2,7 +2,7 @@
 #include "app.h"
 #include "cfg.h"
 #include "gps.h"
-#include "gps_buffer.h"
+#include "tracer_buffer.h"
 #include "log.h"
 #include "modem_main.h"
 #include "net.h"
@@ -122,7 +122,7 @@ bool tracer_init (void)
 
     tracer_reinit();
 
-    if (gps_buf_init (&track, &info.dw))
+    if (tracer_buf_init (&track, &info.dw))
     {   // restore last driver and track type
         tracer_set_user_id(info.s.driver_id);
         if (info.s.track_type)
@@ -417,7 +417,7 @@ void tracer_comm_process (void)
     {   // request for track-id change (erase data)
         if (! tracer_is_active())
         {
-            gps_buf_hard_erase();   // this takes up to 20s !
+            tracer_buf_hard_erase();   // this takes up to 20s !
             track = new_track_id_set-1;
             new_track_id_set = 0;
             return;
@@ -472,7 +472,7 @@ void tracer_comm_process (void)
             {
                 send_retry = 0;
                 proto->packet_done();
-                gps_buf_delivered_all ();
+                tracer_buf_delivered_all ();
                 return;
             }
             LOG_ERROR ("NO ACK");
@@ -495,7 +495,7 @@ void tracer_comm_process (void)
     }
     else
     {   // nothing pending, so check for old data from FLASH
-        if (gps_buf_empty())
+        if (tracer_buf_empty())
         {
             tracer_comm_sleep(5);
         }
@@ -507,9 +507,9 @@ void tracer_comm_process (void)
             u8 f;
             bool last;
 
-            if (gps_buf_read_next(&pos, &t, &p, &f, &(info.dw)) >= 0)
+            if (tracer_buf_read_next(&pos, &t, &p, &f, &(info.dw)) >= 0)
             {
-                last = (f & GPS_FLAG_LAST) ? true : false;
+                last = (f & TRACER_FLAG_LAST) ? true : false;
                 proto->new_point (&pos, t, last, &info);
                 // tracer_comm_sleep(1);
             }
@@ -547,8 +547,8 @@ void tracer_new_point (void)
     point++;
     _LOG_DEBUGL("point %d", point);
     valid_pos = gps_get_current_stamp(&pos);
-    flags |= valid_pos      ? GPS_FLAG_VALID : 0;
-    flags |= tracer_stop_rq ? GPS_FLAG_LAST  : 0;
+    flags |= valid_pos      ? TRACER_FLAG_VALID : 0;
+    flags |= tracer_stop_rq ? TRACER_FLAG_LAST  : 0;
 
     info.dw  = 0;
     info.s.driver_id  = user_id;
@@ -564,7 +564,7 @@ void tracer_new_point (void)
 
     info.s.outputs = 0; // app_main_outputs_status();
 
-    gps_buf_store_position (&pos, track, point, flags, info.dw);
+    tracer_buf_store_position (&pos, track, point, flags, info.dw);
 }
 
 bool tracer_packet_rx (u8 *data, u16 len, u16 port)

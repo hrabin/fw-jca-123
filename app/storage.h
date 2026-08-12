@@ -6,7 +6,7 @@
 #define STORAGE_SECTOR_SIZE (512)
 
 #define STORAGE_CFG_SPACE          (128*1024) // cfg.c
-#define STORAGE_GPS_RECORDS_SPACE (1024*1024) // gps_buffer.c (32768 x 32B)
+#define STORAGE_GPS_RECORDS_SPACE (1024*1024) // tracer_buffer.c (32768 x 32B)
 #define STORAGE_EVENT_MEM_SPACE    (512*1024) // event_memory.c
 
 bool storage_init (void);

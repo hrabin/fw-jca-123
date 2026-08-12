@@ -12,7 +12,8 @@ DIR_ROOT  ?= .
 DIR_HW     := ../hw
 DIR_MODEM  := ../modem
 DIR_NET    := ../net
-DIR_CMS    := ../cms
+DIR_CMS    := ./cms
+DIR_TRACER := ./tracer
 DIR_LIB    := ../lib
 DIR_SDK    := ../sdk
 DIR_UTILS  := ../ut
@@ -44,7 +45,6 @@ C_SOURCES +=  \
   $(DIR_ROOT)/event_buf.c \
   $(DIR_ROOT)/event_memory.c \
   $(DIR_ROOT)/gps.c \
-  $(DIR_ROOT)/gps_buffer.c \
   $(DIR_ROOT)/gps_io.c \
   $(DIR_ROOT)/io.c \
   $(DIR_ROOT)/main.c \
@@ -57,8 +57,9 @@ C_SOURCES +=  \
   $(DIR_ROOT)/system.c \
   $(DIR_ROOT)/system_input.c \
   $(DIR_ROOT)/text.c \
-  $(DIR_ROOT)/tracer.c \
-  $(DIR_ROOT)/tracer_h02.c \
+  $(DIR_TRACER)/tracer.c \
+  $(DIR_TRACER)/tracer_h02.c \
+  $(DIR_TRACER)/tracer_buffer.c \
   $(DIR_ROOT)/update.c \
   \
   $(DIR_HAL)/hw_info.c \
@@ -127,6 +128,7 @@ C_INCLUDES +=  \
 -I$(DIR_HW) \
 -I$(DIR_NET) \
 -I$(DIR_CMS) \
+-I$(DIR_TRACER) \
 -I$(DIR_LIB) \
 -I$(DIR_LIB)/nmea \
 -I$(DIR_MODEM) \
