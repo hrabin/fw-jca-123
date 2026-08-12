@@ -8,18 +8,13 @@
 #include "net.h"
 #include "system.h"
 #include "tracer.h"
-#include "tracer_h02.h"
+#include "tracer_proto.h"
 
 LOG_DEF("tracer");
 
 #define _LOG_DEBUGL(...) LOG_DEBUGL(LOG_SELECT_TRACER, __VA_ARGS__)
 
 #define DEVICE_HAS_SHOCK_START 1
-#define TRACER_SIA 0  // enable SIA protocol
-
-#if TRACER_SIA 
-  #include "tracer_sia.h"
-#endif // TRACER_SIA
 
 #define LIMIT_TRACE_END      3600
 #define LIMIT_TRACE_INTERVAL 3600
@@ -40,11 +35,11 @@ static u16  tracer_store_period_roaming  = TRACER_PERIOD_ROAMING_DEFAULT;
 static u16  tracer_end_wait_time = TRACER_END_WAIT_TIME_DEFAULT;
 #define TRACER_END_WAIT_POWER_FAIL     (20*OS_TIMER_SECOND) // waiting to finish tracking after main power loss
 
-#define TRACER_PROTO_H02  0 // 
+#define TRACER_PROTO_H02  0 //
 #define TRACER_PROTO_SIA  1 // compatible to SIA-DSC (DC9)
 #define TRACER_PROTO_LAST TRACER_PROTO_SIA // number of supported protocols
 
-#define TRACER_PROTO_DEFAULT  (TRACER_PROTO_H02) 
+#define TRACER_PROTO_DEFAULT  (TRACER_PROTO_H02)
 static u8   tracer_protocol = 0;
 
 #define TRACER_START_SPEED_DEFAULT  3 // km/h - start track when speed reaches this limit
@@ -95,51 +90,23 @@ static bool _external_start = false;
 // common buffer for one packet for all protocols
 u8 tracer_packet_buffer[TRACER_PACKET_BUFFER_SIZE];
 
-// 
-typedef void (*pfunc_server_reinit)            (u32 new_id);
-typedef void (*pfunc_server_new_track)       (u16 track_id);
-typedef bool (*pfunc_server_packet_ready)    (void);
-typedef void (*pfunc_server_packet_done)     (void);
-typedef void (*pfunc_server_get_packet)      (u8 *dest);
-typedef u16  (*pfunc_server_packet_size)     (void);
-typedef bool (*pfunc_server_packet_reply_ok) (u8 *data, u16 len);
-typedef void (*pfunc_server_new_point)       (gps_stamp_t *pos, u16 track, bool last, track_info_t *info);
+// protocol interface — set by pfunc_reinit()
+static const tracer_proto_t *proto = NULL;
 
-pfunc_server_reinit          server_reinit = NULL; 
-pfunc_server_new_track       server_new_track = NULL;
-pfunc_server_packet_ready    server_packet_ready = NULL;
-pfunc_server_packet_done     server_packet_done = NULL;
-pfunc_server_packet_size     server_packet_size = NULL;
-pfunc_server_packet_reply_ok server_packet_reply_ok = NULL;
-pfunc_server_new_point       server_new_point = NULL;
-
-static void pfunc_reinit (u8 protocol)
+static void pfunc_reinit(u8 protocol)
 {
-    switch (protocol)
-    {
-  #if TRACER_SIA
-    case TRACER_PROTO_SIA:
-        server_reinit          = (pfunc_server_reinit)&tr_sia_reinit;
-        server_new_track       = (pfunc_server_new_track)&tr_sia_new_track;
-        server_packet_ready    = (pfunc_server_packet_ready)&tr_sia_packet_ready;
-        server_packet_done     = (pfunc_server_packet_done)&tr_sia_packet_done;
-        server_packet_size     = (pfunc_server_packet_size)&tr_sia_packet_size;
-        server_packet_reply_ok = (pfunc_server_packet_reply_ok)&tr_sia_packet_reply_ok;
-        server_new_point       = (pfunc_server_new_point)&tr_sia_new_point;
-        break;
-  #endif // TRACER_SIA
-
-    case TRACER_PROTO_H02:
-    default:
-        server_reinit          = (pfunc_server_reinit)&tracer_h02_reinit;
-        server_new_track       = (pfunc_server_new_track)&tracer_h02_new_track;
-        server_packet_ready    = (pfunc_server_packet_ready)&tracer_h02_packet_ready;
-        server_packet_done     = (pfunc_server_packet_done)&tracer_h02_packet_done;
-        server_packet_size     = (pfunc_server_packet_size)&tracer_h02_packet_size;
-        server_packet_reply_ok = (pfunc_server_packet_reply_ok)&tracer_h02_packet_reply_ok;
-        server_new_point       = (pfunc_server_new_point)&tracer_h02_new_point;
-        break;
-    }
+	switch (protocol)
+	{
+#if TRACER_SIA
+	case TRACER_PROTO_SIA:
+		proto = &tracer_proto_sia;
+		break;
+#endif
+	case TRACER_PROTO_H02:
+	default:
+		proto = &tracer_proto_h02;
+		break;
+	}
 }
 
 static void tracer_comm_sleep(u16 tm)
@@ -187,8 +154,8 @@ static void tracer_server_reinit (u32 new_id)
 
     memset(tracer_packet_buffer, 0, sizeof(tracer_packet_buffer));
     
-    if (server_reinit != NULL)
-        server_reinit(new_id);
+    if (proto != NULL)
+        proto->reinit(new_id);
 }
 
 u32 tracer_unit_id (void)
@@ -461,7 +428,7 @@ void tracer_comm_process (void)
         return; 
     }
 
-    if (server_packet_ready())
+    if (proto->packet_ready())
     {
         switch (tracer_send_mode)
         {
@@ -485,13 +452,13 @@ void tracer_comm_process (void)
             {
                 tracer_reinit();
                 tracer_comm_sleep(60);
-                server_packet_done();
+                proto->packet_done();
                 return; 
             }
             packet.src_port    = server_port;
             packet.dst_port    = server_port;
             packet.dst_ip.addr = server_ip;
-            packet.datalen     = server_packet_size();
+            packet.datalen     = proto->packet_size();
             packet.data        = tracer_packet_buffer;
 
             tracer_packet_ack = false; // avoid previous ACK to be accepted now
@@ -500,7 +467,7 @@ void tracer_comm_process (void)
             if (wait_for_ack())
             {
                 send_retry = 0;
-                server_packet_done();
+                proto->packet_done();
                 gps_buf_delivered_all ();
                 return; 
             }
@@ -539,7 +506,7 @@ void tracer_comm_process (void)
             if (gps_buf_read_next(&pos, &t, &p, &f, &(info.dw)) >= 0)
             {
                 last = (f & GPS_FLAG_LAST) ? true : false;
-                server_new_point (&pos, t, last, &info);
+                proto->new_point (&pos, t, last, &info);
                 // tracer_comm_sleep(1);
             }
             else
@@ -570,7 +537,7 @@ void tracer_new_point (void)
         _LOG_DEBUGL("new track %d", track);
         // now system reaction (like move info)
         system_io_state |= SYSTEM_IO_TRACING;
-        server_new_track(track);
+        proto->new_track(track);
     }
 
     point++;
@@ -601,7 +568,7 @@ bool tracer_packet_rx (u8 *data, u16 len, u16 port)
     if (port != server_port)
         return (false);
 
-    if (! server_packet_reply_ok (data, len))
+    if (! proto->packet_reply_ok (data, len))
         return (false);
     tracer_packet_ack = true;
     return (true);

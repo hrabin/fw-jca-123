@@ -3,6 +3,7 @@
 #include "buf.h"
 #include "tracer.h"
 #include "tracer_sia.h"
+#include "tracer_proto.h"
 #include "system.h" // inputs/outputs
 #include "util.h"
 #include "cms_sia_ip.h"
@@ -149,4 +150,15 @@ void tr_sia_rq_add_auth(u8 id, ascii *data)
 {
 }
 
-
+const tracer_proto_t tracer_proto_sia = {
+	.reinit          = tr_sia_reinit,
+	.new_track       = tr_sia_new_track,
+	.packet_ready    = tr_sia_packet_ready,
+	.packet_done     = tr_sia_packet_done,
+	.packet_size     = tr_sia_packet_size,
+	.packet_reply_ok = tr_sia_packet_reply_ok,
+	.new_point       = tr_sia_new_point,
+	.get_packet      = tr_sia_get_packet,
+	.track_end       = tr_sia_track_end,
+	.rq_add_auth     = tr_sia_rq_add_auth,
+};
