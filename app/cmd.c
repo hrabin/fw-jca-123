@@ -119,6 +119,19 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
         // DBG=20,1234 gps
         return cmd_sms_process (result,  (ascii *)*pptext, "+420777123456", strlen(*pptext));
 
+    /*case 21:
+        {
+            sms_struct_t sms;
+            const ascii t[] = "ahoj";
+            sms.data = (u8 *)OS_MEM_ALLOC(sizeof(t));
+            memcpy(sms.data, &t, sizeof(t));
+            strcpy(sms.tel_num, "+420xxxxxxxxx");
+            sms.type = SMS_TYPE_AUTO;
+            sms.sr   = false;
+            modem_main_sms_send (&sms);
+        }
+        break;*/
+
     case 30:
         alarm_trigger();
         break;

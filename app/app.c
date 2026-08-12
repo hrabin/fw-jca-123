@@ -12,6 +12,7 @@
 #include "led.h"
 #include "log.h"
 #include "modem_main.h"
+#include "net.h"
 #include "power.h"
 #include "rtc.h"
 #include "shock.h"
@@ -327,7 +328,9 @@ void app_main_init (void)
     APP_INIT ("INIT SYSTEM   ... ", system_init());
     APP_INIT ("INIT GPS      ... ", gps_init());
     APP_INIT ("INIT BLE      ... ", ble_init(_ble_rx_parser));
-    
+
+    net_init();
+
     app_main_reinit();
    
     _inp_state = io_get_inp();

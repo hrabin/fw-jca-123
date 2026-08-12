@@ -532,7 +532,7 @@ static void _socket_maintenace(modem_t *m)
 			}
 			if ((s->no_rx_cnt  > 10) && (s->rx_time + 60*OS_TIMER_SECOND < now))
 			{	// workaround (sending packets, but more than 60s nothing received)
-				// looks like modem bug, it sometimes happen that is sends data but nothing received
+				// looks like modem bug, it sometimes happen that it sends data but nothing received
 				//
 				// _socket_close(m, i); // this does not help
 				LOG_ERROR("socket %d failed, reconnect", i);

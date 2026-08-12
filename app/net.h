@@ -5,6 +5,7 @@
 #include "ip4.h"
 #include "udp.h"
 
+void net_init(void);
 bool net_ready(void);
 bool net_connect(void);
 bool net_get_target_ip (u32 *ip, u16 *port, const ascii *url);

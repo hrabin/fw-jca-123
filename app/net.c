@@ -1,5 +1,6 @@
 #include "common.h"
 #include "net.h"
+#include "udp.h"
 #include "cfg.h"
 #include "modem_main.h"
 #include "log.h"
@@ -69,5 +70,10 @@ void net_udp_rx (udp_packet_t *pkt)
     if (update_packet_rx(pkt->data, pkt->datalen,pkt->src_port))
         return;    
     LOG_DEBUGL(3, "RX UNKNOWN packet, p=%d, typ=0x%02x, len=%d", pkt->src_port, *pkt->data, pkt->datalen);
+}
+
+void net_init(void)
+{
+    udp_register_rx_callback(net_udp_rx);
 }
 

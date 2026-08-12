@@ -11,6 +11,7 @@ DIR_ROOT  ?= .
 
 DIR_HW     := ../hw
 DIR_MODEM  := ../modem
+DIR_NET    := ../net
 DIR_LIB    := ../lib
 DIR_SDK    := ../sdk
 DIR_UTILS  := ../ut
@@ -97,13 +98,15 @@ C_SOURCES +=  \
   $(DIR_RTOS)/source/portable/MemMang/heap_4.c \
   $(DIR_RTOS)/source/portable/GCC/ARM_CM4F/port.c \
   \
+  $(DIR_NET)/udp.c \
+  \
   $(DIR_MODEM)/modem.c \
   $(DIR_MODEM)/modem_at.c \
   $(DIR_MODEM)/modem_bg95.c \
   $(DIR_MODEM)/modem_main.c \
   $(DIR_MODEM)/modem_sms.c \
   $(DIR_MODEM)/multi_sms.c \
-  $(DIR_MODEM)/udp.c \
+  $(DIR_MODEM)/modem_udp.c \
   \
   $(DIR_LIB)/pdu/pdu.c \
 
@@ -117,6 +120,7 @@ C_DEFS += $(VERSION_DEFS) \
 C_INCLUDES +=  \
 -I$(DIR_ROOT) \
 -I$(DIR_HW) \
+-I$(DIR_NET) \
 -I$(DIR_LIB) \
 -I$(DIR_MODEM) \
 -I$(DIR_RTOS)/source/include \
