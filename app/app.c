@@ -88,7 +88,7 @@ static void _led_update(void)
 
 static inline void _io_input_task(void)
 {
-    int i;
+    u16 i;
     u32 inp = io_get_inp();
 
     if (_inp_state == inp)
@@ -133,8 +133,8 @@ void app_init(void)
 
 void app_main_reinit(void)
 {
-#define CFG_FORMAT "%d,%d,%d"
-    int a,b,c;
+#define CFG_FORMAT "%" SCNd32 ",%" SCNd32 ",%" SCNd32
+    s32 a,b,c;
 
     ascii cfg[CFG_ITEM_SIZE];
     buf_t buf;

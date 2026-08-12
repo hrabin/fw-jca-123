@@ -85,7 +85,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
     u32 sec, dg, min, sub_min, s;
     float f;
     u32 status = 0xFFFFFFFF;
-    char symbol;
+    ascii symbol;
     buf_t buf;
     buf_init(&buf, (char *)tracer_packet_buffer, TRACER_PACKET_BUFFER_SIZE);
 

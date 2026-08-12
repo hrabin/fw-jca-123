@@ -9,7 +9,7 @@ LOG_DEF("EB");
 
 void event_buf_init (event_buf_t *buf, event_buf_item_t *items, eb_ptr_t size)
 {
-	int i;
+	u16 i;
 	buf->size  = size;
 	buf->items = items;
 	buf->start_index= 0;
@@ -26,7 +26,7 @@ void event_buf_init (event_buf_t *buf, event_buf_item_t *items, eb_ptr_t size)
 
 static eb_ptr_t _buf_find_free (event_buf_t *buf)
 {
-	int i;
+	u16 i;
 
 	for (i=0; i<(buf->size); i++)
 	{
@@ -41,14 +41,16 @@ static eb_ptr_t _buf_find_free (event_buf_t *buf)
 
 static bool _item_active (event_buf_t *buf, eb_ptr_t buf_index)
 {
-	if ((buf->items[buf_index].flag & (EVENT_BUF_FLAG_USED | EVENT_BUF_FLAG_ACTIVE)) == (EVENT_BUF_FLAG_USED | EVENT_BUF_FLAG_ACTIVE))
+	if ((buf->items[buf_index].flag
+	  & (EVENT_BUF_FLAG_USED | EVENT_BUF_FLAG_ACTIVE))
+	  == (EVENT_BUF_FLAG_USED | EVENT_BUF_FLAG_ACTIVE))
 		return (true);
 	return (false);
 }
 
 static eb_ptr_t _buf_replace_prio (event_buf_t *buf, event_prio_e prio)
 {
-	int i;
+	u16 i;
 	eb_ptr_t buf_index = buf->start_index;
 	event_prio_e lowest_prio = EVENT_PRIO_HI;
 
@@ -134,7 +136,7 @@ static void _delete_item (event_buf_t *buf, eb_ptr_t index)
 
 bool event_buf_empty (event_buf_t *buf)
 {
-	int i;
+	u16 i;
 	eb_ptr_t buf_index=buf->start_index;
 	for (i=0; i<(buf->size); i++)
 	{
@@ -212,7 +214,7 @@ bool event_buf_add_event (event_buf_t *buf, event_t *event, event_prio_e prio, u
 bool event_buf_restore_events (event_buf_t *buf, u8 retry_limit)
 {
 	bool result=true;
-	int i;
+	u16 i;
 	eb_ptr_t buf_index=buf->start_index;
 
 	for (i=0; i<(buf->size); i++)
@@ -323,7 +325,7 @@ bool event_buf_get_event (event_buf_t *buf, event_t *event, u16 *user, event_pri
 void event_buf_for_each (event_buf_t *buf, pfunc_for_each pfunc, int numargs, ... )
 {	// will call function "pfunc" for each record and erase it when returns "false"
 	va_list args;
-	int i;
+	u16 i;
 	eb_ptr_t buf_index=buf->start_index;
 
 	for (i=0; i<(buf->size); i++)
@@ -349,7 +351,7 @@ void event_buf_for_each (event_buf_t *buf, pfunc_for_each pfunc, int numargs, ..
 
 void event_buf_info (event_buf_t *buf)
 {
-	int i;
+	u16 i;
 	eb_ptr_t buf_index=buf->start_index;
 
 	OS_PRINTF(NL);

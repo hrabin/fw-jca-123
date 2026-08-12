@@ -31,7 +31,7 @@ static void _save_state(void)
 bool system_init(void)
 {
     buf_def(buf, CFG_ITEM_SIZE);
-    int state;
+    s32 state;
 
     system_input_init();
 
@@ -45,7 +45,7 @@ bool system_init(void)
     section_init(&section);
     alarm_init();
 
-    if (sscanf(buf_data(&buf), _CFG_FORMAT, &state) < 1)
+    if (sscanf(buf_data(&buf), "S%" SCNd32, &state) < 1)
         state = SECTION_ST_UNSET;
 
     section.data.state = state;

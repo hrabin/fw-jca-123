@@ -11,7 +11,7 @@ static system_input_t _sys_inp[SYSTEM_INP_COUNT];
 
 void system_input_reset(void)
 {
-    int i;
+    u16 i;
 
     for (i=0; i<SYSTEM_INP_COUNT; i++)
     {
@@ -22,7 +22,7 @@ void system_input_reset(void)
 
 void system_input_init(void)
 {
-    int i;
+    u16 i;
 
     memset(&_sys_inp, 0, sizeof(_sys_inp));
 
@@ -39,7 +39,8 @@ void system_input_init(void)
 event_source_e system_input_source(system_input_id_t n)
 {
     const event_source_e INP_SOURCE[SYSTEM_INP_COUNT] = {
-        EVENT_SOURCE_KEY, EVENT_SOURCE_LOCK, EVENT_SOURCE_LOCK, EVENT_SOURCE_DOOR, EVENT_SOURCE_INPUT1, EVENT_SOURCE_SHOCK
+        EVENT_SOURCE_KEY, EVENT_SOURCE_LOCK, EVENT_SOURCE_LOCK, EVENT_SOURCE_DOOR,
+        EVENT_SOURCE_INPUT1, EVENT_SOURCE_SHOCK
     };
     OS_ASSERT(n<SYSTEM_INP_COUNT, "system_inp_source()");
     return (INP_SOURCE[n]);
@@ -70,7 +71,7 @@ bool system_input_alarm(system_input_t *inp)
 
 void system_input_tick(void)
 {
-    int n;
+    u16 n;
 
     for (n=0; n<SYSTEM_INP_COUNT; n++)
     {

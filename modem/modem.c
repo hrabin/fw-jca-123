@@ -33,7 +33,7 @@ static void _set_offline(modem_t *m)
 
 static u8 _reg_parse(const char *p)
 {
-    int l = strlen(p);
+    s32 l = strlen(p);
     u8 reg = 0;
 
     if (l == 1)
@@ -77,7 +77,7 @@ static bool _modem_ready(modem_t *m)
 
 static bool _check_pin (modem_t *m)
 {
-    int retry=5;
+    u16 retry=5;
 
     while (retry--)
     {
@@ -599,7 +599,7 @@ bool modem_apn_setup(modem_t *m)
 
 bool modem_start(modem_t *m)
 {
-    int repeat;
+    u16 repeat;
 
     _set_offline(m);
     m->flags &= ~(MODEM_FLAG_PIN_READY);

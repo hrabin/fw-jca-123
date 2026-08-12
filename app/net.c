@@ -27,9 +27,10 @@ bool net_connect(void)
 
 bool _ip_parse (u32 *ip, u16 *port, const ascii * src)
 {
-    int a,b,c,d,p;
+    s32 a,b,c,d,p;
 
-    if (sscanf(src, "%d.%d.%d.%d:%d", &a, &b, &c ,&d, &p)==5)
+    if (sscanf(src, "%" SCNd32 ".%" SCNd32 ".%" SCNd32 ".%" SCNd32 ":%" SCNd32,
+               &a, &b, &c, &d, &p) == 5)
     {
         if ((a>255) || (b>255) || (c>255) || (d>255))
             return (false);

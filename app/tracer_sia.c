@@ -59,15 +59,16 @@ void tr_sia_packet_done (void)
 
 bool tr_sia_packet_reply_ok (u8 *data, u16 len)
 {
-	int a;
-	unsigned int b,c;
+	s32 a;
+	u32 b,c;
 
 	if (! cms_sia_ip_rx(&sia_state, data, len))
 		return (false);
 
 	data += SIA_IDX_DATA;
 
-	if (sscanf((char *)data, "\"ACK\"%dL%X#%X[", &a, &b, &c) == 3)
+	if (sscanf((char *)data, "\"ACK\"%" SCNd32 "L%" SCNx32 "#%" SCNx32 "[",
+	           &a, &b, &c) == 3)
 	{
 		if (a != sia_state.cnt)
 		{	// neni to odpoved na moji zpravu
@@ -101,7 +102,7 @@ void tr_sia_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *inf
 	buf_t buf;
 
 	s32 a, s, m, f;
-	char c;
+	ascii c;
 	// SIA location :
 	// Longitude "X" "[X093W23.456]"
 	// Latitude  "Y" "[Y45N23.456]"

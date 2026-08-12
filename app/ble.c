@@ -109,8 +109,8 @@ void ble_send(const void *buf, size_t count)
 void ble_task(void)
 {
     // RX task
-    int ch;
-    int n = 0;
+    s16 ch;
+    u16 n = 0;
 
     // process UART RX data
     while ((ch = HW_BLE_UART_GETCHAR()) >= 0)

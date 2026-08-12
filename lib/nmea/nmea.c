@@ -6,9 +6,9 @@
 
 // ---- internal helpers ----
 
-static int param_pos(const char *src, int n)
+static s32 param_pos(const char *src, s32 n)
 {
-	int l = 0;
+	s32 l = 0;
 
 	while (*src != '\0')
 	{
@@ -24,9 +24,9 @@ static int param_pos(const char *src, int n)
 	return (n == 0 ? l : -1);
 }
 
-static int get_param(char *dest, const char *src, int n, u16 limit)
+static s32 get_param(char *dest, const char *src, s32 n, u16 limit)
 {
-	int len = 0;
+	s32 len = 0;
 	bool copy = false;
 
 	while (*src != '\0')
@@ -61,10 +61,10 @@ static int get_param(char *dest, const char *src, int n, u16 limit)
 
 static u16 knots_to_10kmh(const char *s)
 {
-	int a, b;
+	s32 a, b;
 	s32 tmp = 0;
 
-	switch (sscanf(s, "%d.%1d", &a, &b))
+	switch (sscanf(s, "%" SCNd32 ".%1" SCNd32, &a, &b))
 	{
 	case 2: tmp = b;
 	case 1:
@@ -80,7 +80,7 @@ static u16 knots_to_10kmh(const char *s)
 
 u32 nmea_parse_u32(const char *sentence, int param_n)
 {
-	int pos;
+	s32 pos;
 
 	if ((pos = param_pos(sentence, param_n)) > 0)
 		return (atol(sentence + pos));
@@ -132,8 +132,8 @@ bool nmea_parse_gga(nmea_data_t *stamp, const char *sentence)
 
 bool nmea_parse_rmc(nmea_data_t *stamp, const char *sentence)
 {
-	char buf[PARAM_BUF_SIZE];
-	int len;
+	ascii buf[PARAM_BUF_SIZE];
+	s32 len;
 
 	// Time (param 1) — "hhmmss.sss"
 	if ((len = get_param(buf, sentence, 1, sizeof(buf) - 1)) >= 6)

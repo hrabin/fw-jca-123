@@ -16,7 +16,7 @@ static int _siren_tmr = 0;
 static int _alarm_tmr = 0;
 
 #define _ALARMS_MAX 3
-int _alarm_cnt = 0;
+u16 _alarm_cnt = 0;
 
 static void _siren_on(void)
 {

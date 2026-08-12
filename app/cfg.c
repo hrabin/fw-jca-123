@@ -8,7 +8,7 @@
 LOG_DEF("CFG");
 
 typedef struct {
-    char data[CFG_ITEM_SIZE];
+    ascii data[CFG_ITEM_SIZE];
     u16 chsum;
 } cfg_t;
 

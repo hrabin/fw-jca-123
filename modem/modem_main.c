@@ -31,7 +31,7 @@ typedef struct {
     modem_main_state_e requested_state;
     modem_command_e command;
     os_timer_t tmout;
-    int err_cnt;
+    u16 err_cnt;
 } modem_state_t;
 
 static modem_state_t _ms;

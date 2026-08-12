@@ -20,7 +20,7 @@ typedef struct {
 	os_timer_t timer;
 	os_timer_t tmout; // socket timeout for close
 	os_timer_t rx_time; // last rx packet time
-	int         no_rx_cnt;
+	u16         no_rx_cnt;
 	ip_addr_t   ip;
 	u16         port;
 	bool        rx;
@@ -110,10 +110,14 @@ AT+QCFG="band",0xF,0x1a0a,0x1a0a
 #define	_CFG_IOTOP_MODE  "0"       // 0 eMTC, 1 NB-IoT, 2 eMTC and NB-IoT
 
 static const modem_config_t MODEM_BG95_CONFIG[] = {
-	{"AT+QURCCFG=\"urcport\"", "+QURCCFG: \"urcport\",\"uart1\"",        "AT+QURCCFG=\"urcport\",\"uart1\"", MODEM_TIMEOUT_S},
-	{"AT+QCFG=\"nwscanmode\"", "+QCFG: \"nwscanmode\"," _CFG_SCAN_MODE,  "AT+QCFG=\"nwscanmode\"," _CFG_SCAN_MODE ",1", MODEM_TIMEOUT_S},
-	{"AT+QCFG=\"nwscanseq\"",  "+QCFG: \"nwscanseq\"," _CFG_SCAN_SEQ,    "AT+QCFG=\"nwscanseq\"," _CFG_SCAN_SEQ ",1", MODEM_TIMEOUT_S},
-	{"AT+QCFG=\"iotopmode\"",  "+QCFG: \"iotopmode\"," _CFG_IOTOP_MODE,  "AT+QCFG=\"iotopmode\"," _CFG_IOTOP_MODE ",1", MODEM_TIMEOUT_S},
+	{"AT+QURCCFG=\"urcport\"", "+QURCCFG: \"urcport\",\"uart1\"",
+	 "AT+QURCCFG=\"urcport\",\"uart1\"", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"nwscanmode\"", "+QCFG: \"nwscanmode\"," _CFG_SCAN_MODE,
+	 "AT+QCFG=\"nwscanmode\"," _CFG_SCAN_MODE ",1", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"nwscanseq\"", "+QCFG: \"nwscanseq\"," _CFG_SCAN_SEQ,
+	 "AT+QCFG=\"nwscanseq\"," _CFG_SCAN_SEQ ",1", MODEM_TIMEOUT_S},
+	{"AT+QCFG=\"iotopmode\"", "+QCFG: \"iotopmode\"," _CFG_IOTOP_MODE,
+	 "AT+QCFG=\"iotopmode\"," _CFG_IOTOP_MODE ",1", MODEM_TIMEOUT_S},
 
 	// some setup without response check
 	{NULL,NULL,"AT+QSCLK=1",MODEM_TIMEOUT_S}, // enable sleep mode (DTR wakeup)
@@ -186,7 +190,8 @@ bool modem_bg95_check(modem_t *m)
 static void _udp_rx_hex(u8 socket, ascii *data, size_t len)
 {
 	buf_t *buf;
-	int i, c;
+	u16 i;
+	u32 c;
 
 	if (socket >= _SOCKETS)
 	{
@@ -199,7 +204,7 @@ static void _udp_rx_hex(u8 socket, ascii *data, size_t len)
 	// convert HEX to BIN
 	for (i=0; i<len; i++)
 	{
-		if (sscanf(data, "%02x", &c) != 1)
+		if (sscanf(data, "%02" SCNx32, &c) != 1)
 			break;
 		buf_append_char(buf, c);
 		data+=2;
@@ -323,10 +328,15 @@ bool modem_bg95_urc(modem_t *m)
 	{
 		// TODO: parse statistics
 		// In the case of GSM mode:
-		// +QENG: "servingcell",<state>[,<RAT>,<MCC>,<MNC>,<LAC>,<cellID>,<bsic>,<ARFCN>,<band>,<RxLev>,<txp>,<rla>,<DRX>,<c1>,<c2>,<GPRS>,<tch>,<ts>,<ta>,<MAIO>,<HSN>,<rxlevsub>,<rxlevfull>,<rxqualsub>,<rxqualfull>,<voicecodec>]
+		// +QENG: "servingcell",<state>[,<RAT>,<MCC>,<MNC>,<LAC>,<cellID>,
+		//   <bsic>,<ARFCN>,<band>,<RxLev>,<txp>,<rla>,<DRX>,<c1>,<c2>,<GPRS>,
+		//   <tch>,<ts>,<ta>,<MAIO>,<HSN>,<rxlevsub>,<rxlevfull>,<rxqualsub>,
+		//   <rxqualfull>,<voicecodec>]
 		// <RAT> "GSM" / "eMTC" / "NBIoT"
 		// In the case of LTE Cat M1/Cat NB2 mode:
-		// +QENG: "servingcell",<state>[,<RAT>,<is_tdd>,<MCC>,<MNC>,<cellID>,<PCI>,<EARFCN>,<freq_band_ind>,<UL_bandwidth>,<DL_bandwidth>,<TAC>,<RSRP>,<RSRQ>,<RSSI>,<SINR>,<srxlev>]
+		// +QENG: "servingcell",<state>[,<RAT>,<is_tdd>,<MCC>,<MNC>,<cellID>,
+		//   <PCI>,<EARFCN>,<freq_band_ind>,<UL_bandwidth>,<DL_bandwidth>,<TAC>,
+		//   <RSRP>,<RSRQ>,<RSSI>,<SINR>,<srxlev>]
 		return (true);
 	}
 	if ((p = modem_parse_pattern(src, "+QJDR: ")) != NULL)
@@ -373,7 +383,7 @@ static u8 _socket_id(ip_addr_t *ip, u16 port)
 	udp_socket_t *s;
 
 	static u8 socket = 0;
-	int i;
+	u16 i;
 
 	for (i=0; i<_SOCKETS; i++)
 	{
@@ -405,7 +415,7 @@ static void _socket_close(modem_t *m, u8 socket)
 static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
 {
 	os_timer_t now = os_timer_get();
-	int local_port;
+	u16 local_port;
 	u8 socket;
 
 	bool result = false;
@@ -440,7 +450,8 @@ static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
 	buf_clear(buf);
 	a = (u8 *)&(ip->addr);
 	local_port = 8000 + socket;
-	buf_append_fmt(buf, "@@AT+QIOPEN=1,%d,\"UDP\",\"%d.%d.%d.%d\",%d,%d,0", socket, a[0], a[1], a[2], a[3], port, local_port);
+	buf_append_fmt(buf, "@@AT+QIOPEN=1,%d,\"UDP\",\"%d.%d.%d.%d\",%d,%d,0",
+	               socket, a[0], a[1], a[2], a[3], port, local_port);
 	// it says at first OK and then URC +QIOPEN: <n>,0
 	s->ready = false;
 	if (modem_at_ok_cmd(m, buf_data(buf)))
@@ -516,8 +527,8 @@ bool modem_bg95_udp_send(modem_t *m, udp_packet_t *packet)
 static void _socket_maintenace(modem_t *m)
 {
 	os_timer_t now = os_timer_get();
-	int i;
-	int limit;
+	u16 i;
+	u16 limit;
 
 	for (i=0; i<_SOCKETS; i++)
 	{

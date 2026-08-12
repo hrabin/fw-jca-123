@@ -69,7 +69,7 @@ typedef struct {
 
     OS_SEMAPHORE(mutex);
   #define _RESULT_BUF_SIZE (2048)
-    char        result_buf_mem[_RESULT_BUF_SIZE];
+    ascii       result_buf_mem[_RESULT_BUF_SIZE];
     buf_t       result_buf; // spare memory by using one result buffer
 
 } cmd_processing_t;
@@ -81,7 +81,7 @@ extern void event_debug(void);
 
 static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (access->auth < ACCESS_ADMIN)
         return (false);
@@ -152,7 +152,7 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
 
 static bool _cmd_modem(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (access->auth < ACCESS_ADMIN)
         return (false);
@@ -209,7 +209,7 @@ void cmd_reply(buf_t *result, const cmd_t *cmd)
 bool cmd_fetch_num(cmd_int_t *dest, const char **pptext)
 {
     char *p;
-    long num;
+    s32 num;
 
     if ((p = parse_number(&num, *pptext)) == NULL)
     {
@@ -352,7 +352,7 @@ static bool _cmd_auth(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_auth_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    char tmp[CFG_ITEM_SIZE];
+    ascii tmp[CFG_ITEM_SIZE];
 
     if (! cmd_fetch_string(tmp, pptext, sizeof(tmp)))
         return (false);
@@ -366,7 +366,7 @@ static bool _cmd_auth_set(buf_t *result, const struct _cmd_t *cmd,  const char *
 static bool _cmd_cfg(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     cfg_id_t cfg_id;
-    int i;
+    u16 i;
     for (i=0; i<1000; i++)
     {
         if ((cfg_id = cfg_table_get_id(i)) == CFG_ID_END)
@@ -385,7 +385,7 @@ static bool _cmd_cfg(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_cfg_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    char tmp[CFG_ITEM_SIZE];
+    ascii tmp[CFG_ITEM_SIZE];
     buf_t buf;
     cmd_int_t cfg_id;
 
@@ -419,7 +419,7 @@ static bool _cmd_echo(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_echo_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
@@ -436,8 +436,8 @@ static bool _cmd_gps(buf_t *result, const cmd_t *cmd, access_t *access)
     u32 lat_sub_dg,lon_sub_dg;
     float f;
 
-    char symb_lon='E';
-    char symb_lat='N';
+    ascii symb_lon='E';
+    ascii symb_lat='N';
 
     buf_append_fmt(result, "%s: ", cmd->text);
 
@@ -500,7 +500,7 @@ static bool _cmd_gps(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_gps_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
@@ -513,7 +513,7 @@ static bool _cmd_gps_set(buf_t *result, const struct _cmd_t *cmd,  const char **
 
 static bool _cmd_reboot_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
@@ -546,7 +546,7 @@ static bool _cmd_dl(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_dl_set(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
-    long num;
+    s32 num;
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
@@ -563,7 +563,7 @@ static bool _cmd_dl_set(buf_t *result, const struct _cmd_t *cmd,  const char **p
 static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     u32 inp, out;
-    int i;
+    u16 i;
     bool next = false;
 
     buf_append_fmt(result, "%s: ", cmd->text);
@@ -710,8 +710,8 @@ static bool _cmd_mem(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_mem_set(buf_t *result, const struct _cmd_t *cmd, const char **pptext, access_t *access)
 {
-    long index;
-    long num = 3;
+    s32 index;
+    s32 num = 3;
 
     if (! cmd_fetch_num(&index, pptext))
         return (false);
@@ -773,7 +773,7 @@ static bool _cmd_status(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static void _cmd_build_help(const cmd_t *table, buf_t *result, bool full, access_auth_t auth)
 {
-    int i;
+    u16 i;
 
     if (result == NULL)
     {
@@ -890,8 +890,8 @@ bool cmd_read_all_items(buf_t *result, const cmd_item_t *items, const char *cmd_
 
 bool cmd_rw_item(buf_t *result, const cmd_item_t *items, const char *cmd_text, const char **pptext)
 {
-    char buf[16];
-    int l = buf_length(result);
+    ascii buf[16];
+    s32 l = buf_length(result);
 
     if (! _cmd_parse_keyword(buf, sizeof(buf), pptext))
     {
@@ -920,7 +920,7 @@ error:
 
 static const cmd_t *_find_cmd(const cmd_t *table, const char **text, access_auth_t auth)
 {
-    int i, l, text_l, found, found_id;
+    s32 i, l, text_l, found, found_id;
 
     found = 0;
     text_l = 0;

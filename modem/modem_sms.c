@@ -20,11 +20,11 @@ void modem_sms_init (modem_t * m)
 
 }
 
-bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
+bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, s16 data_len, u8 *sms_id)
 {
     ascii tmp_buf[32];
     bool result = false;
-    int retry = 3;
+    u16 retry = 3;
 
     if (data_len < 0)
         return (false);
@@ -44,7 +44,7 @@ bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
             if (modem_at_read_line_lite (m, tmp_buf, 16, "+CMGS: ", MODEM_TIMEOUT_LL))
             {   // got "+CMGS", so SMS sent
                 // remember SMS ID for status report if requested
-                int id=atoi(tmp_buf+7);
+                s32 id=atoi(tmp_buf+7);
                 LOG_DEBUGL(4, "%s", tmp_buf);
                 *sms_id = id&0xFF;
 
@@ -62,8 +62,10 @@ bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
                 // +CMS ERROR: 331 == No network service
                 switch (m->at.last_error_result)
                 {
-                case 331: // tuhle chybu to obcas hlasilo i kdyz na siti byl, normalne zpracoval prichozi SMS a pak NEeposlal odpoved
-                    // jenze 331 to hlasi i kdyz je nesmyslne cislo, takze radsi nebudu provadet init
+                case 331: // tuhle chybu to obcas hlasilo i kdyz na siti byl,
+                          // normalne zpracoval prichozi SMS a pak NEeposlal odpoved
+                    // jenze 331 to hlasi i kdyz je nesmyslne cislo,
+                    // takze radsi nebudu provadet init
                     break;
                 }
             }
@@ -100,7 +102,7 @@ bool modem_sms_send_now (modem_t *m, sms_struct_t *sms)
 {
     pdu_t pdu;
     ascii *raw_data;
-    int pdu_len;
+    s16 pdu_len;
     u16 tmp;
 
     u8 *data_ptr;
@@ -297,7 +299,9 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
             // process only one SMS at time, so wait for OK
             do
             {   // using "+CMGL" extent waiting, some modems need it ...
-                response = modem_at_response (m, (ascii *)"+CMGL: ", AT_ST_OK|AT_ST_ERROR|AT_ST_USER_STR, MODEM_TIMEOUT_L);
+                response = modem_at_response (m, (ascii *)"+CMGL: ",
+                                              AT_ST_OK|AT_ST_ERROR|AT_ST_USER_STR,
+                                              MODEM_TIMEOUT_L);
                 if (response & AT_ST_OK)
                     break;
                 m->at.flags &= ~(AT_ST_OK|AT_ST_ERROR|AT_ST_USER_STR);

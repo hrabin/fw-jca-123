@@ -116,7 +116,7 @@ static void _inp_inactive (u8 pin_id)
 
 bool io_init(void)
 {
-    int i;
+    u16 i;
 
     // inputs
     HW_INP1_INIT;
@@ -183,7 +183,7 @@ const ascii *io_out_name(int pin)
 /*static u32 _inp_ll(void)
 {
     u32 inp = 0;
-    int i;
+    u16 i;
 
     for (i=0; i<IO_INPUT_SIZE; i++)
     {
@@ -279,7 +279,7 @@ static bool _inp_is_bypass(int inp)
 
 void io_task(void)
 {
-    int i;
+    u16 i;
     bool io_enabled = _io_enabled;
 
     _now = os_timer_get();

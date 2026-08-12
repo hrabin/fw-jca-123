@@ -169,7 +169,7 @@ bool tracer_reinit (void)
     buf_t buf;
 
     u32 a;
-    int b,c,d,r,s,e;
+    s32 b,c,d,r,s,e;
 
     buf_init(&buf, cfg, sizeof(cfg));
 
@@ -189,7 +189,9 @@ bool tracer_reinit (void)
     if (cfg_read(&buf, CFG_ID_TRACER_PARAM, ACCESS_SYSTEM))
     {
         a=0; b=0; c=0; d=0; r=0;
-        switch (sscanf(cfg, CFG_FORMAT, &a, &b, &r, &c, &d, &s, &e))
+        switch (sscanf(cfg, "%" SCNu32 ",%" SCNd32 ",%" SCNd32 ",%" SCNd32
+                       ",%" SCNd32 ",%" SCNd32 ",%" SCNd32,
+                       &a, &b, &r, &c, &d, &s, &e))
         {
         case 7:
             if ((e>=0) && (e<=1))
@@ -227,7 +229,9 @@ bool tracer_reinit (void)
     return (true);
 }
 
-static bool tracer_save_config (u32 id, u16 period, u16 period_roaming, u16 wait_time, u8 protocol, u8 limit_speed, u8 end_mode)
+static bool tracer_save_config (u32 id, u16 period, u16 period_roaming,
+                                u16 wait_time, u8 protocol, u8 limit_speed,
+                                u8 end_mode)
 {
     ascii cfg[CFG_ITEM_SIZE];
     buf_t buf;
@@ -576,7 +580,11 @@ bool tracer_packet_rx (u8 *data, u16 len, u16 port)
 
 bool tracer_set_id (u32 id)
 {
-    return (tracer_save_config(id, tracer_store_period_normal/OS_TIMER_SECOND, tracer_store_period_roaming/OS_TIMER_SECOND, tracer_end_wait_time/OS_TIMER_SECOND, tracer_protocol, tracer_start_speed, tracer_send_mode));
+    return (tracer_save_config(id, tracer_store_period_normal/OS_TIMER_SECOND,
+                               tracer_store_period_roaming/OS_TIMER_SECOND,
+                               tracer_end_wait_time/OS_TIMER_SECOND,
+                               tracer_protocol, tracer_start_speed,
+                               tracer_send_mode));
 }
 
 void tracer_set_user_id (u8 id)

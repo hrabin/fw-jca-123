@@ -130,7 +130,7 @@ bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t
 {   // new event
     // add it to primary buffer and proccess it later from event_task()
     event_t *event;
-    unsigned int ptr = _buf_wr_ptr;
+    u32 ptr = _buf_wr_ptr;
 
     event = &_event_buffer[ptr];
     if (++ptr == _EVENT_BUF_SIZE)
@@ -164,7 +164,7 @@ bool event_create (event_id_e e, event_source_e s)
 
 void event_task(void)
 {
-    unsigned int ptr = _buf_rd_ptr;
+    u32 ptr = _buf_rd_ptr;
 
     OS_ASSERT(_buf_wr_ptr < _EVENT_BUF_SIZE, "_buf_wr_ptr");
 

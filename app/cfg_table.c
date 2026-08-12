@@ -13,11 +13,13 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_MAIN_SWITCH,  ACCESS_USER,   ACCESS_ADMIN,  "0"}, // TBD
     {CFG_ID_SIM_PIN,      ACCESS_ADMIN,  ACCESS_ADMIN,  "1234"}, // TODO: use PIN for SIM
     {CFG_ID_APN,          ACCESS_USER,   ACCESS_ADMIN,  "internet"},
-    {CFG_ID_MODEM_BAND,   ACCESS_USER,   ACCESS_SYSTEM, "0xF,0x8080085,0x8080085"}, // For modem band setup (BG95-M3: AT+QCFG="band",<text>
+    // For modem band setup (BG95-M3: AT+QCFG="band",<text>)
+    {CFG_ID_MODEM_BAND,   ACCESS_USER,   ACCESS_SYSTEM, "0xF,0x8080085,0x8080085"},
 
     // setup server for tracking (i.e. Traccar)
     {CFG_ID_TRACER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:5013"}, // <IP>:<port>
-    {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0"}, // id, period, period_roaming, wait_time, protocol, limit_speed, end_mode
+    // id, period, period_roaming, wait_time, protocol, limit_speed, end_mode
+    {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0"},
 
     // setup server for control
 //  {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>

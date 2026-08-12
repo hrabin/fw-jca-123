@@ -210,7 +210,7 @@ bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    int result = vsnprintf(buffer, sizeof(buffer), fmt, args);
+    s32 result = vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
     if ((result < 0) || (result >= (int)sizeof(buffer)))

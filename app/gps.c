@@ -93,7 +93,7 @@ void gps_send_text(const ascii *text)
 
 static bool pmtk_cmd(const ascii *cmd)
 {
-	int wait = 10;
+	u16 wait = 10;
 
 	pmtk_ack = 0;
 	gps_send_text(cmd);
@@ -110,8 +110,8 @@ static bool pmtk_cmd(const ascii *cmd)
 
 static bool gps_set_baudrate(void)
 {
-	int retry = 2;
-	int i;
+	u16 retry = 2;
+	u16 i;
 
 	while (retry--)
 	{
