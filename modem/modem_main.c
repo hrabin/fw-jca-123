@@ -8,6 +8,7 @@
 #include "sms.h"
 #include "multi_sms.h"
 #include "log.h"
+#include "app.h"
 
 LOG_DEF("MM");
 
@@ -107,6 +108,31 @@ static bool _hw_rx_char(u8 *c)
     return (false);
 }
     
+static void _modem_event(modem_event_e event)
+{
+    switch (event)
+    {
+    case MODEM_EVENT_SMS_INCOMMING:
+        app_main_led_single(APP_LED_SMS_INCOMMING);
+        break;
+
+    case MODEM_EVENT_SMS_SENDING:
+        app_main_led_single(APP_LED_SMS_SENDING);
+        break;
+
+    case MODEM_EVENT_SMS_ERROR:
+        app_main_led_single(APP_LED_SMS_ERROR);
+        break;
+
+    case MODEM_EVENT_CALL_INCOMMING:
+        app_main_led_single(APP_LED_CALL_INCOMMING);
+        break;
+
+    default:
+        break;
+    }
+}
+
 bool modem_main_init(void)
 {
     memset(&_ms, 0, sizeof(_ms));
@@ -118,14 +144,17 @@ bool modem_main_init(void)
     MODEM.pfunc_wakeup   = _hw_wakeup;
     MODEM.pfunc_tx_char  = _hw_tx_char;
     MODEM.pfunc_rx_char  = _hw_rx_char;
-   
+
     // force BG95 setup without modem type detection
     MODEM.pfunc_init        = modem_bg95_init;
     MODEM.pfunc_check       = modem_bg95_check;
     MODEM.pfunc_urc         = modem_bg95_urc;
     MODEM.pfunc_udp_init    = modem_bg95_udp_init;
     MODEM.pfunc_udp_send    = modem_bg95_udp_send;
-    MODEM.pfunc_udp_rx_task = modem_bg95_udp_rx_task; 
+    MODEM.pfunc_udp_rx_task = modem_bg95_udp_rx_task;
+
+    // application notification
+    MODEM.pfunc_event = _modem_event;
 
     modem_hw_init(&_ms.m);
     _ms.requested_state = MODEM_MAIN_STATE_OFF;

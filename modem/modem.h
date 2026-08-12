@@ -66,6 +66,20 @@ typedef enum {
     MODEM_SIM_ST_PIN_READY      // PIN entered and is OK
 } modme_sim_state_e;
 
+// Events reported by the modem layer to the application.
+// The modem reports WHAT happened; the app decides HOW to react
+// (LED signalization, notifications, ...).
+typedef enum {
+	MODEM_EVENT_SMS_INCOMMING,
+	MODEM_EVENT_SMS_SENDING,
+	MODEM_EVENT_SMS_ERROR,
+	MODEM_EVENT_CALL_INCOMMING,
+
+	MODEM_EVENT_SIZE
+} modem_event_e;
+
+typedef void (*modem_event_callback_t)(modem_event_e event);
+
 typedef struct _modem_t {
     modem_at_t at;
     modme_sim_state_e sim;
@@ -88,11 +102,14 @@ typedef struct _modem_t {
 
     // processing functions
     bool (*pfunc_init)(struct _modem_t *m);
-    bool (*pfunc_check)(struct _modem_t *m); 
+    bool (*pfunc_check)(struct _modem_t *m);
     bool (*pfunc_urc)(struct _modem_t *m);
     bool (*pfunc_udp_init)(struct _modem_t *m);
     bool (*pfunc_udp_send)(struct _modem_t *m, udp_packet_t *packet);
     void (*pfunc_udp_rx_task)(struct _modem_t *m);
+
+    // application notification (registered by modem_main)
+    modem_event_callback_t pfunc_event;
 
 } modem_t;
 

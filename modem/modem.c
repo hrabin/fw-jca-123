@@ -2,7 +2,6 @@
 #include "modem.h"
 #include "modem_main.h"
 #include "modem_at.h"
-#include "app.h"
 #include "const.h"
 
 #include "parse.h"
@@ -354,7 +353,8 @@ bool modem_parse_urc(modem_t *m)
             m->sms_storage_me=false;
         }
         m->error_counter=0;
-        app_main_led_single(APP_LED_SMS_INCOMMING);
+        if (m->pfunc_event != NULL)
+            m->pfunc_event(MODEM_EVENT_SMS_INCOMMING);
         m->sms_counter = atoi(modem_at_param_pos(p,1));
         
         // SARA-R4 a SIM5320 give "0", wtf ?
@@ -410,7 +410,8 @@ bool modem_parse_urc(modem_t *m)
     if ((p = modem_parse_pattern(src, "RING")) != NULL)
     {   // if CLIP does not work, use CLCC
         m->error_counter=0; // incomming call, it means MODEM is OK
-        app_main_led_single(APP_LED_CALL_INCOMMING);
+        if (m->pfunc_event != NULL)
+            m->pfunc_event(MODEM_EVENT_CALL_INCOMMING);
         m->flags |= MODEM_FLAG_CLCC_RQ;
         return(true);
     }
@@ -419,7 +420,8 @@ bool modem_parse_urc(modem_t *m)
         // +CLIP: "+420777123456",145,"",,"TEL1",0
         ascii phone[MAX_PHONENUM_LEN];
         m->error_counter=0;
-        app_main_led_single(APP_LED_CALL_INCOMMING);
+        if (m->pfunc_event != NULL)
+            m->pfunc_event(MODEM_EVENT_CALL_INCOMMING);
         LOG_DEBUGL(1, src);
         parse_string(phone, p, sizeof(phone));
         // modem_call_incomming (m, phone);
