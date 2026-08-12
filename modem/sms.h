@@ -2,7 +2,7 @@
 #define SMS_H
 
 #include "type.h"
-#include "rtc.h"
+#include "rtc_type.h"
 
 #define SMS_MAX_PHONE_LEN 20
 

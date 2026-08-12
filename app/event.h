@@ -2,7 +2,7 @@
 #define EVENT_H
 
 #include "type.h"
-#include "rtc.h"
+#include "rtc_type.h"
 #include "buf.h"
 
 #define EVENT_USER_NONE 0xFFFF
