@@ -477,6 +477,96 @@ TEST(pdu_encode_invalid_number)
     ASSERT_EQ(pdu_encode(buf, &pdu), -2);
 }
 
+// ---- known-bug documentation tests ----
+//
+// Each test below pins the CURRENT (buggy) behavior. When the bug is
+// fixed, update the assertion to the correct expectation.
+
+TEST(pdu_bug_extension_chars_not_encodable)
+{
+    // BUG: _enc7b() has no extension-table handling — characters
+    // ^ { } \ [ ~ ] | € are not in the main 7-bit table and silently
+    // become '?'. Encoding "a^b" must produce the same PDU as "a?b".
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "a^b";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 3;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+    pdu.sr        = false;
+
+    pdu_encode(buf, &pdu);
+
+    // UD for "a?b" — the '^' was replaced by '?'
+    ASSERT_STREQ(buf, "0011000C9124103254769800008F03E19F18");
+}
+
+TEST(pdu_bug_euro_extension_decode)
+{
+    // BUG: GSM 03.38 extension 0x65 is €, but _7b_escape maps it to
+    // 164 == ¤. Also the escape path writes the raw byte, not UTF-8.
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDL=02, septets: 1B (ESC) + 65 → packed 9B 32
+    const ascii *v =
+        "00040C91241032547698000002901251426080029B32";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 1);
+    // currently ¤ (raw Latin-1 0xA4); should be "€" (UTF-8 E2 82 AC)
+    ASSERT_EQ((u8)content[0], 164);
+}
+
+TEST(pdu_bug_multipart_ucs2_udh_not_subtracted)
+{
+    // BUG: the UCS2 decode branch does not subtract the UDH octets
+    // from the user-data length, so every concatenated UCS2 part
+    // reads udh_len/2 extra characters past the real text.
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // type=44 (UDHI), DCS=08, UDL=0A (6 UDH + 4 data octets = 2 chars)
+    // UDH: 05 00 03 07 02 01, data "He", trailing byte "0041" must NOT
+    // be read — currently it is, producing "HeA"
+    const ascii *v =
+        "00440C912410325476980008029012514260800A050003070201004800650041";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 3);              // should be 2
+    ASSERT_STREQ(pdu.content, "HeA");  // should be "He"
+}
+
+TEST(pdu_bug_greek_alphabet_placeholder)
+{
+    // BUG: GSM 0x10 is Δ (U+0394) but pdu_7b_table[0x10] = 16 —
+    // a control character placeholder.
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDL=01, single septet 0x10
+    const ascii *v =
+        "00040C912410325476980000029012514260800110";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 1);
+    ASSERT_EQ((u8)content[0], 16);   // should be Δ (UTF-8 CE 94)
+}
+
 // ---- pdu_init defaults ----
 
 TEST(pdu_init_defaults)
