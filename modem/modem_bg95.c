@@ -510,7 +510,7 @@ bool modem_bg95_udp_send(modem_t *m, udp_packet_t *packet)
 		LOG_DEBUGL(1, "send failed, close socket");
 		_socket_close(m, socket);
 	}
-	return (true);
+	return (result);
 }
 
 static void _socket_maintenace(modem_t *m)

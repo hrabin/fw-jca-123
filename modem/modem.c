@@ -92,16 +92,76 @@ static bool _check_pin (modem_t *m)
     return (false);
 }
 
+static bool _pin_attempts_left(modem_t *m, u8 *attempts)
+{
+    buf_t buf;
+    ascii resp[32];
+    ascii *p;
+
+    buf_init(&buf, resp, sizeof(resp));
+
+    // BG95: AT+QPINC? -> +QPINC: "SC",3,10  (3 attempts left of 10)
+    if (! modem_at_cmd_get_response(m, &buf, "AT+QPINC?", "+QPINC: \"SC\""))
+        return (false);
+
+    p = strchr(resp, ',');
+    if (p == NULL)
+        return (false);
+
+    *attempts = atoi(p + 1);
+    return (true);
+}
+
+static bool _pin_enter(modem_t *m, const ascii *pin)
+{
+    if ((pin == NULL) || (pin[0] == '\0'))
+    {
+        LOG_ERROR("no PIN configured");
+        return (false);
+    }
+
+    if (! modem_at_ok_cmd_fmt(m, "AT+CPIN=\"%s\"", pin))
+    {
+        LOG_ERROR("PIN enter failed");
+        return (false);
+    }
+    return (true);
+}
+
 static bool _init_sim(modem_t *m, const ascii *pin)
 {
+    u8 attempts;
+
     if (_check_pin(m))
     {
         m->sim = MODEM_SIM_ST_PIN_OFF_READY;
         return (true);
     }
-    // TODO: need to check number of attempts to enter PIN
-    //       and then enter PIN only in case there is 3 attempts left 
-    // for BG95 it is AT+QPINC? resp: +QPINC: "SC",3,10 \r\n  +QPINC: "P2",3,10
+
+    // SIM requires PIN — verify remaining attempts before entering it
+    if (_pin_attempts_left(m, &attempts))
+    {
+        if (attempts < 3)
+        {
+            m->sim = MODEM_SIM_ST_PIN_CNT;
+            LOG_ERROR("SIM PIN attempts low (%d)", attempts);
+            return (false);
+        }
+    }
+
+    if (! _pin_enter(m, pin))
+    {
+        m->sim = MODEM_SIM_ST_ERROR;
+        return (false);
+    }
+
+    if (_check_pin(m))
+    {
+        m->sim = MODEM_SIM_ST_PIN_READY;
+        return (true);
+    }
+
+    m->sim = MODEM_SIM_ST_ERROR;
     return (false);
 }
 
@@ -565,7 +625,16 @@ bool modem_start(modem_t *m)
             (! modem_at_ok_cmd(m, "AT+CGREG=1")))   // give DATA status change
             continue;
 
-        if (! _init_sim(m, "1234"))
+        ascii pin[CFG_ITEM_SIZE];
+        buf_t buf;
+
+        buf_init(&buf, pin, sizeof(pin));
+        if (! cfg_read(&buf, CFG_ID_SIM_PIN, ACCESS_SYSTEM))
+        {   // SIM without PIN configured
+            pin[0] = '\0';
+        }
+
+        if (! _init_sim(m, pin))
         {
             LOG_ERROR("SIM init failed");
             break;
