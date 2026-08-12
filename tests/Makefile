@@ -24,8 +24,10 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../sdk/common/parse.c \
                  ../sdk/common/buf.c \
                  ../sdk/common/util.c \
+                 ../sdk/common/text_lib.c \
                  ../modem/modem.c \
-                 ../modem/modem_at.c
+                 ../modem/modem_at.c \
+                 ../modem/multi_sms.c
 
 # Test source files (auto-discovered: test_*.c)
 TEST_SRCS      = $(wildcard test_*.c) test_main.c
