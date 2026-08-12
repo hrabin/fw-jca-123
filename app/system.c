@@ -16,7 +16,7 @@ LOG_DEF("SYS");
 #define _DELAY_TMIN  (10) // [s]
 
 
-u32 system_io_state = 0;  // TODO
+u32 system_io_state = 0;
 u32 system_int_state = 0; // TODO
 
 static section_t section;
@@ -71,7 +71,14 @@ void system_inp_activated(unsigned int n)
 
     switch (n)
     {
-    case IO_SHOCK: app_main_led_single(APP_LED_SHOCK); break;
+    case IO_INP1:  system_io_state |= SYSTEM_IO_INP1;  break;
+    case IO_DOOR:  system_io_state |= SYSTEM_IO_DOOR;  break;
+    case IO_KEY:   system_io_state |= SYSTEM_IO_KEY;   break;
+    case IO_SHOCK:
+        system_io_state |= SYSTEM_IO_SHOCK;
+        app_main_led_single(APP_LED_SHOCK);
+        break;
+
     default:
         break;
     }
@@ -102,13 +109,19 @@ void system_inp_deactivated(unsigned int n)
 {
     switch (n)
     {
+    case IO_INP1:  system_io_state &= ~SYSTEM_IO_INP1;  break;
+    case IO_DOOR:  system_io_state &= ~SYSTEM_IO_DOOR;  break;
     case IO_KEY:
         // stop tracking
+        system_io_state &= ~SYSTEM_IO_KEY; 
         tracer_stop();
         break;
 
     case IO_SHOCK:
+        system_io_state &= ~SYSTEM_IO_SHOCK;
         tracer_shock_start(false);
+        break;
+    default:
         break;
     }
 }

@@ -299,7 +299,7 @@ void app_reinit_req(cfg_id_t id)
         _reinit_mask |= _REINIT_MODEM;
         break;
 
-    case CFG_ID_SERVER_ADDR:
+    case CFG_ID_CMS_SERVER_ADDR:
     case CFG_ID_CMS_ACCOUNT:
         cms_reinit();
         break;

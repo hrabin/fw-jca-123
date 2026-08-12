@@ -43,7 +43,7 @@ TEST(h02_build_point)
     ASSERT(tracer_h02_packet_ready());
     ASSERT_EQ(tracer_h02_packet_size(), strlen((char *)tracer_packet_buffer));
     ASSERT_STREQ((char *)tracer_packet_buffer,
-                 "*HQ,1000000001,V1,102411,A,5045.0000,N,01530.0000,E,009.98,333,051024,FFFFFFFF#");
+                 "*HQ,1000000001,V1,102411,A,5045.0000,N,01530.0000,E,009.98,333,051024,FFFEFBFF#");
 }
 
 TEST(h02_build_no_fix)
@@ -59,7 +59,61 @@ TEST(h02_build_no_fix)
     tracer_h02_new_point(&pos, 1, false, &info);
 
     ASSERT_STREQ((char *)tracer_packet_buffer,
-                 "*HQ,1000000001,V1,102411,V,5045.0000,N,01530.0000,E,009.98,333,010100,FFFFFFFF#");
+                 "*HQ,1000000001,V1,102411,V,5045.0000,N,01530.0000,E,009.98,333,010100,FFFEFBFF#");
+}
+
+TEST(h02_status_default)
+{
+    // no inputs, no power fail — ignition off (bit 10 = 0), door closed (bit 16 = 0)
+    gps_stamp_t pos;
+    track_info_t info;
+
+    tracer_h02_reinit(1000000001);
+    info.dw = 0;
+
+    _pos_set(&pos);
+    tracer_h02_new_point(&pos, 1, false, &info);
+
+    ASSERT(strstr((char *)tracer_packet_buffer, ",FFFEFBFF#") != NULL);
+}
+
+TEST(h02_status_inputs)
+{
+    typedef struct {
+        u32 inputs;      // TRACK_INP_* bits
+        u32 res;         // TRACK_RES_* bits
+        const ascii *status;
+    } combo_t;
+
+    static const combo_t COMBOS[] = {
+        {0,           0,          "FFFEFBFF"},   // nothing active
+        {1 << 0,      0,          "FFFEFBFE"},   // panic → vibration alarm (bit 0 = 0)
+        {1 << 3,      0,          "FFFEFFFF"},   // key → ignition on (bit 10 = 1)
+        {1 << 4,      0,          "FFFFFBFF"},   // door open (bit 16 = 1)
+        {1 << 5,      0,          "FFFEFBFE"},   // shock → vibration alarm (bit 0 = 0)
+        {0,           1 << 1,     "FFF6FBFF"},   // power fail → power cut (bit 19 = 0)
+        {(1 << 3) | (1 << 4), 0, "FFFFFFFF"},    // key + door
+    };
+
+    u8 i;
+
+    for (i = 0; i < sizeof(COMBOS)/sizeof(COMBOS[0]); i++)
+    {
+        gps_stamp_t pos;
+        track_info_t info;
+        ascii pattern[16];
+
+        tracer_h02_reinit(1000000001);
+        info.dw = 0;
+        info.s.inputs = COMBOS[i].inputs;
+        info.s.res = COMBOS[i].res;
+
+        _pos_set(&pos);
+        tracer_h02_new_point(&pos, 1, false, &info);
+
+        sprintf(pattern, ",%s#", COMBOS[i].status);
+        ASSERT(strstr((char *)tracer_packet_buffer, pattern) != NULL);
+    }
 }
 
 TEST(h02_packet_done)

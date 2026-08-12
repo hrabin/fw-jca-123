@@ -24,8 +24,8 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0"},
 
     // security center (SIA over IP)
-    {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>
-//  {CFG_ID_SERVER_KEY,   ACCESS_SYSTEM, ACCESS_ADMIN,  "a7604a1357412dbc688ee89b43378785"}, // AES 128 key (HEX)
+    {CFG_ID_CMS_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>
+//  {CFG_ID_CMS_SERVER_KEY,   ACCESS_SYSTEM, ACCESS_ADMIN,  "a7604a1357412dbc688ee89b43378785"}, // AES 128 key (HEX)
 
     // setup server for OTA FW update
     {CFG_ID_UPDATE_SERVER_ADDR, ACCESS_USER, ACCESS_ADMIN, "0.0.0.0:3333"}, // <IP>:<port> used by command "UPDATE"

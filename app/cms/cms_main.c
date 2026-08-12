@@ -66,7 +66,7 @@ bool cms_reinit(void)
 
     buf_init(&buf, cfg, sizeof(cfg));
 
-    if (cfg_read(&buf, CFG_ID_SERVER_ADDR, ACCESS_SYSTEM))
+    if (cfg_read(&buf, CFG_ID_CMS_SERVER_ADDR, ACCESS_SYSTEM))
         net_get_target_ip(&_cms.server_ip.addr, &_cms.server_port, cfg);
 
     buf_clear(&buf);

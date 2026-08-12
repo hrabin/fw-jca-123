@@ -75,16 +75,44 @@ bool tracer_h02_packet_reply_ok (u8 *data, u16 len)
     return (true);
 }
 
-#define H02_STATUS_CUT_OFF_ENGINE (1 << (3 + 0*8))
-#define H02_STATUS_DOOR           (1 << (0 + 2*8))
+// H02 status field bit definitions — Traccar decoder numbering (LSB = bit 0).
+// Alarm bits are active-low: 0 = alarm, 1 = OK.
+#define H02_STATUS_VIBRATION   (1 << 0)   // 0 = vibration alarm
+#define H02_STATUS_SOS         (1 << 1)   // 0 = SOS alarm
+#define H02_STATUS_OVERSPEED   (1 << 2)   // 0 = overspeed
+#define H02_STATUS_IGNITION    (1 << 10)  // 1 = ACC/ignition on
+#define H02_STATUS_DOOR        (1 << 16)  // 1 = door open
+#define H02_STATUS_SOS2        (1 << 18)  // 0 = SOS alarm
+#define H02_STATUS_POWER_CUT   (1 << 19)  // 0 = main power cut
 
+// track_info_t res bits
+#define TRACK_RES_POWER_FAIL (1 << 1)
+
+static u32 _status_build (track_info_t *info)
+{
+    u32 status = 0xFFFFFFFF;
+
+    // defaults: ignition off, door closed — the rest "no alarm"
+    status &= ~(H02_STATUS_IGNITION | H02_STATUS_DOOR);
+
+    if (info->s.inputs & (TRACER_INP_PANIC | TRACER_INP_SHOCK))
+        status &= ~H02_STATUS_VIBRATION;
+    if (info->s.inputs & TRACER_INP_KEY)
+        status |= H02_STATUS_IGNITION;
+    if (info->s.inputs & TRACER_INP_DOOR)
+        status |= H02_STATUS_DOOR;
+    if (info->s.res & TRACK_RES_POWER_FAIL)
+        status &= ~H02_STATUS_POWER_CUT;
+
+    return (status);
+}
 
 void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *info)
 {
     // *HQ,1000000001,V1,102411,A,5123.1549,N,01123.3183,E,0.00,333,011024,BFFFFBFF#
     u32 sec, dg, min, sub_min, s;
     float f;
-    u32 status = 0xFFFFFFFF;
+    u32 status = _status_build(info);
     ascii symbol;
     buf_t buf;
     buf_init(&buf, (char *)tracer_packet_buffer, TRACER_PACKET_BUFFER_SIZE);
@@ -133,7 +161,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
     // Date
     if (pos->fix == 0)
     {   // sent invalid date when no fix to be sure not accepted by server
-        // Traccar accepted zero coordinates even vit "V" as invalid
+        // Traccar accepted zero coordinates even with "V" as invalid
         buf_append_str(&buf, "010100,");
     }
     else
@@ -141,8 +169,8 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
         buf_append_fmt(&buf, "%02d%02d%02d,", pos->time.day, pos->time.month, pos->time.year);
     }
 
-    // additiona info (alarms)
-    buf_append_fmt(&buf, "%08X", status); // TODO: set values, use 'track_info_t';
+    // additional info (alarms)
+    buf_append_fmt(&buf, "%08X", status);
 
     // end of data
     buf_append_str(&buf, "#");

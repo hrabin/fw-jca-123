@@ -528,6 +528,26 @@ void tracer_new_valid_stamp (void)
     track_last_fix_tmr = os_timer_get();
 }
 
+u8 _map_inputs(void)
+{
+    u8 result = 0;
+
+    if (system_io_state & SYSTEM_IO_PANIC) // default IO_DOOR
+        result |= (1<<0);
+    if (system_io_state & SYSTEM_IO_INP1) //
+        result |= (1<<1);
+    if (system_io_state & SYSTEM_IO_INP2) //
+        result |= (1<<2);
+    if (system_io_state & SYSTEM_IO_KEY) //
+        result |= (1<<3);
+    if (system_io_state & SYSTEM_IO_DOOR) //
+        result |= (1<<4);
+    if (system_io_state & SYSTEM_IO_SHOCK) //
+        result |= (1<<5);
+
+    return (result);
+}
+
 void tracer_new_point (void)
 {
     gps_stamp_t pos;
@@ -553,16 +573,12 @@ void tracer_new_point (void)
     info.dw  = 0;
     info.s.driver_id  = user_id;
     info.s.track_type = (system_io_state & SYSTEM_IO_TRACK) ? 1:0;
-    if (system_io_state & SYSTEM_IO_PANIC) // default IO_DOOR
-        info.s.inputs |= (1<<0);
-    if (system_io_state & SYSTEM_IO_INP1) //
-        info.s.inputs |= (1<<1);
-    if (system_io_state & SYSTEM_IO_INP2) //
-        info.s.inputs |= (1<<2);
-    if (system_io_state & SYSTEM_IO_DOOR) //
-        info.s.inputs |= (1<<4);
-
+    
+    info.s.inputs = _map_inputs();
     info.s.outputs = 0; // app_main_outputs_status();
+
+    if (system_int_state & SYSTEM_INT_POWER_FAIL)
+        info.s.res |= (1<<1); // main power failure
 
     tracer_buf_store_position (&pos, track, point, flags, info.dw);
 }

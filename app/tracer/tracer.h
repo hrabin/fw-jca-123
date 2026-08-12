@@ -14,6 +14,14 @@ typedef union {
     u32 dw;
 } track_info_t;
 
+// track_info_t->inputs values
+#define TRACER_INP_PANIC   (1 << 0)
+#define TRACER_INP_INP1    (1 << 1)
+#define TRACER_INP_INP2    (1 << 2)
+#define TRACER_INP_KEY     (1 << 3)
+#define TRACER_INP_DOOR    (1 << 4)
+#define TRACER_INP_SHOCK   (1 << 5)
+
 #define TRACER_PACKET_BUFFER_SIZE (256)
 extern u8 tracer_packet_buffer[];
 

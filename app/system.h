@@ -13,6 +13,7 @@
 #define SYSTEM_IO_DOOR    BIT(2)
 #define SYSTEM_IO_KEY     BIT(3)
 #define SYSTEM_IO_PANIC   BIT(4)
+#define SYSTEM_IO_SHOCK   BIT(5)
 #define SYSTEM_IO_TRACING BIT(15)
 #define SYSTEM_IO_TRACK   BIT(16)
 extern u32 system_io_state;
