@@ -15,14 +15,16 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_APN,          ACCESS_USER,   ACCESS_ADMIN,  "internet"},
     // For modem band setup (BG95-M3: AT+QCFG="band",<text>)
     {CFG_ID_MODEM_BAND,   ACCESS_USER,   ACCESS_SYSTEM, "0xF,0x8080085,0x8080085"},
+    // SIA account number (monitoring center subscriber id, HEX)
+    {CFG_ID_CMS_ACCOUNT,  ACCESS_USER,   ACCESS_ADMIN,  "0"},
 
     // setup server for tracking (i.e. Traccar)
     {CFG_ID_TRACER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:5013"}, // <IP>:<port>
     // id, period, period_roaming, wait_time, protocol, limit_speed, end_mode
     {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0"},
 
-    // setup server for control
-//  {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>
+    // security center (SIA over IP)
+    {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>
 //  {CFG_ID_SERVER_KEY,   ACCESS_SYSTEM, ACCESS_ADMIN,  "a7604a1357412dbc688ee89b43378785"}, // AES 128 key (HEX)
 
     // setup server for OTA FW update

@@ -14,6 +14,7 @@ typedef enum {
     CFG_ID_SIM_PIN      = 10,
     CFG_ID_APN          = 11,
     CFG_ID_MODEM_BAND   = 12,
+    CFG_ID_CMS_ACCOUNT  = 13,
     CFG_ID_TRACER_ADDR  = 20,
     CFG_ID_TRACER_PARAM = 21,
     CFG_ID_SERVER_ADDR  = 22,
