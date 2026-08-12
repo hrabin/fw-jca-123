@@ -18,11 +18,11 @@ const cfg_table_t CFG_TABLE[] = {
     // setup server for tracking (i.e. Traccar)
     {CFG_ID_TRACER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:5013"}, // <IP>:<port>
     {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0"}, // id, period, period_roaming, wait_time, protocol, limit_speed, end_mode
-    
-    // setup server for control  
-//  {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port> 
+
+    // setup server for control
+//  {CFG_ID_SERVER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:4444"}, // <IP>:<port>
 //  {CFG_ID_SERVER_KEY,   ACCESS_SYSTEM, ACCESS_ADMIN,  "a7604a1357412dbc688ee89b43378785"}, // AES 128 key (HEX)
-    
+
     // setup server for OTA FW update
     {CFG_ID_UPDATE_SERVER_ADDR, ACCESS_USER, ACCESS_ADMIN, "0.0.0.0:3333"}, // <IP>:<port> used by command "UPDATE"
     {CFG_ID_UPDATE_SERVER_KEY, ACCESS_SYSTEM, ACCESS_ADMIN, "80feb47cae3c19274f2408d35398514c"}, // AES 128 key (HEX)
@@ -89,7 +89,7 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_TEXT_SOURCE_NAME_013, ACCESS_USER, ACCESS_ADMIN, ""},
     {CFG_ID_TEXT_SOURCE_NAME_014, ACCESS_USER, ACCESS_ADMIN, ""},
     {CFG_ID_TEXT_SOURCE_NAME_015, ACCESS_USER, ACCESS_ADMIN, ""},
-        
+
     {CFG_ID_END, 0, 0, NULL} // end of table
 };
 
@@ -110,7 +110,7 @@ static const cfg_table_t *_table_get(cfg_id_t cfg_id)
 }
 
 cfg_id_t cfg_table_get_id(u32 row)
-{   
+{
     if (row >= sizeof(CFG_TABLE)/sizeof(cfg_table_t))
         return (CFG_ID_END);
 

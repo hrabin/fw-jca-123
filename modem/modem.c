@@ -69,7 +69,7 @@ static bool _modem_ready(modem_t *m)
         return (true);
 
     OS_DELAY(500);
-    
+
     if (_ok_test(m))
         return (true);
     return (false);
@@ -166,7 +166,7 @@ static bool _init_sim(modem_t *m, const ascii *pin)
 
 static void _power_off(modem_t *m)
 {
-    modem_at_lock(m);   
+    modem_at_lock(m);
     _set_offline(m);
     m->pfunc_off();
     m->sim = MODEM_SIM_ST_PIN_INIT_RQ;
@@ -179,7 +179,7 @@ char *modem_parse_pattern(const char *s, const char *pattern)
 
     if (p == NULL)
         return (NULL);
-    
+
     while (*p == ' ')
     {
         p++;
@@ -319,7 +319,7 @@ bool modem_parse_urc(modem_t *m)
         }
         return(true);
     }
-    
+
     if ((p = modem_parse_pattern(src, "+CGREG:")) != NULL)
     {   // GPRS state, does not work for LTE
         u8 cgreg = _reg_parse(p);
@@ -355,7 +355,7 @@ bool modem_parse_urc(modem_t *m)
         m->error_counter=0;
         modem_event(m, MODEM_EVENT_SMS_INCOMMING);
         m->sms_counter = atoi(modem_at_param_pos(p,1));
-        
+
         // SARA-R4 a SIM5320 give "0", wtf ?
         if (m->sms_counter == 0)
             m->sms_counter++;
@@ -440,7 +440,7 @@ bool modem_parse_urc(modem_t *m)
         // x: 0=active, 1=held, 2=dialing, 3=alerting, 4 =incomming, 5=waiting
         // tmp = atoi(m->at_rx_buf+11);
         ascii phone[MAX_PHONENUM_LEN] = {0};
-        
+
         p = modem_at_param_pos(src, 5);
         parse_string(phone, p, sizeof(phone));
 
@@ -453,7 +453,7 @@ bool modem_parse_urc(modem_t *m)
         case 2: // dialing
             modem_call_update_state(m, CALL_DIALING);
             break;
-        case 3: // alerting 
+        case 3: // alerting
             modem_call_update_state(m, CALL_ALERTING);
             break;
         case 4: // incomming
@@ -515,7 +515,7 @@ static bool _config_task(modem_t *m, const modem_config_t *p)
 
     if (modem_at_ok_cmd_nolock(m, p->set))
         return (true);
-    
+
     LOG_ERROR("cfg \"%s\" failed", p->set);
     return (false);
 }
@@ -638,7 +638,7 @@ bool modem_start(modem_t *m)
             LOG_ERROR("SIM init failed");
             break;
         }
-        
+
         if (! modem_config_table(m, MODEM_CONFIG))
             continue;
 
@@ -652,7 +652,7 @@ bool modem_start(modem_t *m)
             LOG_ERROR("CNMI using ds mode 1");
         }
 
-        // for LTE CAT-1 and NB-IOT we need to set APN before network attach 
+        // for LTE CAT-1 and NB-IOT we need to set APN before network attach
         // without APN it would connect and then lost connection (CREG=0)
         modem_apn_setup(m);
 
@@ -661,7 +661,7 @@ bool modem_start(modem_t *m)
             m->pfunc_init(m);
         }
         LOG_DEBUGL(1, "init OK");
-        
+
         modem_at_ok_cmd(m, "AT+CREG?;+CEREG?");
         return (true);
     }
@@ -675,7 +675,7 @@ bool modem_check(modem_t *m)
     {
         OS_DELAY(100);
         if (! _ok_test(m))
-        {   // try again to be sure 
+        {   // try again to be sure
             LOG_ERROR("modem check FAILED,1");
             return (false);
         }
@@ -726,9 +726,9 @@ void modem_data_rx_process(modem_t * m)
 bool modem_apn_init(modem_t *m, const ascii *apn)
 {
     ascii buf[64];
-    
+
     modem_at_ok_cmd(m, "@AT+CGACT=0,1"); // <state>,<cid>
-    
+
     snprintf(buf, sizeof(buf), "AT+CGDCONT=1,\"IP\",\"%s\"", apn);
     // AT+CGDCONT=<cid>[,<PDP_type>[,<APN>[,<PDP_addr>[,<data_comp>[,<head_comp>[,<IPv4AddrAlloc>]]]]]]
 

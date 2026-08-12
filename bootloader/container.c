@@ -27,8 +27,8 @@ bool container_valid(u8 *data, int len)
 bool container_compatible (container_hdr_t *container)
 {
   #warning "missing compatibility check"
-	// container->device_id;     
-	// container->hw_version_min; 
-	// container->hw_version_max; 
+	// container->device_id;
+	// container->hw_version_min;
+	// container->hw_version_max;
 	return (true);
 }

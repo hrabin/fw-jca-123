@@ -61,7 +61,7 @@ bool _inp_lo_level_active(u8 pin_id)
         break;
     }
     return (false);
-} 
+}
 
 static bool _inp_inverted(u8 pin_id)
 {
@@ -89,7 +89,7 @@ static void _inp_active (u8 pin_id)
         return;
 
     if (_inp_check_needed & (1<<pin_id))
-        return; // previous change not yet registered 
+        return; // previous change not yet registered
 
     _inp_state |= (1<<pin_id);
     _inp_check_needed |= (1<<pin_id);
@@ -132,11 +132,11 @@ bool io_init(void)
     HW_LOCK_OUT_INIT;
     HW_UNLOCK_OUT_LOW;
     HW_UNLOCK_OUT_INIT;
-    
+
     memset(&_io_filter, 0, sizeof(_io_filter));
     _inp_direction = (1 << IO_LOCK_IN) | (1 << IO_UNLOCK_IN) | (1 << IO_DOOR) | (1 << IO_INP1);
 
-    
+
     _inp_state = 0;
     _out_state = 0;
     _inp_bypass = 0;
@@ -224,13 +224,13 @@ void io_set_out(u8 pin, bool state)
 
         switch (pin)
         {
-        case IO_LOCK_OUT:   
-            if (HW_UNLOCK_IN == 0) 
+        case IO_LOCK_OUT:
+            if (HW_UNLOCK_IN == 0)
                 return; // blocked
             HW_LOCK_OUT_ON;
             break;
 
-        case IO_UNLOCK_OUT: 
+        case IO_UNLOCK_OUT:
             if (HW_LOCK_IN == 0)
                 return; // blocked
             HW_UNLOCK_OUT_ON;
@@ -283,7 +283,7 @@ void io_task(void)
     bool io_enabled = _io_enabled;
 
     _now = os_timer_get();
-    
+
     if (io_enabled)
     {   // detect power loss and disable inputs which cant work
         if (analog_main_mv() < 7000)

@@ -56,7 +56,7 @@ bool system_input_alarm(system_input_t *inp)
 {
     if (inp->cnt >= ALARM_MAX_CNT)
         return (false);
-    
+
     inp->cnt++;
 
     if (inp->postpone)

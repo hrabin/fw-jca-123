@@ -41,9 +41,9 @@ static u32 _siren_beep_time = 0;
 
 static access_t _ble_access = {ACCESS_NONE};
 
-static void _siren_beep(void) 
+static void _siren_beep(void)
 {   // signalization beep
-    HW_SIREN_ON; 
+    HW_SIREN_ON;
     OS_DELAY(_siren_beep_time);
     HW_SIREN_OFF;
 }
@@ -115,7 +115,7 @@ static inline void _io_input_task(void)
 }
 
 static inline void _io_output_task(void)
-{   // 
+{   //
 }
 
 void app_init(void)
@@ -125,7 +125,7 @@ void app_init(void)
     led.off = _led_off;
 
     app_main_led(0x0F, 8);
-    
+
     led_init(&siren);
     siren.on = _siren_beep;
     siren.off = NULL;
@@ -135,7 +135,7 @@ void app_main_reinit(void)
 {
 #define CFG_FORMAT "%d,%d,%d"
     int a,b,c;
- 
+
     ascii cfg[CFG_ITEM_SIZE];
     buf_t buf;
 
@@ -217,7 +217,7 @@ static void _time_sync_task(void)
     static bool sync_modem = true;
     os_timer_t now = os_timer_get();
 
-    
+
     if (now < (sync_time + _TIME_SYNC_PERIOD))
         return;
 
@@ -248,7 +248,7 @@ static void _ble_rx_parser(char *data)
     buf_t *result = cmd_get_buf();
 
     app_main_led_single(0xFFFF, 10);
-    
+
     if (os_timer_get() > (_ble_access.time + ACCESS_BLE_TIMEOUT))
         _ble_access.auth = ACCESS_NONE;
 
@@ -332,7 +332,7 @@ void app_main_init (void)
     net_init();
 
     app_main_reinit();
-   
+
     _inp_state = io_get_inp();
 
     OS_PUTTEXT(NL);

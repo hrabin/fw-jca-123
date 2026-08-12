@@ -44,10 +44,10 @@ static bool _wait_for_ack(void)
         OS_DELAY(10);
         _now = os_timer_get();
 
-        
+
         if (! _packet_ack)
             continue; // no response yet
-        
+
         // yes, we have got response
         _packet_ack = false;
         return (true);
@@ -86,14 +86,14 @@ static bool _update_req(void)
     data.hdr.packet_id = PACKET_ID_UPDATE_REQ;
     data.hdr.unit_id = HW_INFO.addr;
     data.ver = (SW_VERSION_MAJOR<<16) + (SW_VERSION_MINOR << 8) + SW_VERSION_PATCH;
-	
+
 	return (_send_packet((u8 *)&data, sizeof(data)));
 }
 
 static bool _update_phase(void)
 {
     update_rq_data_packet_t data;
-    
+
     data.hdr.packet_id = PACKET_ID_GET_CHUNK;
     data.hdr.unit_id = HW_INFO.addr;
     data.chunk_id = _phase-1;
@@ -197,7 +197,7 @@ bool update_start(void)
     buf_clear(&buf);
     if (! cfg_read(&buf, CFG_ID_UPDATE_SERVER_KEY, ACCESS_SYSTEM))
         return (false);
-    
+
     hex_to_bin(_aes_key, cfg, sizeof(_aes_key));
 #warning "TODO: AES unused"
 

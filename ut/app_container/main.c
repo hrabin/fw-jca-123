@@ -96,7 +96,7 @@ static void _rx_feed(char ch)
 void usage (ascii *filename)
 {
 	ascii *p = strrchr(filename, '/');
-    
+
 	if (p == NULL)
 	p = filename;
 
@@ -104,7 +104,7 @@ void usage (ascii *filename)
 		p++;
 
 	OS_PRINTF( "\nusage: %s [options]\n", filename);
-	
+
 	cfg_print_help();
 
 	OS_PRINTF( "\n");
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	app_info_t app_info;
 	int ch;
 	u32 i;
-	
+
 	if (! configure (argc, argv))
 	{
 		usage(argv[0]);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 		_rx_feed(ch);
 	}
 	memcpy(&app_info, fw_data, sizeof(app_info));
-	
+
 	if (app_info.size + APP_INFO_PAGE_SIZE != app_size)
 	{
 		OS_FATAL("app size mismatch");
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 			p+=AES_PAGE_SIZE;
 			// OS_PRINTFE("ENC l=%d", l);
 		}
-	
+
 	}
 
 	app_chsum = chsum32(fw_data, app_size, CHSUM32_START_VALUE);

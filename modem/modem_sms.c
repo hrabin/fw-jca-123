@@ -38,7 +38,7 @@ bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
         // result is ">" then awaiting PDU string
         if (modem_at_response (m, NULL, AT_ST_RAB, MODEM_TIMEOUT_S))
         {   // timeout for ">" is 1s
-            // send only "PDU" (no any other characters i.e. "PDU\r") 
+            // send only "PDU" (no any other characters i.e. "PDU\r")
             modem_at_raw (m, (u8 *)pdu_raw_data, strlen((ascii *)pdu_raw_data));
             modem_at_raw (m, (u8 *)"\x1A", 1); // ctrl-Z == ack
             if (modem_at_read_line_lite (m, tmp_buf, 16, "+CMGS: ", MODEM_TIMEOUT_LL))
@@ -50,7 +50,7 @@ bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
 
                 OS_DELAY (1000);
                 result = true;
-                break; 
+                break;
             }
             else
             {
@@ -123,7 +123,7 @@ bool modem_sms_send_now (modem_t *m, sms_struct_t *sms)
 
     if (sms->type == SMS_TYPE_AUTO)
     {   // decide what coding to use UTF8/ASCII
-        if (text_is_ascii((ascii *)sms->data))  // TODO: this is not enough, need to use coding table 
+        if (text_is_ascii((ascii *)sms->data))  // TODO: this is not enough, need to use coding table
             sms->type = SMS_TYPE_TEXT7;
         else
             sms->type = SMS_TYPE_UTF8;
@@ -169,7 +169,7 @@ bool modem_sms_send_now (modem_t *m, sms_struct_t *sms)
     }
 
     // max_sms_len is limit for characters in one part of SMS
-    // compute how many SMS we need  
+    // compute how many SMS we need
     pdu.count=0;
     for (len=0; len<(sms->len); len+=max_sms_len)
     {
@@ -225,7 +225,7 @@ g_s_s_false:
     OS_MEM_FREE (pdu.content);
     OS_MEM_FREE (raw_data);
     m->sms_error_counter=0;
-    return (true); 
+    return (true);
 }
 
 
@@ -241,11 +241,11 @@ bool modem_sms_unso_pdu_parse (modem_t * m, ascii *pdu_data)
     OS_ASSERT(pdu.tel_num != NULL, "mem");
     OS_ASSERT(pdu.content != NULL, "mem");
 
-    msg_len = pdu_decode(&pdu, pdu_data); 
+    msg_len = pdu_decode(&pdu, pdu_data);
     if ((msg_len>0)
      && (pdu.type == PDU_TYPE_SR))
-    {   // 
-        modem_main_delivery_report (*(pdu.content), *(pdu.content+1)); 
+    {   //
+        modem_main_delivery_report (*(pdu.content), *(pdu.content+1));
     }
 
     OS_MEM_FREE (pdu.content);
@@ -261,7 +261,7 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
     u32 response;
     u16 sms_id;
     s16 msg_len=0;
-    bool sms_ready=false;   
+    bool sms_ready=false;
 
     pdu_init(&pdu);
     raw_data=(ascii *)OS_MEM_ALLOC(PDU_MAX_LENGTH);
@@ -271,11 +271,11 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
 
     pdu.tel_num = sms->tel_num;
 
-#define _tmp_buf raw_data 
+#define _tmp_buf raw_data
     *pdu.tel_num='\0';
 
     pdu.type    = PDU_TYPE_UNKNOWN;
-    
+
     if (m->sms_storage_me)
     {   // some modems sometimes receive SMS into "ME" memory even if disabled
         // (noticed on some Telit modems)
@@ -292,10 +292,10 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
         {   // PDU read ok
             LOG_DEBUGL(LOG_SELECT_PDU, "PDU: \"%s\"", raw_data);
             msg_len = pdu_decode(&pdu, raw_data); // WARNING: it may reallocate sms.data in case multiple parts SMS
-            OS_PRINTF("[t: %s]", pdu.tel_num); 
+            OS_PRINTF("[t: %s]", pdu.tel_num);
 
             // process only one SMS at time, so wait for OK
-            do 
+            do
             {   // using "+CMGL" extent waiting, some modems need it ...
                 response = modem_at_response (m, (ascii *)"+CMGL: ", AT_ST_OK|AT_ST_ERROR|AT_ST_USER_STR, MODEM_TIMEOUT_L);
                 if (response & AT_ST_OK)
@@ -334,7 +334,7 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
     OS_MEM_FREE (raw_data);
 
     if (sms_ready)
-    {   // reading OK, check if it is split message 
+    {   // reading OK, check if it is split message
         if (pdu.count)
         {   // this is long SMS divided into multiple SMS
             switch ( ms_incomming (pdu.content, pdu.size, pdu.id, pdu.nr, pdu.count) )
@@ -346,7 +346,7 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
             case MS_SMS_DONE:
                 LOG_DEBUG("Long SMS READY");
                 // WARNING: ms_get reallocate memory for long SMS
-                msg_len = ms_get ((ascii **)&(pdu.content), pdu.id); 
+                msg_len = ms_get ((ascii **)&(pdu.content), pdu.id);
                 ms_delete (pdu.id);
                 break;
 
@@ -356,7 +356,7 @@ bool modem_sms_read (modem_t * m, sms_struct_t *sms)
         }
     }
 
-    if ((sms_ready) &&  // 
+    if ((sms_ready) &&  //
         (msg_len>0))    // zero length SMS may be used for time synchronization
     {
         if (pdu.type == PDU_TYPE_SR)
@@ -394,8 +394,8 @@ bool modem_sms_delete (modem_t *m, u16 n)
 
     if (NULL == (tmp_buf=(ascii *)OS_MEM_ALLOC (32)))
         return (false);
-    
-    sprintf (tmp_buf,"\r\nAT+CMGD=%d\r\n", n);  
+
+    sprintf (tmp_buf,"\r\nAT+CMGD=%d\r\n", n);
     modem_at_lock(m);
     modem_at_cmd_nolock (m, tmp_buf);
 

@@ -52,13 +52,13 @@ static eb_ptr_t _buf_replace_prio (event_buf_t *buf, event_prio_e prio)
 	eb_ptr_t buf_index = buf->start_index;
 	event_prio_e lowest_prio = EVENT_PRIO_HI;
 
-	// find the lowest existing priority in buffer 
+	// find the lowest existing priority in buffer
 	for (i=0; i<(buf->size); i++)
 	{
 		if (buf->items[buf_index].flag == 0)
 		{
 			LOG_ERROR("inconsistent");
-			return (buf_index); // this should never happen 
+			return (buf_index); // this should never happen
 		}
 
 		if (buf->items[buf_index].prio < lowest_prio)
@@ -76,7 +76,7 @@ static eb_ptr_t _buf_replace_prio (event_buf_t *buf, event_prio_e prio)
 		// replace oldest record
 		return (buf->start_index);
 	}
-	
+
 	// find the oldest record with lowest priority
 	buf_index = buf->start_index;
 	for (i=0; i<(buf->size); i++)
@@ -101,7 +101,7 @@ static void _delete_item (event_buf_t *buf, eb_ptr_t index)
 	if (buf->items[index].flag == 0)
 	{
 		LOG_ERROR("clear, i=%d", index);
-		return; 
+		return;
 	}
 
 	buf->items[index].flag = 0;
@@ -113,11 +113,11 @@ static void _delete_item (event_buf_t *buf, eb_ptr_t index)
 		{	// it is last one
 			buf->last_index = buf->items[index].prev_index;
 			OS_ASSERT (buf->items[index].next_index == EVENT_BUF_INDEX_NIL, "_delete_item() next_index != EVENT_BUF_INDEX_NIL");
-			return; 
+			return;
 		}
 		OS_ASSERT (buf->items[index].next_index < (buf->size), "_delete_item() next_index >=(buf->size)");
 		buf->items[ buf->items[index].next_index ].prev_index = buf->items[index].prev_index;
-		return; 
+		return;
 	}
 	// it is firs record
 	if (index != buf->last_index)
@@ -140,7 +140,7 @@ bool event_buf_empty (event_buf_t *buf)
 	{
 		if (_item_active(buf, buf_index)
 		 && ((buf->items[buf_index].flag & (EVENT_BUF_FLAG_PROCESSING | EVENT_BUF_FLAG_ZOMBIE)) == 0))
-		{	// 
+		{	//
 			return (false);
 		}
 		if (buf->items[buf_index].next_index == EVENT_BUF_INDEX_NIL)
@@ -154,13 +154,13 @@ bool event_buf_empty (event_buf_t *buf)
 bool event_buf_add_event (event_buf_t *buf, event_t *event, event_prio_e prio, u16 user)
 {
 	eb_ptr_t wr_index = EVENT_BUF_INDEX_NIL;
-	
+
 	if (event == NULL)
 		return (false);
-	
+
 	if (user == EVENT_USER_NONE)
 		return (false);
-	
+
 	if (buf->last_index == EVENT_BUF_INDEX_NIL)
 	{	// no need to search free space, buffer is empty
 		wr_index = buf->start_index;
@@ -182,7 +182,7 @@ bool event_buf_add_event (event_buf_t *buf, event_t *event, event_prio_e prio, u
 	}
 	else
 	{
-		LOG_ERROR ("full");	
+		LOG_ERROR ("full");
 		return (false);
 	}
 
@@ -221,7 +221,7 @@ bool event_buf_restore_events (event_buf_t *buf, u8 retry_limit)
 		{
 			buf->items[buf_index].flag &= ~(EVENT_BUF_FLAG_PROCESSING | EVENT_BUF_FLAG_ZOMBIE);
 			if (_item_active(buf, buf_index))
-			{	// it is active and was communicated 
+			{	// it is active and was communicated
 				if (retry_limit != EVENT_BUF_UNLIMITED)
 				{	//
 					if (++(buf->items[buf_index].cnt) >= retry_limit)
@@ -261,9 +261,9 @@ void event_buf_done_events (event_buf_t *buf, bool delivered)
 		{
 			buf->items[buf_index].flag &= ~EVENT_BUF_FLAG_PROCESSING;
 			if (_item_active(buf, buf_index))
-			{	// it is active and was in communication 
+			{	// it is active and was in communication
 				if (delivered)
-				{	// 
+				{	//
 					LOG_DEBUGL(LOG_SELECT_EB, "delivered, nr=%d", buf->items[buf_index].event.cnt);
 					_delete_item (buf, buf_index);
 				}
@@ -288,7 +288,7 @@ bool event_buf_get_event (event_buf_t *buf, event_t *event, u16 *user, event_pri
 {
 	eb_ptr_t i;
 	eb_ptr_t buf_index=buf->start_index;
-	
+
 	if (user == NULL)
 		return (false);
 
@@ -301,7 +301,7 @@ bool event_buf_get_event (event_buf_t *buf, event_t *event, u16 *user, event_pri
 				memcpy (event, &(buf->items[buf_index].event), sizeof(event_t));
 			if (prio != NULL)
 				*prio = buf->items[buf_index].prio;
-			
+
 			if (*user == EVENT_USER_NONE)
 			{	// dont mind user
 				*user = buf->items[buf_index].user;
@@ -329,8 +329,8 @@ void event_buf_for_each (event_buf_t *buf, pfunc_for_each pfunc, int numargs, ..
 	for (i=0; i<(buf->size); i++)
 	{
 		if (buf->items[buf_index].flag & EVENT_BUF_FLAG_USED)
-		{	// 
-			va_start (args, numargs);		
+		{	//
+			va_start (args, numargs);
 			if (pfunc(&(buf->items[buf_index].event), args) == false)
 			{	// record erase request
 				_delete_item (buf, buf_index);
@@ -360,15 +360,15 @@ void event_buf_info (event_buf_t *buf)
 	{
 		if (buf->items[buf_index].flag & EVENT_BUF_FLAG_PROCESSING)
 		{
-			OS_PRINTF("|%02x|", buf_index); 
+			OS_PRINTF("|%02x|", buf_index);
 		}
 		else if (buf->items[buf_index].flag)
 		{
-			OS_PRINTF("%02x", buf_index); 
+			OS_PRINTF("%02x", buf_index);
 		}
-		else 
+		else
 		{
-			OS_PRINTF("(%02x)", buf_index); 
+			OS_PRINTF("(%02x)", buf_index);
 		}
 
 		if (buf->items[buf_index].next_index == EVENT_BUF_INDEX_NIL)
@@ -381,7 +381,7 @@ void event_buf_info (event_buf_t *buf)
 	{
 		OS_ASSERT (buf_index < (buf->size), "user_buf_info() buf_index>=(buf->size)");
 		if (buf->items[i].flag)
-		{	// 
+		{	//
 			OS_PRINTF(NL);
 			OS_PRINTF("buf: %d, flag=0x%02x", i, buf->items[i].flag);
 			OS_PRINTF(", n=%ld", buf->items[i].event.cnt);

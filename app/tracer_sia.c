@@ -66,7 +66,7 @@ bool tr_sia_packet_reply_ok (u8 *data, u16 len)
 		return (false);
 
 	data += SIA_IDX_DATA;
-	
+
 	if (sscanf((char *)data, "\"ACK\"%dL%X#%X[", &a, &b, &c) == 3)
 	{
 		if (a != sia_state.cnt)
@@ -86,7 +86,7 @@ bool tr_sia_packet_reply_ok (u8 *data, u16 len)
 		LOG_ERROR("SIA RX");
 		// return (false);
 	}
-	
+
 	// TODO
 	sia_state.cnt++;
 	return (true);
@@ -106,7 +106,7 @@ void tr_sia_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *inf
 	// Longitude "X" "[X093W23.456]"
 	// Latitude  "Y" "[Y45N23.456]"
 	// Altitude  "Z" "[Z123.2M]"
-	// 
+	//
 
 	if (sia_packet_ok)
 	{
@@ -116,7 +116,7 @@ void tr_sia_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *inf
  	e.evt = EVENT_TRACKING;
 	e.src = SOURCE_SELF;
 	e.time.dw = pos->time.dw;
-	
+
 	buf_init(&buf, data, SIA_MAX_DATA_LEN);
 
 	// podle standardu SIA je to ukecane a navic chybi rychlost atd.
@@ -133,12 +133,12 @@ void tr_sia_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *inf
 	m = a/(60*100); a%=(60*100); // minuty
 	f = a/60;  // zlomek minut
 	buf_append_fmt (&buf, "[Y%02d%c%02d.%02d0]", s, c, m, f);
-	
+
 	a = pos->alt;
 	buf_append_fmt (&buf, "[Z%04dM]", a);
 
 	cms_sia_ip_build_msg (&sia_state, &sia_packet, &e, data);
-	
+
 	sia_packet_ok = true;
 }
 

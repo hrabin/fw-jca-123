@@ -31,7 +31,7 @@ static bool _configure( cfg_t *cfg, int argc, char *argv[] )
 
 	memcpy(cfg, &DEFAULT_CFG, sizeof(cfg_t));
 
-	while ( (o = getopt_long( argc, argv, "e:xn:h", opt, NULL )) != -1 ) 
+	while ( (o = getopt_long( argc, argv, "e:xn:h", opt, NULL )) != -1 )
 	{
 		switch ( o ) {
 			case 'e':

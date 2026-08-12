@@ -37,10 +37,10 @@ Current setup for CPU STM32G4xx.
 │   ├── doc             # MCU documentation
 │   ├── drv_*           # drivers
 │   ├── hal             # HW abstraction layer (universal)
-│   ├── freertos        # 
-│   └── stm32           # STM32 related source files 
-│       ├── CMSIS       # 
-│       │   ├── device  # MCU definitions 
+│   ├── freertos        #
+│   └── stm32           # STM32 related source files
+│       ├── CMSIS       #
+│       │   ├── device  # MCU definitions
 │       │   ├── inc     # stm32 core definitions
 │       │   ├── linker  # linker files
 │       │   └── src     # stm32 core sources
@@ -48,7 +48,7 @@ Current setup for CPU STM32G4xx.
 └── ut
     ├── app_container   # tool for build FW container
     ├── app_crc         # tool for FW crc calculation
-    ├── common          # common for tools 
+    ├── common          # common for tools
     └── upload          # tool for FW uplad using serial port
 
 ```

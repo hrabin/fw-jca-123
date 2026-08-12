@@ -15,7 +15,7 @@
 
 // flags
 #define MODEM_FLAG_ECHO        (1 << 0)
-#define MODEM_FLAG_PIN_READY   (1 << 1) 
+#define MODEM_FLAG_PIN_READY   (1 << 1)
 #define MODEM_FLAG_NET_READY   (1 << 2)
 #define MODEM_FLAG_DATA_READY  (1 << 3)
 #define MODEM_FLAG_ROAMING     (1 << 4)
@@ -28,7 +28,7 @@
 
 typedef enum {
     MODEM_MODEL_UNKNOWN,
-    MODEM_MODEL_BG95, 
+    MODEM_MODEL_BG95,
 
     MODEM_MODELS // size limit only
 } modem_model_e;
@@ -60,9 +60,9 @@ typedef struct _modem_at_t {
 
 typedef enum {
     MODEM_SIM_ST_PIN_INIT_RQ=0, // init didnt start
-    MODEM_SIM_ST_ERROR,         // probably no SIM 
+    MODEM_SIM_ST_ERROR,         // probably no SIM
     MODEM_SIM_ST_PIN_CNT,       // needed PIN, but less than 3 attempts left
-    MODEM_SIM_ST_PIN_OFF_READY, // PIN not required 
+    MODEM_SIM_ST_PIN_OFF_READY, // PIN not required
     MODEM_SIM_ST_PIN_READY      // PIN entered and is OK
 } modme_sim_state_e;
 

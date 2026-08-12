@@ -9,7 +9,7 @@
 #define     AT_ST_USER_STR      (1 << 2)
 #define     AT_ST_RAB           (1 << 3)    // ">" (Right Angle Bracket)
 #define     AT_ST_RESET         (1 << 4)    // reset response flags
-#define     AT_ST_READY         (1 << 5)    // 
+#define     AT_ST_READY         (1 << 5)    //
 #define     AT_ST_LINE          (1 << 6)    // new line detected
 
 const ascii *modem_at_param_pos(const ascii * data, u16 n);

@@ -17,7 +17,7 @@ LOG_DEF("POWER");
 #define V_BATT_FULL       4000 // [mV]
 #define V_BATT_DROP        400 // max drop voltage when testing
 
-// 12V main source 
+// 12V main source
 #define V_VCC_CHARGE_EN  12600 // [mV]
 #define V_VCC_EMPTY      11800 // [mV]
 #define V_VCC_LOST        8000 // [mV]
@@ -126,7 +126,7 @@ static void _batt_test(void)
     tm = now + BATT_TEST_TM;
 
     voltage = analog_batt_mv();
-    
+
     if (voltage < V_BATT_OK)
     {
         _bat_set_state(false);
@@ -148,7 +148,7 @@ static void _batt_test(void)
     }
 
     HW_PWR_BAT_TEST_ON;
-    
+
     for (int i=0; i<10; i++)
     {
         OS_DELAY(20);
@@ -206,7 +206,7 @@ void power_task (void)
         return;
 
     tm = now + _TASK_PERIOD;
-    
+
     voltage_batt = analog_batt_mv();
     voltage_main = analog_main_mv();
 

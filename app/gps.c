@@ -52,8 +52,8 @@ static bool sleep_mode = false;
 static bool gps_pwr_on_state = false;
 static bool gps_rx_ok = false; // detekce, ze GPS posila nejaka platna data
 static u8   gps_unsolicited = 0;
-static u8   gps_nbsat_visible = 0; 
-static u8   glonass_nbsat_visible = 0; 
+static u8   gps_nbsat_visible = 0;
+static u8   glonass_nbsat_visible = 0;
 static bool glonass_used = false;
 static bool gps_init_rq = true;
 static u8   gps_jamming = 0;
@@ -72,7 +72,7 @@ static char _hex_to_a(char ch)
 
 void gps_send_text(const ascii *text)
 {
-	u8 chsum = '$'; 
+	u8 chsum = '$';
 
 	LOG_DEBUGL(3, "TX: \"%s\"", text);
 
@@ -212,7 +212,7 @@ bool gps_on (void)
 	return (gps_pwr_on_state);
 }
 
-bool gps_glonass_used (void) 
+bool gps_glonass_used (void)
 {
 	return (glonass_used);
 }
@@ -447,7 +447,7 @@ void gps_maintenance (void)
 	{	// 2 minuty nejaky problem
 		if ((now > (gps_reset_tm  + 10 * OS_TIMER_MINUTE))
  		 && (now > fix_tm + (5 * OS_TIMER_MINUTE)))
-		{	// 
+		{	//
 			LOG_WARNING("forced reset");
 			gps_reset();
 		}
@@ -521,8 +521,8 @@ void gps_task (void)
 		}
 		if (rx_char != '\0')
 			continue;
-		
-		// we have whole line 
+
+		// we have whole line
 		// check CRC
 		if (chsum != rx_chsum)
 		{
@@ -557,7 +557,7 @@ void gps_tick (void)
 			sleep_tmr=0;
 		}
 		else if (sleep_tmr == SLEEP_TIMEOUT)
-		{	// 
+		{	//
 			gps_suspend();
 		}
 	}
@@ -618,7 +618,7 @@ u8 gps_get_glonass_nbsat (bool in_use)
 /*
 void gps_debug_show_info (void)
 {
-	DBG_PRINTF("# GPS: gps_pwr_on_state=%d, sleep_mode=%d, sleep_postpone=%d, sleep_tmr=%d\r\n", 
-		gps_pwr_on_state, sleep_mode, sleep_postpone, sleep_tmr); 
+	DBG_PRINTF("# GPS: gps_pwr_on_state=%d, sleep_mode=%d, sleep_postpone=%d, sleep_tmr=%d\r\n",
+		gps_pwr_on_state, sleep_mode, sleep_postpone, sleep_tmr);
 }
 */

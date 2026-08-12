@@ -71,7 +71,7 @@ bool tracer_h02_packet_reply_ok (u8 *data, u16 len)
         LOG_ERROR("no ACK");
         return (false);
     }
-    // 
+    //
     return (true);
 }
 
@@ -119,7 +119,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
     sec = sec % 6000;
     sub_min = 10000 * sec / 6000;
 
-    buf_append_fmt(&buf, "%03d%02d.%04d,%c,", dg, min, sub_min, symbol);  
+    buf_append_fmt(&buf, "%03d%02d.%04d,%c,", dg, min, sub_min, symbol);
 
     // Speed (in knots, 1Kn=1.852 km/h)
     f = pos->speed; // my speed is in km/h*10
@@ -129,7 +129,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
 
     // Direction
     buf_append_fmt(&buf, "%03d,", pos->angle);
-    
+
     // Date
     if (pos->fix == 0)
     {   // sent invalid date when no fix to be sure not accepted by server
@@ -140,7 +140,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
     {
         buf_append_fmt(&buf, "%02d%02d%02d,", pos->time.day, pos->time.month, pos->time.year);
     }
-    
+
     // additiona info (alarms)
     buf_append_fmt(&buf, "%08X", status); // TODO: set values, use 'track_info_t';
 

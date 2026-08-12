@@ -17,7 +17,7 @@ const ascii *modem_at_param_pos(const ascii * data, u16 n)
     const ascii *data_ptr;
 
     data_ptr = data;
-    
+
     for (i = 0; i < MODEM_AT_RX_BUF_SIZE; i++)
     {
         if (*data_ptr == '\0')
@@ -43,7 +43,7 @@ void modem_at_init(modem_t *m)
 static void modem_at_wakeup(modem_t *m)
 {
     m->pfunc_wakeup();
-    
+
     if (m->sleep)
     {   //
         LOG_DEBUGL(LOG_SELECT_SLEEP, "AT wakeup");
@@ -53,7 +53,7 @@ static void modem_at_wakeup(modem_t *m)
 }
 
 void modem_at_lock(modem_t *m)
-{   // 
+{   //
     OS_SEMAPHORE_TAKE(m->at.semaphore);
     m->at.busy = true;
     modem_at_wakeup(m);
@@ -65,7 +65,7 @@ void modem_at_unlock(modem_t *m)
     // modem_at_sleep(m);
     m->at.busy = false;
     OS_SEMAPHORE_GIVE(m->at.semaphore);
-} 
+}
 
 
 bool modem_at_busy(modem_t *m)
@@ -100,7 +100,7 @@ bool modem_at_cmd_nolock(modem_t *m, const ascii *at_cmd)
 
     _clr_response(&(m->at));
     m->at.last_error_result = 0;
-    
+
     modem_tx_data (m, (u8 *)at_cmd, strlen(at_cmd));
     modem_tx_data (m, (u8 *)"\r\n", 2);
     return (true);
@@ -135,8 +135,8 @@ static bool _at_cmd_and_response_ok(modem_t *m, buf_t *dest, const ascii *at_cmd
     u32 timeout = MODEM_TIMEOUT_M;
     u32 response;
 
-    if (at_cmd == NULL) 
-        return (true); 
+    if (at_cmd == NULL)
+        return (true);
 
     if (*at_cmd == '!')
     {
@@ -158,8 +158,8 @@ static bool _at_cmd_and_response_ok(modem_t *m, buf_t *dest, const ascii *at_cmd
     response = modem_at_response (m, user_str, AT_ST_OK | AT_ST_ERROR, timeout);
     if (dest != NULL)
     {
-        if ((user_str == NULL) // i want anything 
-         || (response & AT_ST_USER_STR)) // or it is what requested 
+        if ((user_str == NULL) // i want anything
+         || (response & AT_ST_USER_STR)) // or it is what requested
         {
             buf_append_str(dest, m->at.response);
         }
@@ -171,7 +171,7 @@ static bool _at_cmd_and_response_ok(modem_t *m, buf_t *dest, const ascii *at_cmd
             result = true;
         }
         else
-        {   // 
+        {   //
             if (response & AT_ST_USER_STR)
                 result = true;
         }
@@ -189,7 +189,7 @@ bool modem_at_response_ok(modem_t *m, const ascii *at_cmd, const ascii *user_str
 }
 
 bool modem_at_ok_cmd(modem_t * m, const ascii * at_cmd)
-{   
+{
     bool result = false;
 
     modem_at_lock(m);
@@ -204,7 +204,7 @@ bool modem_at_ok_cmd_nolock(modem_t * m, const ascii * at_cmd)
     return (_at_cmd_and_response_ok(m, NULL, at_cmd, NULL));
 }
 
-bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...) 
+bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...)
 {
     ascii buffer[AT_BUFFER_SIZE];
     va_list args;
@@ -213,7 +213,7 @@ bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...)
     int result = vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
-    if ((result < 0) || (result >= (int)sizeof(buffer))) 
+    if ((result < 0) || (result >= (int)sizeof(buffer)))
     {
         // too long text
         LOG_ERROR("AT usage fail");
@@ -227,7 +227,7 @@ bool modem_at_ok_cmd_fmt(modem_t * m, const ascii *fmt, ...)
 bool modem_at_cmd_get_response(modem_t *m, buf_t *dest, const ascii *at_cmd, const ascii *user_str)
 {
     bool result = false;
-    
+
     modem_at_lock(m);
     result = _at_cmd_and_response_ok(m, dest, at_cmd, user_str);
     modem_at_unlock(m);
@@ -248,11 +248,11 @@ u16 modem_at_read_line (modem_t *m, buf_t *dest, const ascii *user_str, u32 time
     while (OS_TIMER() < limit)
     {
         if (at->flags & AT_ST_LINE)
-        {   // 
-            if ((at->user_str != NULL) && // i want exact answer 
+        {   //
+            if ((at->user_str != NULL) && // i want exact answer
                 ((at->flags & AT_ST_USER_STR) == 0)) // and is it not what expected
             {   // continute to next row  ...
-                at->flags &= ~(AT_ST_LINE); 
+                at->flags &= ~(AT_ST_LINE);
                 continue;
             }
             if (dest != NULL)
@@ -290,7 +290,7 @@ void modem_at_rx(modem_t * m, u8 rx_char)
     if (m->flags & MODEM_FLAG_ECHO)
     {
         if (((rx_char>=0x20) && (rx_char<127))
-        || (rx_char=='\r') 
+        || (rx_char=='\r')
         || (rx_char=='\n'))
         {
             OS_PRINTF("%c", rx_char);
@@ -308,7 +308,7 @@ void modem_at_rx(modem_t * m, u8 rx_char)
         rx_char = '\0';
 
     at->rx_buf[at->buf_len] = rx_char;
-    if (at->buf_len < (MODEM_AT_RX_BUF_SIZE -1)) 
+    if (at->buf_len < (MODEM_AT_RX_BUF_SIZE -1))
         at->buf_len++;
 
     if (rx_char == '\0')
@@ -317,12 +317,12 @@ void modem_at_rx(modem_t * m, u8 rx_char)
         {   // has some valid length
             at->flags |= AT_ST_LINE;
 
-            // most common answers process first 
+            // most common answers process first
             if (! stricmp(at->rx_buf, "OK"))
             {
                 at->flags |= AT_ST_OK;
                 at->flags |= AT_ST_READY;
-                goto modem_rx_exit; 
+                goto modem_rx_exit;
             }
             if (! stricmp (at->rx_buf, "ERROR"))
             {
@@ -330,7 +330,7 @@ void modem_at_rx(modem_t * m, u8 rx_char)
                 goto modem_rx_exit;
             }
             if (modem_parse_urc(m))
-            {   // 
+            {   //
                 goto modem_rx_exit;
             }
 
@@ -339,27 +339,27 @@ void modem_at_rx(modem_t * m, u8 rx_char)
                 if (at->user_str != NULL)
                 {   // waiting for specific string
                     if (!strnicmp(at->rx_buf, at->user_str, strlen(at->user_str)))
-                    {   // yes, it is what i want 
+                    {   // yes, it is what i want
                         at->user_str = NULL;
                         memcpy(at->response, at->rx_buf, at->buf_len);
                         at->response_len = at->buf_len;
                         at->flags |= AT_ST_USER_STR;
-                        OS_DELAY(2); // some time to process buffer ? 
+                        OS_DELAY(2); // some time to process buffer ?
                         // TODO: some mutex ?
                     }
 
                 }
                 else
-                { 
+                {
                     memcpy(at->response, at->rx_buf, at->buf_len);
                     at->response_len = at->buf_len;
-                    OS_DELAY(2); // some time to process buffer ? 
+                    OS_DELAY(2); // some time to process buffer ?
                     // TODO: some mutex ?
                 }
             }
         }
 
-        // continue processing next line 
+        // continue processing next line
         at->buf_len = 0;
     }
     else if (rx_char == '>')

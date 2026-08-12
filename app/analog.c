@@ -31,7 +31,7 @@ void analog_task(void)
 
 static u32 _fix_value(s32 value)
 {
-    // possible negative value due to calibration 
+    // possible negative value due to calibration
     if (value < 0)
         return (0);
 

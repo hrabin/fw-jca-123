@@ -31,7 +31,7 @@ static u16  tracer_store_period  = 0;
 static u16  tracer_store_period_normal  = TRACER_PERIOD_DEFAULT;
 #define TRACER_PERIOD_ROAMING_DEFAULT  (10*OS_TIMER_SECOND) // period of point storing in roaming
 static u16  tracer_store_period_roaming  = TRACER_PERIOD_ROAMING_DEFAULT;
-#define TRACER_END_WAIT_TIME_DEFAULT   (20*OS_TIMER_SECOND) // 
+#define TRACER_END_WAIT_TIME_DEFAULT   (20*OS_TIMER_SECOND) //
 static u16  tracer_end_wait_time = TRACER_END_WAIT_TIME_DEFAULT;
 #define TRACER_END_WAIT_POWER_FAIL     (20*OS_TIMER_SECOND) // waiting to finish tracking after main power loss
 
@@ -45,7 +45,7 @@ static u8   tracer_protocol = 0;
 #define TRACER_START_SPEED_DEFAULT  3 // km/h - start track when speed reaches this limit
 static u8   tracer_start_speed = TRACER_START_SPEED_DEFAULT;
 
-#define TRACER_END_NORMAL     0 // 
+#define TRACER_END_NORMAL     0 //
 #define TRACER_END_POWER_FAIL 1 // instant track end when main power lost
 #define TRACER_END_DEFAULT TRACER_END_POWER_FAIL
 static u8   tracer_end_mode = TRACER_END_DEFAULT;
@@ -62,9 +62,9 @@ static os_timer_t comm_sleep_tmr = 0;
 static os_timer_t track_last_fix_tmr = 0; // time of last valid GPS point
 
 static bool tracer_packet_ack = false;
-#define NO_FIX_PROBLEM_LIMIT  (30*OS_TIMER_SECOND)  
-#define NO_FIX_RESET_LIMIT   (100*OS_TIMER_SECOND) 
-static bool no_fix_reset_enable = true; // enable only one forced GPS reset in one track 
+#define NO_FIX_PROBLEM_LIMIT  (30*OS_TIMER_SECOND)
+#define NO_FIX_RESET_LIMIT   (100*OS_TIMER_SECOND)
+static bool no_fix_reset_enable = true; // enable only one forced GPS reset in one track
 
 static u16  point = 0;
 static u16  track = 0;
@@ -78,7 +78,7 @@ static bool tracing_active = false;
 static u32  unit_id = 0;
 
 #if DEVICE_HAS_SHOCK_START == 1
-bool tracer_shock_trace_active  = false; 
+bool tracer_shock_trace_active  = false;
 static bool tracer_shock_stop_rq  = false;
 static os_timer_t tracer_shock_start_tmr = 0;
 #endif // DEVICE_HAS_SHOCK_START == 1
@@ -115,15 +115,15 @@ static void tracer_comm_sleep(u16 tm)
 }
 
 bool tracer_init (void)
-{   // main init after boot 
+{   // main init after boot
     track_info_t info;
-    
+
     pfunc_reinit(TRACER_PROTO_DEFAULT);
 
     tracer_reinit();
 
     if (gps_buf_init (&track, &info.dw))
-    {   // restore last driver and track type 
+    {   // restore last driver and track type
         tracer_set_user_id(info.s.driver_id);
         if (info.s.track_type)
             system_io_state |= SYSTEM_IO_TRACK;
@@ -153,7 +153,7 @@ static void tracer_server_reinit (u32 new_id)
     unit_id = new_id;
 
     memset(tracer_packet_buffer, 0, sizeof(tracer_packet_buffer));
-    
+
     if (proto != NULL)
         proto->reinit(new_id);
 }
@@ -221,7 +221,7 @@ bool tracer_reinit (void)
     pfunc_reinit(tracer_protocol);
 
     tracer_server_reinit (a);
-    
+
     tracer_packet_ack = false;
 
     return (true);
@@ -256,7 +256,7 @@ bool tracer_is_active (void)
 static void tracer_activate (void)
 {
     tracing_active = true;
-    // dont set SYSTEM_IO_TRACING now, keep it for first point as filter 
+    // dont set SYSTEM_IO_TRACING now, keep it for first point as filter
 }
 
 static void tracer_deactivate (void)
@@ -285,31 +285,31 @@ static bool _tracer_start_now (void)
     if (! tracer_server_setup_ok())
     {
         LOG_ERROR ("bad setup");
-        return (false); 
+        return (false);
     }
     gps_sleep_enable (false);
-    
+
     track_last_fix_tmr = os_timer_get();
     no_fix_reset_enable = true;
-    // 
+    //
     point=0;
-    
+
     // set first point time
     tracer_point_time = os_timer_get() + (5 * OS_TIMER_SECOND);
-    
+
     tracer_activate();
     return (true);
 }
 
 static void _tracer_stop_now (void)
-{   
-    // stop request, give some timeout 
+{
+    // stop request, give some timeout
     if (tracer_is_active())
     {
         if (point == 0)
-        { 
+        {
             tracer_deactivate();
-            return; 
+            return;
         }
         // enable_stored_stamp = false;
         tracer_stop_tmr = os_timer_get() + tracer_end_wait_time;
@@ -335,7 +335,7 @@ void tracer_stop (void)
 bool tracer_test (void)
 {   // short tracking start
     if (tracer_is_active())
-        return (true); 
+        return (true);
     if (! tracer_server_setup_ok())
         return (false);
 
@@ -375,7 +375,7 @@ bool wait_for_ack (void)
     os_timer_t now = os_timer_get();;
     os_timer_t start = now;
     bool result = false;
-    
+
     while (now < (start + tmout))
     {
         OS_DELAY(10);
@@ -386,7 +386,7 @@ bool wait_for_ack (void)
 
         // yes, we have got response
         tracer_packet_ack = false;
-        
+
         u32 tm = now - start;
         _LOG_DEBUGL("ACK in %d", tm);
         tmout = (now - start);
@@ -412,20 +412,20 @@ void tracer_comm_process (void)
     if (new_track_id_set)
     {   // request for track-id change (erase data)
         if (! tracer_is_active())
-        { 
-            gps_buf_hard_erase();   // this takes up to 20s ! 
+        {
+            gps_buf_hard_erase();   // this takes up to 20s !
             track = new_track_id_set-1;
             new_track_id_set = 0;
-            return; 
+            return;
 
         }
     }
-    
+
     if (! tracer_server_setup_ok())
     {
         _LOG_DEBUGL("setup not ok");
         tracer_comm_sleep(60);
-        return; 
+        return;
     }
 
     if (proto->packet_ready())
@@ -453,7 +453,7 @@ void tracer_comm_process (void)
                 tracer_reinit();
                 tracer_comm_sleep(60);
                 proto->packet_done();
-                return; 
+                return;
             }
             packet.src_port    = server_port;
             packet.dst_port    = server_port;
@@ -469,7 +469,7 @@ void tracer_comm_process (void)
                 send_retry = 0;
                 proto->packet_done();
                 gps_buf_delivered_all ();
-                return; 
+                return;
             }
             LOG_ERROR ("NO ACK");
             tracer_comm_sleep(1);
@@ -482,7 +482,7 @@ void tracer_comm_process (void)
         if (send_retry < MAX_SEND_RETRY)
         {
             send_retry++;
-            return; 
+            return;
         }
         // sending not successful, keep stored in FLASH
         _LOG_DEBUGL("keep trying");
@@ -545,15 +545,15 @@ void tracer_new_point (void)
     valid_pos = gps_get_current_stamp(&pos);
     flags |= valid_pos      ? GPS_FLAG_VALID : 0;
     flags |= tracer_stop_rq ? GPS_FLAG_LAST  : 0;
-    
+
     info.dw  = 0;
     info.s.driver_id  = user_id;
     info.s.track_type = (system_io_state & SYSTEM_IO_TRACK) ? 1:0;
     if (system_io_state & SYSTEM_IO_PANIC) // default IO_DOOR
         info.s.inputs |= (1<<0);
-    if (system_io_state & SYSTEM_IO_INP1) // 
+    if (system_io_state & SYSTEM_IO_INP1) //
         info.s.inputs |= (1<<1);
-    if (system_io_state & SYSTEM_IO_INP2) // 
+    if (system_io_state & SYSTEM_IO_INP2) //
         info.s.inputs |= (1<<2);
     if (system_io_state & SYSTEM_IO_DOOR) //
         info.s.inputs |= (1<<4);
@@ -595,7 +595,7 @@ u8 tracer_get_user_id (void )
 static bool tracer_power_stop(void)
 {
     if (system_int_state & SYSTEM_INT_POWER_FAIL)
-    { 
+    {
         if ((system_int_state & (SYSTEM_INT_BATT_LOW | SYSTEM_INT_BATT_FAIL))
          || (tracer_end_mode == TRACER_END_POWER_FAIL))
         {
@@ -609,9 +609,9 @@ void tracer_shock_start(bool state)
 {
     if (state)
     {   // activity detected
-        if ((tracer_shock_trace_active == false) 
-         && (! tracer_power_stop())) 
-        {   // ok, lets wait for some speed 
+        if ((tracer_shock_trace_active == false)
+         && (! tracer_power_stop()))
+        {   // ok, lets wait for some speed
             if (! tracer_is_active())
                 app_main_led_single(0x03, 8);
             tracer_shock_start_tmr = os_timer_get() + 60*OS_TIMER_SECOND;
@@ -634,7 +634,7 @@ static __inline void tracer_shock_task(void)
     if (tracer_power_stop())
     {   // no main power cant start
         if (tracer_shock_trace_active)
-        { 
+        {
             LOG_WARNING("STOP OK, POWER");
             tracer_shock_trace_active = false; // force end, don wait for zero speed
             _tracer_stop_now();
@@ -658,7 +658,7 @@ static __inline void tracer_shock_task(void)
     else if (tracer_shock_stop_rq)
     {
         if (gps_get_speed() < 2)
-        {   // met also for no fix 
+        {   // met also for no fix
             LOG_INFO("STOP OK");
             tracer_shock_trace_active = false;
             tracer_shock_stop_rq = false;
@@ -666,7 +666,7 @@ static __inline void tracer_shock_task(void)
         }
     }
 }
-#else // DEVICE_HAS_SHOCK_START ==1 
+#else // DEVICE_HAS_SHOCK_START ==1
   #define   tracer_shock_task()
 #endif // ~DEVICE_HAS_SHOCK_START != 1
 
@@ -707,7 +707,7 @@ void tracer_task (void)
     {   // waiting for driver
         // TODO: do some signalization
     }
-    
+
     // workaround for some GPS issues
     if (now - track_last_fix_tmr > NO_FIX_PROBLEM_LIMIT)
     {
@@ -715,7 +715,7 @@ void tracer_task (void)
         {   // there was no GPS reset in this track
             if ((gps_valid_stamp_age() < 10*OS_TIMER_MINUTE)
              && (gps_valid_stamp_age() >  1*OS_TIMER_MINUTE))
-            {   // 
+            {   //
                 no_fix_reset_enable = false;
                 LOG_ERROR ("fix problem,reset");
                 gps_reset();

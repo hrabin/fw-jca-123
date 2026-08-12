@@ -78,7 +78,7 @@ static const ascii *_event_name(event_id_e id)
     OS_ASSERT(id < EVENT_ID_SIZE, "EVENT_ID_SIZE");
     OS_ASSERT(id == EVENT_SETUP[id].id, "EVENT_SETUP corrupted");
     buf_init(&buf, cfg, sizeof(cfg));
-    
+
     if (! cfg_read(&buf, EVENT_SETUP[id].text_id, ACCESS_SYSTEM))
         return ("error");
 
@@ -93,7 +93,7 @@ static const ascii *_source_name(event_source_e id)
     OS_ASSERT(id < EVENT_SOURCE_SIZE, "EVENT_SOURCE_SIZE");
     OS_ASSERT(id == EVENT_SOURCE_SETUP[id].id, "EVENT_SOURCE_SETUP corrupted");
     buf_init(&buf, cfg, sizeof(cfg));
-    
+
     if (! cfg_read(&buf, EVENT_SOURCE_SETUP[id].text_id, ACCESS_SYSTEM))
         return ("error");
 
@@ -127,7 +127,7 @@ bool event_valid(event_t *e)
 }
 
 bool event_create_ext (event_id_e e, event_source_e s, event_channel_e ch, rtc_t *event_time)
-{   // new event 
+{   // new event
     // add it to primary buffer and proccess it later from event_task()
     event_t *event;
     unsigned int ptr = _buf_wr_ptr;
@@ -168,7 +168,7 @@ void event_task(void)
 
     OS_ASSERT(_buf_wr_ptr < _EVENT_BUF_SIZE, "_buf_wr_ptr");
 
-    // processing primary event buffer 
+    // processing primary event buffer
     while (ptr != _buf_wr_ptr)
     {
         event_t *e;
@@ -260,7 +260,7 @@ void event_description(buf_t *buf, event_t *e)
 void event_comm_task(void)
 {
     event_t event;
-    u16 user = EVENT_USER_NONE; 
+    u16 user = EVENT_USER_NONE;
 
     if (event_buf_get_event(&sms_buf, &event, &user, NULL))
     {
@@ -274,7 +274,7 @@ void event_comm_task(void)
         _buf_add_event(&sms_text, &event);
 
         OS_DELAY(2000); // get some time to collect more events
-        
+
         while (event_buf_get_event(&sms_buf, &event, &user, NULL))
         {
             buf_append_str(&sms_text, ";" NL);

@@ -68,7 +68,7 @@ void net_udp_rx (udp_packet_t *pkt)
     if (tracer_packet_rx(pkt->data, pkt->datalen,pkt->src_port))
         return;
     if (update_packet_rx(pkt->data, pkt->datalen,pkt->src_port))
-        return;    
+        return;
     LOG_DEBUGL(3, "RX UNKNOWN packet, p=%d, typ=0x%02x, len=%d", pkt->src_port, *pkt->data, pkt->datalen);
 }
 

@@ -23,7 +23,7 @@
 
 LOG_DEF("BL");
 
-#if (MAIN_DEBUG == 1) 
+#if (MAIN_DEBUG == 1)
   #warning "MAIN_DEBUG directive active"
 #endif // MAIN_DEBUG
 
@@ -45,9 +45,9 @@ static void _tty_rx_parser(char *data)
 		{
 			OS_PRINTF("ERROR" NL);
 		}
-	
+
 		OS_FLUSH();
-		return; 
+		return;
 	}
 
 	switch (data[0])
@@ -59,7 +59,7 @@ static void _tty_rx_parser(char *data)
 		wd_reset();
         break;
 
-	case 'F': 
+	case 'F':
 		ext_storage_flush_cache();
 		OS_PRINTF("FLASH" NL);
 		GPREG_WRITE(GPREG_BOOT, GPREG_BOOT_FLASH_RQ);
@@ -67,7 +67,7 @@ static void _tty_rx_parser(char *data)
 		wd_reset();
 		break;
 
-	case 'T': 
+	case 'T':
 		OS_PRINTF("TEST OK" NL);
 		break;
 
@@ -171,7 +171,7 @@ static bool main_app_ok(void)
 		LOG_ERROR("FW size mismatch");
 		return (false);
 	}
-	
+
 	app_ptr = (u8 *)APP_START_ADDR;
 	crc = app_crc(app_ptr, APP_INFO.size);
 
@@ -187,7 +187,7 @@ static bool main_app_ok(void)
 typedef unsigned long (*pfunc_void)	(void);
 
 static void _jump_to_app(void)
-{	
+{
 	pfunc_void app;
 	app=(pfunc_void)(*((u32*)(APP_START_ADDR+4)));
 	__set_MSP(*(__IO uint32_t*) APP_START_ADDR);
@@ -195,7 +195,7 @@ static void _jump_to_app(void)
 	app();
 }
 
-int main (void) 
+int main (void)
 {
     bool app_ok = false;
     bool flash_rq = false;

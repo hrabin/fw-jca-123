@@ -11,7 +11,7 @@
 
 #define CMD_USE_HELP 1
 
-#define CMD_MAX_LEN (64) // max text length of single command 
+#define CMD_MAX_LEN (64) // max text length of single command
 
 #define CMD_MIN_PASSWD_LENGTH (4)
 

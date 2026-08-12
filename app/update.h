@@ -28,7 +28,7 @@ typedef struct {
 } update_rq_data_packet_t;
 
 #define UPDATE_CHUNK_SIZE 256
-#define UPDATE_CHUNK_STATUS_ERROR 0 // 
+#define UPDATE_CHUNK_STATUS_ERROR 0 //
 #define UPDATE_CHUNK_STATUS_DONE  1 // this is last chunk
 #define UPDATE_CHUNK_STATUS_OK    2 // not the last chun
 

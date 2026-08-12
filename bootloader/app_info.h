@@ -17,16 +17,16 @@
   // this is not bootloader project but application
   // define vectors offset
   #define APP_VTOR_ADDR APP_START_ADDR
-#endif // 
+#endif //
 
 
 typedef struct {
 
-	u32  size;           // 
-	u32  crc;            // 
-	u16  device_id;      // 
-	u16  hw_version_min; // 
-	u16  hw_version_max; // 
+	u32  size;           //
+	u32  crc;            //
+	u16  device_id;      //
+	u16  hw_version_min; //
+	u16  hw_version_max; //
 	u16  res; // padding to 16B
 
 } app_info_t;

@@ -27,7 +27,7 @@ static u32 _ptr_dec(u32 ptr)
 {
     if (ptr >= _EVENT_MEM_SIZE)
         return (ptr - _EVENT_MEM_SIZE);
-    
+
     ptr = STORAGE_EVENT_MEM_SPACE - _EVENT_MEM_SIZE;
     return (ptr);
 }
@@ -72,7 +72,7 @@ bool event_memory_store(event_t *event)
 {
     u32 ptr = _event_memory_ptr;
     _event_memory_ptr =  _ptr_inc(_event_memory_ptr);
-   
+
     OS_ASSERT(ptr <= (STORAGE_EVENT_MEM_SPACE - _EVENT_MEM_SIZE),"ptr mismatch");
     _EM_DEBUG("wr ptr=%u", _event_memory_ptr);
 
@@ -86,7 +86,7 @@ bool event_memory_read(event_t *event, size_t back_index)
     for (u32 i=0; i<(STORAGE_EVENT_MEM_SPACE - _EVENT_MEM_SIZE); i += _EVENT_MEM_SIZE)
     {
         ptr = _ptr_dec(ptr);
-        
+
         if (back_index == 0)
         {
             _EM_DEBUG("rd ptr=%u", ptr);

@@ -124,7 +124,7 @@ void system_set(access_t *access)
     {
         system_input_reset();
         app_main_siren_beep(0x01,8);
-   
+
         _save_state();
     }
 }

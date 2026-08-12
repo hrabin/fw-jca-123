@@ -107,7 +107,7 @@ static bool _hw_rx_char(u8 *c)
     }
     return (false);
 }
-    
+
 static void _modem_event(modem_event_e event)
 {
     switch (event)
@@ -212,7 +212,7 @@ static void _set_state(modem_main_state_e new_state)
         _err_wait_time += 30; // in case permanent error increase off wait state
         _ms.tmout = now + 10 * OS_TIMER_SECOND;
         break;
-    
+
     case MODEM_MAIN_STATE_INIT:
         _ms.tmout = now + (_modem_error ? 600 : 120) * OS_TIMER_SECOND;
         break;
@@ -298,7 +298,7 @@ static void _state_machine_task(void)
     case MODEM_MAIN_STATE_OFF:
         if (now < _ms.tmout)
             break;
-        
+
         if (_ms.requested_state == MODEM_MAIN_STATE_OFF)
             return;
 
@@ -319,7 +319,7 @@ static void _state_machine_task(void)
             break;
 
         _modem_command_exec(MODEM_COMMAND_OFF);
-        
+
         if (_ms.err_cnt >= 3)
         {
             LOG_ERROR("MODEM FAILURE");
@@ -379,7 +379,7 @@ static void _status_task(void)
     if (_ms.requested_state == _ms.state)
     {
         if (! _modem_error)
-            return; 
+            return;
         // end of error
         LOG_INFO("state OK");
         _modem_error = false;
@@ -388,7 +388,7 @@ static void _status_task(void)
     }
     if (_modem_error)
         return; // already in error state
-    
+
     // state is different than requested
     if (os_timer_get() < _timer)
         return;
@@ -432,7 +432,7 @@ bool modem_main_sms_incomming(void)
 bool modem_main_sms_read (sms_struct_t *sms)
 {
     if (MODEM.sms_counter)
-    {   // read only one SMS 
+    {   // read only one SMS
         if ((MODEM.flags & MODEM_FLAG_PIN_READY) == 0)
             return (false);
 
@@ -440,7 +440,7 @@ bool modem_main_sms_read (sms_struct_t *sms)
         if (modem_sms_read(&MODEM, sms)) // read SMS, allocate memory and delete this SMS
         {   // true = we have valid sms.data and sms.tel_num
             OS_PUTTEXT ("DONE ");
-            return (true); 
+            return (true);
         }
         OS_PUTTEXT ("FAILED ");
     }
@@ -449,8 +449,8 @@ bool modem_main_sms_read (sms_struct_t *sms)
 
 bool modem_main_sms_send (sms_struct_t *sms)
 {
-    bool result;    
-    
+    bool result;
+
     if (++_sms_limiter >= _SMS_DAY_LIMIT)
     {
         LOG_ERROR("SMS limiter active");
@@ -458,7 +458,7 @@ bool modem_main_sms_send (sms_struct_t *sms)
     }
 
     result = modem_sms_send_now (&MODEM, sms);
-    
+
     return (result);
 }
 
@@ -517,7 +517,7 @@ bool modem_main_udp_send(udp_packet_t *packet)
 {
     if (MODEM.pfunc_udp_send == NULL)
         return (false);
-    
+
     return (MODEM.pfunc_udp_send(&MODEM, packet));
 }
 
@@ -542,7 +542,7 @@ bool modem_main_get_time(rtc_t *t)
     {   // i.e. '+CCLK: "21/05/03,10:21:44+08" '
         u32 Y,M,D,h,m,s;
         s32 z;
-        
+
         if (sscanf (result+7, "\"%2" SCNu32 "/%2" SCNu32 "/%2" SCNu32 ",%2" SCNu32 ":%2" SCNu32 ":%2" SCNu32 "%" SCNd32,
                         &Y, &M, &D, &h, &m, &s, &z) == 7)
         {
@@ -552,7 +552,7 @@ bool modem_main_get_time(rtc_t *t)
             t->hour  = h;
             t->minute= m;
             t->second= s;
-            // the current time is in UTC 
+            // the current time is in UTC
             // NOTE: some other modems have local time instead of UTC
             return (true);
             // we may set time zone (z/4)
@@ -575,7 +575,7 @@ void modem_main_task(void)
     _state_machine_task();
     _status_task();
     _limiters_update();
-    
+
     if (MODEM.sleep == false)
     {   // reduce modem power consumption
         modem_at_lock(&MODEM);

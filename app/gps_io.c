@@ -3,7 +3,7 @@
 #include	"hardware.h"
 #include 	"gps_io.h"
 
-#if !defined(HW_GNSS_ON_INIT) && !defined(HW_GNSS_RST_INIT) 
+#if !defined(HW_GNSS_ON_INIT) && !defined(HW_GNSS_RST_INIT)
   #warning "missing GNSS HW"
 #endif
 
@@ -36,7 +36,7 @@ void gps_io_pwr(u8 state)
     	HW_GNSS_PWR_ON;
 		HW_GNSS_UART_WAKEUP;
 #endif // HW_GNSS_PWR_ON
-	} 
+	}
    	else
 	{
 #ifdef HW_GNSS_PWR_OFF
@@ -53,7 +53,7 @@ void gps_io_reset(u8 state)
 #ifdef HW_GNSS_PWR_OFF
     	HW_GNSS_PWR_OFF;
 #endif // HW_GNSS_PWR_OFF
-	} 
+	}
 	else
 	{
 #ifdef HW_GNSS_PWR_ON

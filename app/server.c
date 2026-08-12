@@ -21,7 +21,7 @@ void server_send(const void *buf, size_t count)
     u8 *ptr = (u8 *)buf;
     if (! _connected)
         return;
-    
+
     while (count--)
     {
         size_t idx;
@@ -29,7 +29,7 @@ void server_send(const void *buf, size_t count)
         if (idx >= _BUF_SIZE)
             idx = 0;
         if (idx == _tx_buf_rd_idx)
-            return; // owerflow 
+            return; // owerflow
         _tx_buf[idx] = *ptr++;
         _tx_buf_wr_idx = idx;
     }

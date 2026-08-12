@@ -14,7 +14,7 @@ typedef struct {
 
 static cfg_t cfg_buf;
 
-OS_SEMAPHORE(cfg_semaphore); 
+OS_SEMAPHORE(cfg_semaphore);
 
 static inline void cfg_semaphore_take (void)
 {
@@ -57,7 +57,7 @@ bool cfg_init(void)
 bool cfg_write(cfg_id_t id, buf_t *src, access_auth_t auth)
 {
     bool result = false;
-    
+
     if (buf_length(src) > CFG_ITEM_SIZE)
         return (false);
 
@@ -89,7 +89,7 @@ bool cfg_read(buf_t *dest, cfg_id_t id, access_auth_t auth)
         LOG_ERROR("no RD access");
         return (false);
     }
-        
+
     cfg_semaphore_take();
 
     if (storage_read_cfg((u8 *)&cfg_buf, id * sizeof(cfg_t), sizeof(cfg_t)))
@@ -121,7 +121,7 @@ s32 cfg_read_nparam(cfg_id_t id, int n)
     ascii *p;
 
     if (! cfg_read(&buf, id, ACCESS_SYSTEM))
-        return (false); 
+        return (false);
 
     p = buf_data(&buf);
 

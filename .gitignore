@@ -9,4 +9,4 @@ ut/app_container/obj/*
 ut/app_container/ac.bin
 ut/upload/obj/*
 ut/upload/upload.bin
-
+tests/build/*

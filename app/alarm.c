@@ -6,7 +6,7 @@
 
 LOG_DEF("ALARM");
 
-static alarm_state_e _state = ALARM_IDLE; 
+static alarm_state_e _state = ALARM_IDLE;
 static bool _siren_state = OFF;
 
 #define _SIREN_TIME (30 * 10) // [100ms]
@@ -73,7 +73,7 @@ void alarm_tick(void)
 }
 
 void alarm_trigger(void)
-{  
+{
     if (_state == ALARM_ACTIVE)
         return;
 

@@ -4,16 +4,16 @@
 #include "type.h"
 
 enum {
-    ALARM_IDLE     = 0,  // 
-    ALARM_ACTIVE   = 1,  // 
-    ALARM_TIMEOUT  = 2,  // 
+    ALARM_IDLE     = 0,  //
+    ALARM_ACTIVE   = 1,  //
+    ALARM_TIMEOUT  = 2,  //
 };
 typedef u8 alarm_state_e;
 
 enum {
-    ALARM_REACTION_NONE    = 0,  // 
-    ALARM_REACTION_DELAY   = 1,  // 
-    ALARM_REACTION_INSTANT = 2,  // 
+    ALARM_REACTION_NONE    = 0,  //
+    ALARM_REACTION_DELAY   = 1,  //
+    ALARM_REACTION_INSTANT = 2,  //
     ALARM_REACTION_24H     = 3,  //
     ALARM_REACTION_TAMPER  = 4,  //
 

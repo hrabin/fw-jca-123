@@ -10,7 +10,7 @@ typedef struct {
     u8     order_num;   // order of sms
     u8     total;       // total number od SMS parts
     u8     id;          // id - serialization
-    u8     len;         // length of current part of SMS 
+    u8     len;         // length of current part of SMS
 } msms_t;
 
 msms_t msms[MSMS_BUF_LEN];
@@ -21,7 +21,7 @@ void ms_init (void)
 
     for (i=0; i<MSMS_BUF_LEN; i++)
     {
-        msms[i].len=0;  // zero length means empty buffer 
+        msms[i].len=0;  // zero length means empty buffer
         OS_MEM_FREE (msms[i].buffer);
         msms[i].buffer=NULL;
     }
@@ -31,7 +31,7 @@ s16 ms_get_free_buf (u8 id)
 {
     u16 i;
 
-    // try to find empty buffer 
+    // try to find empty buffer
     for (i=0; i<MSMS_BUF_LEN; i++)
     {
         if (msms[i].len == 0)
@@ -52,8 +52,8 @@ s16 ms_get_free_buf (u8 id)
             msms[i].len=0;
         }
     }
-    
-    // now there should by free space 
+
+    // now there should by free space
     // if not, it means too much parts and cant be received
     for (i=0; i<MSMS_BUF_LEN; i++)
     {
@@ -74,7 +74,7 @@ s16 ms_find_in_buf (u8 id, u8 order)
     {
         if ((msms[i].id==id) &&
             (msms[i].order_num==order))
-        { 
+        {
             if (msms[i].buffer != NULL)
                 return (i);
         }
@@ -85,15 +85,15 @@ s16 ms_find_in_buf (u8 id, u8 order)
 u16 ms_incomming (ascii *sms_text, u16 len, u8 id, u8 order, u8 total)
 {
     s16 i;
-    // some next part of some SMS arrived 
- 
+    // some next part of some SMS arrived
+
     i = ms_get_free_buf(id);
     if (i<0)
-    {   // no space in buffer 
+    {   // no space in buffer
         return (MS_SMS_ERROR);
     }
     if (len > 160)
-    {   // that is some nonsense, should never happen 
+    {   // that is some nonsense, should never happen
         return (MS_SMS_ERROR);
     }
     if ((msms[i].buffer = (ascii *)OS_MEM_ALLOC (len+1)) == NULL)
@@ -106,7 +106,7 @@ u16 ms_incomming (ascii *sms_text, u16 len, u8 id, u8 order, u8 total)
     msms[i].total = total;
     msms[i].id = id;
 
-    // check if all parts received 
+    // check if all parts received
     for (i=1; i<=total; i++)
     {
         if (ms_find_in_buf (id, i) < 0)
@@ -118,8 +118,8 @@ u16 ms_incomming (ascii *sms_text, u16 len, u8 id, u8 order, u8 total)
 }
 
 u16 ms_get (ascii **sms_text, u8 id)
-{   // join all parts into single message 
-    // sms_text is pointer to pointer to be able reallocate 
+{   // join all parts into single message
+    // sms_text is pointer to pointer to be able reallocate
     u16 i;
     u16 num=0;
     u16 len=0;
@@ -134,7 +134,7 @@ u16 ms_get (ascii **sms_text, u8 id)
             if (msms[i].id==id)
             {
                 len+=msms[i].len;
-                num=msms[i].total; 
+                num=msms[i].total;
             }
         }
     }
@@ -158,7 +158,7 @@ u16 ms_get (ascii **sms_text, u8 id)
     destptr = *sms_text;
 
     for (i=1; i<=num; i++)
-    {   
+    {
         mem=ms_find_in_buf (id, i);
         if (mem<0)
         {
@@ -172,7 +172,7 @@ u16 ms_get (ascii **sms_text, u8 id)
         OS_ASSERT ((destptr - *sms_text) <= len, "ms_get() OVERFLOW ");
     }
     return (len);
-    
+
 
 }
 

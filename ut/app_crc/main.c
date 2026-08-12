@@ -13,17 +13,17 @@ static u32 crc = 0xFFFFFFFF;
 static u32 app_size = 0;
 static u32 info_size = 0;
 
-u32 _app_crc_calc(u8 *data, int len) 
+u32 _app_crc_calc(u8 *data, int len)
 {
 	int i;
 	u32 b, mask;
 
-	while (len--) 
+	while (len--)
 	{
 		b = *data++;
 
 		crc = crc ^ b;
-		for (i = 7; i >= 0; i--) 
+		for (i = 7; i >= 0; i--)
 		{   // Do eight times.
 			mask = -(crc & 1);
 			crc = (crc >> 1) ^ (0xEDB88320 & mask);
@@ -137,9 +137,9 @@ static void _rx_feed(char ch)
 				// exit -1;
 			}
 		}
-	
+
 		rx_len = 0;
-		return; 
+		return;
 	}
 	rx_len++;
 }
@@ -152,12 +152,12 @@ int main(int argc, char *argv[])
 	int size=0;
 
 	OS_PRINTFE("# Loading iHEX file ... ");
-	
+
 	while ((i = getchar()) != EOF)
 	{	// read from stdin
 		data[size] = i;
 		size++;
-		
+
 		if (size >= MAX_FILE_SIZE)
 		{
 			OS_FATAL("size overflow");
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 	OS_PRINTFE("%dB DONE" NL, size);
 
 	memset(app_info_page, 0xff, sizeof(app_info_page));
-	
+
 	ihex_init(_compute_crc);
 	for (i=0; i<size; i++)
 	{
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 	OS_PRINTFE("# ------------------ " NL);
 
 	ihex_flush(APP_INFO_PAGE_ADDR, app_info_page, info_size);
-	
+
 	ihex_init(_flush_data);
 	for (i=0; i<size; i++)
 	{

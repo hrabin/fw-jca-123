@@ -14,12 +14,12 @@
 
 static int port_fd;
 
-void setup_serial(int fd) 
+void setup_serial(int fd)
 {
     struct termios tty;
 
     // Get current terminal attributes
-    if (tcgetattr(fd, &tty) != 0) 
+    if (tcgetattr(fd, &tty) != 0)
     {
         OS_FATAL("tcgetattr");
     }
@@ -57,12 +57,12 @@ void rx_flush(int fd)
     tcflush(port_fd, TCIOFLUSH); // rx/tx fifo discard
 }
 
-void send_command(int fd, const char *command) 
+void send_command(int fd, const char *command)
 {
     write(fd, command, strlen(command));
 }
 
-void read_response(int fd) 
+void read_response(int fd)
 {
     char buffer[256];
     int n = read(fd, buffer, sizeof(buffer) - 1);
@@ -72,7 +72,7 @@ void read_response(int fd)
     }
 
     buffer[n] = '\0'; // Null-terminate the buffer
-    
+
     if (strncmp(buffer, cfg.response, strlen(cfg.response)) != 0)
     {
         OS_PRINTF("Response: %s" NL, buffer);
@@ -83,7 +83,7 @@ void read_response(int fd)
 void usage (ascii *filename)
 {
     ascii *p = strrchr(filename, '/');
-    
+
     if (p == NULL)
     p = filename;
 
@@ -91,7 +91,7 @@ void usage (ascii *filename)
         p++;
 
     OS_PRINTF("\nusage: %s [options]\n", p);
-    
+
     cfg_print_help();
 
     OS_PRINTF("\n");
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     // Open the serial port
     port_fd = open(cfg.device, O_RDWR | O_NOCTTY | O_SYNC);
 
-    if (port_fd < 0) 
+    if (port_fd < 0)
     {
         OS_FATAL("serial device open failed");
     }

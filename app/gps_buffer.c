@@ -8,7 +8,7 @@
 LOG_DEF("gpsbuf");
 
 #define	SAVE_GRID_SIZE 32
-#define	BUF_STORE_LIMIT (STORAGE_GPS_RECORDS_SPACE / SAVE_GRID_SIZE) 
+#define	BUF_STORE_LIMIT (STORAGE_GPS_RECORDS_SPACE / SAVE_GRID_SIZE)
 
 #if ((BUF_STORE_LIMIT & (BUF_STORE_LIMIT-1)) != 0)
   #error "BUF_STORE_LIMIT must be a power of 2."
@@ -35,14 +35,14 @@ bool gps_buf_init (u16 *track, u32 *info)
 
 	*track = 0;
 	*info  = 0;
-	
+
 	if ((buf = (gps_buf_t *)OS_MEM_ALLOC (sizeof(gps_buf_t))) == NULL)
 		return (false);
 
-	// search for last valid record 
+	// search for last valid record
 	buf_last_undelivered = PTR_INVALID;
 	buf_save_ptr         = PTR_INVALID;
-	
+
 	if (gps_buf_load(buf, 0))
 	{	// there is some first record, lets find the last one
 		buf_save_ptr = 0;
@@ -51,7 +51,7 @@ bool gps_buf_init (u16 *track, u32 *info)
 		ptr=i;
 		*track = buf->track;
 
-		// search for the last one record 
+		// search for the last one record
 		while (i)
 		{
 			i>>=1;
@@ -70,13 +70,13 @@ bool gps_buf_init (u16 *track, u32 *info)
 				ptr-=i;
 			}
 		}
-	
-		// now search for last undelivered record 
+
+		// now search for last undelivered record
 		if (buf_last_undelivered != PTR_INVALID)
 		{	// yes, there is something undelivered
 			i=(BUF_STORE_LIMIT>>1);
 			// halving the space
-			ptr = (buf_save_ptr - i) & (BUF_STORE_LIMIT-1) ; // 
+			ptr = (buf_save_ptr - i) & (BUF_STORE_LIMIT-1) ; //
 
 			while (i)
 			{
@@ -120,7 +120,7 @@ bool gps_buf_hard_erase (void)
 	LOG_INFO("erasing all");
 	if ((buf = (gps_buf_t *)OS_MEM_ALLOC (sizeof(gps_buf_t))) == NULL)
 		return (false);
-	
+
 	memset ((u8 *)buf, 0xFF,sizeof(gps_buf_t));
 	for (mem_id=0; mem_id<BUF_STORE_LIMIT; mem_id++)
 	{
@@ -133,7 +133,7 @@ bool gps_buf_hard_erase (void)
 		// 	OS_PRINTF(".");
 
 	}
-	
+
 	buf_save_ptr = 0;
 	buf_last_undelivered = buf_save_ptr;
 	buf_read_ptr = buf_last_undelivered;
@@ -226,7 +226,7 @@ bool gps_buf_delivered_all (void)
 
 	if ((buf = (gps_buf_t *)OS_MEM_ALLOC (sizeof(gps_buf_t))) == NULL)
 		return (false);
-	
+
 	// oznacit za dorucene vsechny dosud prectene zaznamy
 	while (buf_last_undelivered != buf_read_ptr)
 	{

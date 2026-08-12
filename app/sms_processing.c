@@ -27,7 +27,7 @@ void sms_parse(sms_struct_t *sms)
         return; // zero length is not valid SMS (may be used for time sync)
 
     // TODO: detect loop
-    
+
     if (! buf_init (&sms_result, NULL, MAX_SMS_LEN))
     {
         return;
@@ -63,7 +63,7 @@ void sms_parse(sms_struct_t *sms)
 
 void sms_report_prosess(u8 sr_id, u8 sr_result)
 {
-    LOG_DEBUG("SR: %02x,%02x", sr_id, sr_result); 
+    LOG_DEBUG("SR: %02x,%02x", sr_id, sr_result);
 }
 
 bool sms_process (void)

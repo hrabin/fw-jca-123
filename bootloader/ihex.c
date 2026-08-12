@@ -5,19 +5,19 @@
 #define	_PREFIX "IHEX: "
 
 
-u8 gethex (ascii **s, u8 *sum) 
+u8 gethex (ascii **s, u8 *sum)
 {
 	u8 d=0;
 	ascii ch;
 	u8 i;
-	
+
 	for (i=0; i<2; i++)
 	{	// process 2 characters == 1 byte
 		d<<=4;
 		ch=**s;
 		// upcase
 		if ((ch>='a') && (ch<='f'))
-			ch-=('a'-'A');	
+			ch-=('a'-'A');
 
 		if ((ch>='0') && (ch<='9'))
 			d+=(ch-'0');
@@ -33,13 +33,13 @@ u8 gethex (ascii **s, u8 *sum)
 
 
 bool ihex_parse (char *src)
-{	
+{
 	static u32 addr_hiword=0;
 	u32 addr;
 	u8  *pdata, *data;
 	u8  l, sum, llen, type;
 
-	data = (u8 *)src; // hex->bin encoding to the same place 
+	data = (u8 *)src; // hex->bin encoding to the same place
 
 	if (*src != ':')
 		return (false);
@@ -53,7 +53,7 @@ bool ihex_parse (char *src)
 	addr= (gethex (&src, &sum)<<8);
 	addr|=gethex (&src, &sum);
 	type= gethex (&src, &sum);
-	
+
 	if (l-8 < (llen<<1))
 	{
 		OS_ERROR("IHEX: len");
@@ -61,16 +61,16 @@ bool ihex_parse (char *src)
 	}
 
 	pdata = data;
-	
+
 	l=llen;
-	while (l) 
+	while (l)
 	{
 		l--;
 		*(pdata++)=gethex (&src, &sum);
 	}
 
 	gethex (&src, &sum);
-	if (sum) 
+	if (sum)
 	{
 		OS_ERROR("IHEX: chsum");
 		OS_PRINTF("SUM = 0x%02x" NL, sum);

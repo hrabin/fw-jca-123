@@ -10,11 +10,11 @@ static void _update_addr(u32 addr)
 	u8 sum = 0;
 
 	if ((addr >> 16) == (hi_word))
-		return; 
-	
+		return;
+
 	hi_word = (addr >> 16);
 
-	sum += 0x02 + 0x04; 
+	sum += 0x02 + 0x04;
 	sum += hi_word & 0xFF;
 	sum += (hi_word>>8) & 0xFF;
 
@@ -35,7 +35,7 @@ void ihex_reset(void)
 void ihex_flush(u32 addr, u8 *data, int len)
 {
 #define	HEX_LINE_SIZE (16)
-	
+
 	u8 sum = 0;
 	char tmp_buf[16];
 	int i,l;
@@ -72,19 +72,19 @@ void ihex_flush(u32 addr, u8 *data, int len)
 	}
 }
 
-static u8 gethex (ascii **s, u8 *sum) 
+static u8 gethex (ascii **s, u8 *sum)
 {
 	u8 d=0;
 	ascii ch;
 	u8 i;
-	
+
 	for (i=0;i<2;i++)
 	{	// zpracovat 2 ascii znaky == 1 byte
 		d<<=4;
 		ch=**s;
 		// upcase
 		if ((ch>='a') && (ch<='f'))
-			ch-=('a'-'A');	
+			ch-=('a'-'A');
 
 		if ((ch>='0') && (ch<='9'))
 			d+=(ch-'0');
@@ -99,7 +99,7 @@ static u8 gethex (ascii **s, u8 *sum)
 }
 
 bool ihex_parse (char *src)
-{	
+{
 	static u32 addr_hiword=0;
 	u32 addr;
 	u8  *pdata, *data;
@@ -119,7 +119,7 @@ bool ihex_parse (char *src)
 	addr= (gethex (&src, &sum)<<8);
 	addr|=gethex (&src, &sum);
 	type= gethex (&src, &sum);
-	
+
 	if (l-8 < (llen<<1))
 	{
 		OS_ERROR("IHEX: len");
@@ -127,16 +127,16 @@ bool ihex_parse (char *src)
 	}
 
 	pdata = data;
-	
+
 	l=llen;
-	while (l) 
+	while (l)
 	{
 		l--;
 		*(pdata++)=gethex (&src, &sum);
 	}
 
 	gethex (&src, &sum);
-	if (sum) 
+	if (sum)
 	{
 		OS_ERROR("IHEX: chsum, SUM = 0x%02x" NL, sum);
 		return (false);

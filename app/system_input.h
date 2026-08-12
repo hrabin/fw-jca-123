@@ -9,7 +9,7 @@
 #define SYSTEM_INP_COUNT (IO_INPUT_SIZE)
 
 typedef struct {
-    u8 nr; // input number 
+    u8 nr; // input number
     alarm_reaction_e reaction;
     u8 postpone;
     u8 tmr;

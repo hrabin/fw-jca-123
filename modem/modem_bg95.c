@@ -32,12 +32,12 @@ static udp_socket_t udp_socket[_SOCKETS];
 static u8 rx_udp_socket = 0;
 
 /*
-/ATI 
+/ATI
 |Quectel
 |BG95-M3
 |Revision: BG95M3LAR02A03
- 
-/AT+QCFG=? 
+
+/AT+QCFG=?
 |+QCFG: "nwscanmode",(0,1,3),(0,1)
 |+QCFG: "servicedomain",(1,2),(0,1)
 |+QCFG: "nwscanseq",(00-010203),(0,1)
@@ -100,7 +100,7 @@ AT+QCFG="band",0xF,0x8080085,0x8080085
 	  0x1 B1
 0x8080085
 
-# For USA 
+# For USA
 AT+QCFG="band",0xF,0x1a0a,0x1a0a
 
 */
@@ -114,7 +114,7 @@ static const modem_config_t MODEM_BG95_CONFIG[] = {
 	{"AT+QCFG=\"nwscanmode\"", "+QCFG: \"nwscanmode\"," _CFG_SCAN_MODE,  "AT+QCFG=\"nwscanmode\"," _CFG_SCAN_MODE ",1", MODEM_TIMEOUT_S},
 	{"AT+QCFG=\"nwscanseq\"",  "+QCFG: \"nwscanseq\"," _CFG_SCAN_SEQ,    "AT+QCFG=\"nwscanseq\"," _CFG_SCAN_SEQ ",1", MODEM_TIMEOUT_S},
 	{"AT+QCFG=\"iotopmode\"",  "+QCFG: \"iotopmode\"," _CFG_IOTOP_MODE,  "AT+QCFG=\"iotopmode\"," _CFG_IOTOP_MODE ",1", MODEM_TIMEOUT_S},
-	
+
 	// some setup without response check
 	{NULL,NULL,"AT+QSCLK=1",MODEM_TIMEOUT_S}, // enable sleep mode (DTR wakeup)
 	{NULL,NULL,"AT+QJDR=1",MODEM_TIMEOUT_S}, // enable jamming detection
@@ -140,7 +140,7 @@ static void _return_at_buf(buf_t *buf)
 
 
 static bool _qcfg(modem_t *m, const ascii *cfg, const ascii *value, const ascii *tail)
-{	
+{
 	ascii buffer[128];
 	bool qcfg_ok = false;
 
@@ -191,11 +191,11 @@ static void _udp_rx_hex(u8 socket, ascii *data, size_t len)
 	if (socket >= _SOCKETS)
 	{
 		LOG_ERROR("bad socket %d", socket);
-		return; 
+		return;
 	}
-	
+
 	buf = _get_at_buf();
-	
+
 	// convert HEX to BIN
 	for (i=0; i<len; i++)
 	{
@@ -321,7 +321,7 @@ bool modem_bg95_urc(modem_t *m)
 	}
 	if ((p = modem_parse_pattern(src, "+QENG: \"servingcell\",")) != NULL)
 	{
-		// TODO: parse statistics 
+		// TODO: parse statistics
 		// In the case of GSM mode:
 		// +QENG: "servingcell",<state>[,<RAT>,<MCC>,<MNC>,<LAC>,<cellID>,<bsic>,<ARFCN>,<band>,<RxLev>,<txp>,<rla>,<DRX>,<c1>,<c2>,<GPRS>,<tch>,<ts>,<ta>,<MAIO>,<HSN>,<rxlevsub>,<rxlevfull>,<rxqualsub>,<rxqualfull>,<voicecodec>]
 		// <RAT> "GSM" / "eMTC" / "NBIoT"
@@ -417,7 +417,7 @@ static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
 
 	socket = _socket_id(ip, port);
 	*socket_id = socket;
-	
+
 	s = &udp_socket[socket];
 
 	if ((now + _RX_RETRY_TIME) < s->timer)
@@ -430,7 +430,7 @@ static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
 	{
 		return (true);
 	}
-	
+
 	if (s->ip.addr)
 	{
 		_socket_close(m, socket);
@@ -489,16 +489,16 @@ bool modem_bg95_udp_send(modem_t *m, udp_packet_t *packet)
 	}
 
 	buf = _get_at_buf();
-	// console_put_char_direct('>'); 
+	// console_put_char_direct('>');
 	tx_cnt++;
-	
+
 	buf_append_fmt(buf,"AT+QISENDEX=%d,\"", socket); // tmout 120s
 	buf_append_hex(buf, packet->data, packet->datalen);
 	buf_append_str(buf, "\",0");
 
 	modem_at_lock(m);
 	modem_at_cmd_nolock(m, buf_data(buf));
-	
+
 	if (modem_at_response(m, "SEND OK", AT_ST_ERROR | AT_ST_USER_STR, MODEM_TIMEOUT_LL) & AT_ST_USER_STR)
 		result = true;
 
@@ -553,7 +553,7 @@ static void _socket_maintenace(modem_t *m)
 			ascii buf[32];
 
 			s->rx = false; // switch to true again by incoming data
-			
+
 			snprintf(buf, sizeof(buf), "@@AT+QIRD=%d", i); // tmout 120s
 			rx_udp_socket = i;
 			if (modem_at_ok_cmd(m, buf))
@@ -561,7 +561,7 @@ static void _socket_maintenace(modem_t *m)
 				s->timer = now + 60*OS_TIMER_SECOND;
 			}
 			else
-			{	// 
+			{	//
 				s->ip.addr = 0;
 			}
 		}

@@ -27,10 +27,10 @@ LOG_DEF("MAIN");
 #endif // MAIN_DEBUG
 
 #define TASK_TIMER_TMOUT                  500 // [ms]
-#define TASK_APP_FAST_TMOUT               500 // 
-#define TASK_APP_SLOW_TMOUT           30*1000 // 
-#define TASK_APP_COMM_TMOUT         5*60*1000 // 
-#define TASK_APP_MODEM_TMOUT             1000 // 
+#define TASK_APP_FAST_TMOUT               500 //
+#define TASK_APP_SLOW_TMOUT           30*1000 //
+#define TASK_APP_COMM_TMOUT         5*60*1000 //
+#define TASK_APP_MODEM_TMOUT             1000 //
 
 static u8 reset_type = RESET_POWER_ON;
 
@@ -55,13 +55,13 @@ OS_TASK(task_timer)
     OS_WAIT_TO_DEFINE;
 
     wdog_task_id_t wdid = wdog_task_register("timer", TASK_TIMER_TMOUT*MS, task_timer_stack);
-   
+
     OS_WAIT_TO_SET(TASK_TIMER_PERIOD);
     while (! tasks_run)
     {
         wdog_task_feed(wdid);
         wdog_main_task();
-        
+
         OS_WAIT_TO(TASK_TIMER_PERIOD);
     }
     while (1)
@@ -131,7 +131,7 @@ OS_TASK(task_app_comm)
     }
 
     hb = os_timer_get() + HB_TIME;
-    
+
     LOG_DEBUG("comm start");
 
     GPREG_WRITE(GPREG_BOOTLOOP, 0);
@@ -157,7 +157,7 @@ OS_TASK(task_app_comm)
 OS_TASK(task_app_modem)
 {
     wdog_task_id_t wdid = wdog_task_register("modem", TASK_APP_MODEM_TMOUT*MS, task_app_modem_stack);
-    
+
     while (! tasks_run)
     {
         wdog_task_feed(wdid);
@@ -204,7 +204,7 @@ void main_cmd_process(char *data)
 
 void adc_test(void);
 
-void enter_sleep_mode(void) 
+void enter_sleep_mode(void)
 {
     // wdog_disable();
     HW_LED_OFF;
@@ -220,7 +220,7 @@ void enter_sleep_mode(void)
 
     // Set the SLEEPDEEP bit
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-    
+
     // Clear the SLEEPDEEP bit to select Sleep mode (not Deep Sleep)
     // SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
 
@@ -248,11 +248,11 @@ static void _tty_rx_parser(char *data)
                 adc_test();
                 break;
 
-            case 'F': 
+            case 'F':
                 main_flash();
                 break;
 
-            case 't': 
+            case 't':
                 u32 t =  os_timer_get();
                 OS_PRINTF("Tick %ld, tm %ld", xTaskGetTickCount(), t);
                 break;
@@ -269,7 +269,7 @@ static void _tty_rx_parser(char *data)
                 enter_sleep_mode();
                 break;
 
-            case 'T': 
+            case 'T':
                 OS_PRINTF("TEST OK");
                 break;
 
@@ -295,7 +295,7 @@ void main_flash(void)
     wdog_reset(GPREG_BOOT_FLASH_RQ);
 }
 
-int main (void) 
+int main (void)
 {
     sys_init();
     sys_clock_config();
@@ -309,8 +309,8 @@ int main (void)
 
     HW_LED_INIT;
     HW_LED_ON;
-    
-    log_init(); 
+
+    log_init();
     tty_init(_tty_rx_parser);
 
     OS_PRINTF(NL);
@@ -339,19 +339,19 @@ int main (void)
     OS_PRINTF(NL);
 
     app_init();
-    
+
     OS_INIT();
     OS_TASK_CREATE_STATIC(task_timer);
     OS_TASK_CREATE_STATIC(task_app_fast);
     OS_TASK_CREATE_STATIC(task_app_slow);
     OS_TASK_CREATE_STATIC(task_app_comm);
     OS_TASK_CREATE_STATIC(task_app_modem);
-   
+
     OS_MUTEX_INIT(spi1_mutex);
     OS_START();
 
     OS_ERROR("OS DIED !");
-    
+
     HW_LED_ON;
 
     while (1)

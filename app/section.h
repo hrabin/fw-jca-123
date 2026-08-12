@@ -9,16 +9,16 @@
 
 typedef enum {
     SECTION_ST_UNKNOWN  = 0,  // error state
-    SECTION_ST_UNSET    = 1,  // 
+    SECTION_ST_UNSET    = 1,  //
     SECTION_ST_SET_PART = 2,  // partially set, some inputs inactive
-    SECTION_ST_SET      = 3,  // 
-    SECTION_ST_SERVICE  = 4,  // 
+    SECTION_ST_SET      = 3,  //
+    SECTION_ST_SERVICE  = 4,  //
 
     SECTION_ST_SIZE
 } section_state_t;
 
 typedef struct {
-    u16            num; // this section number 
+    u16            num; // this section number
     u16            tm_out;
     u16            tm_in;
 } section_setup_t;

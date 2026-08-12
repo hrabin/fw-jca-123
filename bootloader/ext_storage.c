@@ -35,7 +35,7 @@ static container_hdr_t *fw_container = NULL;
 
 static bool _sector_read (u8 *dest, u32 sector)
 {
-	return (flash_read_data(dest, sector * SECTOR_SIZE, SECTOR_SIZE)); 
+	return (flash_read_data(dest, sector * SECTOR_SIZE, SECTOR_SIZE));
 }
 
 bool ext_storage_init (void)
@@ -49,7 +49,7 @@ bool ext_storage_init (void)
 		OS_PRINTF("OK" NL);
 	else
 		OS_PRINTF("ERROR" NL);
-	
+
 	_storage_ready = result;
 	OS_PRINTF("FLASH FW space 0x%lx to 0x%lx" NL, _FW_ADDR, _FW_ADDR+_FW_MAX_SIZE);
 	return (result);
@@ -78,7 +78,7 @@ bool ext_storage_check_fw (container_hdr_t *container)
 		LOG_ERROR("cant read sector %ld", s);
 		return (false);
 	}
-	
+
 	if (! container_valid(buf, SECTOR_SIZE))
 	{
 		LOG_ERROR("bad container");
@@ -136,7 +136,7 @@ bool ext_storage_read_fw (u8 *dest, int len, u32 offset)
 
 	offset += SECTOR_SIZE; // first sector is container
 	s = ((_FW_ADDR+offset)/SECTOR_SIZE);
-	
+
 	if (! _sector_read(buf, s))
 		return (false);
 

@@ -3,7 +3,7 @@
 
 #include "type.h"
 
-typedef enum { 
+typedef enum {
     IO_KEY,
     IO_LOCK_IN,
     IO_UNLOCK_IN,

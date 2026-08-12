@@ -88,10 +88,10 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
-  
+
     switch (num)
     {
-    case 1: return net_connect(); 
+    case 1: return net_connect();
     case 2: modem_main_data_disconnect(); break;
     case 3:
         {
@@ -112,7 +112,7 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
     case 10:
         return (tracer_test());
 
-    case 20: // simulate incomming SMS 
+    case 20: // simulate incomming SMS
         if (! cmd_fetch_separator(pptext))
             return (false);
 
@@ -159,7 +159,7 @@ static bool _cmd_modem(buf_t *result, const struct _cmd_t *cmd,  const char **pp
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
-  
+
     return (modem_main_command(num));
 }
 
@@ -290,10 +290,10 @@ static bool _cmd_ble(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
 {
     // BLE=AT+VERSION
     // BLE=AT+PIN
-    
+
     // for binding :
     // BLE=AT+TYPE2
-    
+
     ble_cmd(*pptext);
     return (true);
 }
@@ -364,7 +364,7 @@ static bool _cmd_auth_set(buf_t *result, const struct _cmd_t *cmd,  const char *
 }
 
 static bool _cmd_cfg(buf_t *result, const cmd_t *cmd, access_t *access)
-{   
+{
     cfg_id_t cfg_id;
     int i;
     for (i=0; i<1000; i++)
@@ -391,7 +391,7 @@ static bool _cmd_cfg_set(buf_t *result, const struct _cmd_t *cmd,  const char **
 
     if (! cmd_fetch_num(&cfg_id, pptext))
         return (false);
-    
+
     if (! cmd_fetch_separator(pptext))
     {
         bool ret;
@@ -432,7 +432,7 @@ static bool _cmd_gps(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     gps_stamp_t pos;
     s32 lat_sec, lon_sec;
-    u32 lat_dg,lon_dg; 
+    u32 lat_dg,lon_dg;
     u32 lat_sub_dg,lon_sub_dg;
     float f;
 
@@ -473,7 +473,7 @@ static bool _cmd_gps(buf_t *result, const cmd_t *cmd, access_t *access)
     lon_sub_dg = (lon_sec % (6000UL*60)) / (6000UL*60/10000);
     lat_dg     =  lat_sec / (6000UL*60);
     lat_sub_dg = (lat_sec % (6000UL*60)) / (6000UL*60/10000);
-    
+
     if (rtc_valid(&pos.time))
     {   // we have got time info
         rtc_t *t = (rtc_t *)&pos.time;
@@ -492,7 +492,7 @@ static bool _cmd_gps(buf_t *result, const cmd_t *cmd, access_t *access)
 
     f = pos.speed;
     buf_append_fmt (result, "speed=%.1f, alt=%d", f/10, pos.alt);
-    
+
     cmd_nl(result);
     return (true);
 }
@@ -504,7 +504,7 @@ static bool _cmd_gps_set(buf_t *result, const struct _cmd_t *cmd,  const char **
 
     if (! cmd_fetch_num(&num, pptext))
         return (false);
-  
+
     gps_set_unso(num & 0xFF);
     gps_temporary_start_tmout(60*60);
 
@@ -644,7 +644,7 @@ static bool _cmd_rtc(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_set(buf_t *result, const cmd_t *cmd, access_t *access)
 {
-    if (system_state() == SECTION_ST_SET) 
+    if (system_state() == SECTION_ST_SET)
     {
         _add_state(result);
     }
@@ -660,7 +660,7 @@ static bool _cmd_set(buf_t *result, const cmd_t *cmd, access_t *access)
 
 static bool _cmd_unset(buf_t *result, const cmd_t *cmd, access_t *access)
 {
-    if (system_state() == SECTION_ST_UNSET) 
+    if (system_state() == SECTION_ST_UNSET)
     {
         _add_state(result);
     }
@@ -715,7 +715,7 @@ static bool _cmd_mem_set(buf_t *result, const struct _cmd_t *cmd, const char **p
 
     if (! cmd_fetch_num(&index, pptext))
         return (false);
-    
+
     if (cmd_fetch_separator(pptext))
     {
         if (! cmd_fetch_num(&num, pptext))
@@ -946,7 +946,7 @@ static const cmd_t *_find_cmd(const cmd_t *table, const char **text, access_auth
 
         if (table[i].auth > auth)
             continue;
-       
+
         if ((text_l < l) && (text_l > 0))
         {   // detect shortcu versions of command
             if (strnicmp(*text, table[i].text, text_l) == 0)
@@ -1057,7 +1057,7 @@ bool cmd_process_text(buf_t *result, const char *ptext, access_t *access)
 
         // maybe continue next command
         _skip_spaces(&ptext);
-        
+
         if (*ptext != _CMD_CHAIN_SEPARATOR)
         {   // valid separator required
             break;
@@ -1132,10 +1132,10 @@ bool cmd_sms_process (buf_t *result, ascii *sms_text, ascii *phone_num, u16 sms_
 {
     const ascii *ptext = sms_text;
     access_t access = {ACCESS_NONE};
-    
+
     _skip_spaces(&ptext);
     ptext += cmd_get_password_access(&access, ptext);
-    
+
     if (access.auth <= ACCESS_NONE)
     {
         LOG_ERROR("invalid code");

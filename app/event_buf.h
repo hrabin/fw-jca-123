@@ -6,7 +6,7 @@
 
 #define EVENT_BUF_FLAG_USED       BIT(0)   // item valid, not empty
 #define EVENT_BUF_FLAG_ACTIVE     BIT(1)   // item active for processing
-#define EVENT_BUF_FLAG_PROCESSING BIT(2)   // item used in last communication 
+#define EVENT_BUF_FLAG_PROCESSING BIT(2)   // item used in last communication
 #define EVENT_BUF_FLAG_ZOMBIE     BIT(3)   // possible later reactivation
 
 

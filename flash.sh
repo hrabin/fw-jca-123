@@ -15,7 +15,7 @@ echo "REBOOT=1" > $DEVICE
 
 sleep 2
 
-# flush all old responses 
+# flush all old responses
 while read -t 0.1 -r discard; do :; done < /dev/ttyUSB0
 
 cat ./build/JCA-123-*_container.hex | ../ut/upload/upload.bin -d $DEVICE

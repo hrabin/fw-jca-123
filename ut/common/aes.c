@@ -335,10 +335,10 @@ static const unsigned long RCON[10] =
  * Forward S-box & tables
  */
 static unsigned char FSb[256];
-static unsigned long FT0[256]; 
-static unsigned long FT1[256]; 
-static unsigned long FT2[256]; 
-static unsigned long FT3[256]; 
+static unsigned long FT0[256];
+static unsigned long FT1[256];
+static unsigned long FT2[256];
+static unsigned long FT3[256];
 
 /*
  * Reverse S-box & tables
@@ -660,7 +660,7 @@ void aes_crypt_ecb( aes_context *ctx,
 	int i;
 	const unsigned long *RK;
 	unsigned long X0, X1, X2, X3, Y0, Y1, Y2, Y3;
-	
+
 #if defined(POLARSSL_PADLOCK_C) && defined(POLARSSL_HAVE_X86)
 	if( padlock_supports( PADLOCK_ACE ) )
 	{
@@ -759,7 +759,7 @@ void aes_crypt_ecb32( aes_context *ctx,
 	int i;
 	const unsigned long *RK;
 	unsigned long X0, X1, X2, X3, Y0, Y1, Y2, Y3;
-	
+
 #if defined(POLARSSL_PADLOCK_C) && defined(POLARSSL_HAVE_X86)
 	if( padlock_supports( PADLOCK_ACE ) )
 	{
@@ -876,7 +876,7 @@ void aes_crypt_cbc( aes_context *ctx,
 	if ((((uintptr_t)output|(uintptr_t)input|(uintptr_t)iv) & 3) == 0)
 	{	// vsechno zarovnano na u32
 		// lze pouzit rychlejsi algoritmus
-		u32_optimise=true;		
+		u32_optimise=true;
 	}
 	if( mode == AES_DECRYPT )
 	{

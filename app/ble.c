@@ -92,7 +92,7 @@ void ble_send(const void *buf, size_t count)
 
     if (! _connected)
         return;
-    
+
     while (count--)
     {
         size_t idx;
@@ -100,7 +100,7 @@ void ble_send(const void *buf, size_t count)
         if (idx >= _BUF_SIZE)
             idx = 0;
         if (idx == _tx_buf_rd_idx)
-            return; // overflow 
+            return; // overflow
         _tx_buf[idx] = *ptr++;
         _tx_buf_wr_idx = idx;
     }
@@ -111,7 +111,7 @@ void ble_task(void)
     // RX task
     int ch;
     int n = 0;
-    
+
     // process UART RX data
     while ((ch = HW_BLE_UART_GETCHAR()) >= 0)
     {
@@ -143,15 +143,15 @@ void ble_task(void)
     // TX task
     if (! _connected)
         return;
-    
+
     if (_tx_buf_wr_idx != _tx_buf_rd_idx)
     {
         size_t idx = _tx_buf_rd_idx + 1;
         ch = _tx_buf[_tx_buf_rd_idx];
-        
+
         if (idx >= _BUF_SIZE)
             idx = 0;
-        
+
         if (! HW_BLE_UART_PUTCHAR(ch))
             return;
 

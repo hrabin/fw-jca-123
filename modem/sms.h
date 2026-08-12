@@ -20,11 +20,11 @@ typedef enum {
 
 typedef struct {	// struktura pro sms
 	u8 *data;		// obecna data, libovolne delky (pripadne rozdeli na vic SMS)
-	ascii tel_num[SMS_MAX_PHONE_LEN]; // 
-	u16 len;		//  
+	ascii tel_num[SMS_MAX_PHONE_LEN]; //
+	u16 len;		//
 	sms_type_t type;// format vstupnich dat, vystup vzdy UTF8 nebo SR
 	u8 id;			// identifikace odchozi SMS - cekani na dorucenku
-	bool sr;		// status report request 
+	bool sr;		// status report request
 	rtc_t time;		// cas z dorucene SMS
 } sms_struct_t;
 
