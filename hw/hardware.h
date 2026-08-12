@@ -6,7 +6,7 @@
 #ifndef HW_NAME
 
   // default HW name
-  #define	HW_NAME "JCA12301"
+  #define   HW_NAME "JCA12301"
 
 #endif // not defined HW_NAME
 

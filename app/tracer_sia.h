@@ -1,5 +1,5 @@
 #ifndef TRACER_SIA_H
-#define	TRACER_SIA_H
+#define TRACER_SIA_H
 
 #include "type.h"
 #include "gps.h"

@@ -95,18 +95,18 @@ static const tracer_proto_t *proto = NULL;
 
 static void pfunc_reinit(u8 protocol)
 {
-	switch (protocol)
-	{
+    switch (protocol)
+    {
 #if TRACER_SIA
-	case TRACER_PROTO_SIA:
-		proto = &tracer_proto_sia;
-		break;
+    case TRACER_PROTO_SIA:
+        proto = &tracer_proto_sia;
+        break;
 #endif
-	case TRACER_PROTO_H02:
-	default:
-		proto = &tracer_proto_h02;
-		break;
-	}
+    case TRACER_PROTO_H02:
+    default:
+        proto = &tracer_proto_h02;
+        break;
+    }
 }
 
 static void tracer_comm_sleep(u16 tm)

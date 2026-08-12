@@ -6,13 +6,13 @@
 #include "buf.h"
 
 typedef struct {
-	ip_addr_t dst_ip;	//
-	ip_addr_t src_ip;	//
-	u8 *data;			//
-	u16 dst_port;		//
-	u16 src_port;		//
-	u16 datalen;		//
-	bool packet_ready;	//
+    ip_addr_t dst_ip;   //
+    ip_addr_t src_ip;   //
+    u8 *data;           //
+    u16 dst_port;       //
+    u16 src_port;       //
+    u16 datalen;        //
+    bool packet_ready;  //
 } udp_packet_t;
 
 typedef void (*udp_rx_callback_t)(udp_packet_t *pkt);

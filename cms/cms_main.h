@@ -1,9 +1,9 @@
 #ifndef CMS_MAIN_H
-#define	CMS_MAIN_H
+#define CMS_MAIN_H
 
 #ifndef NO_PCO
 
-#define	CMS_IPS (2) // pocet IP adres jednoho PCO
+#define CMS_IPS (2) // pocet IP adres jednoho PCO
 
 extern bool cms_init(void);
 extern bool cms_reinit(void);

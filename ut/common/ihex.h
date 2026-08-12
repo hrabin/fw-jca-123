@@ -1,5 +1,5 @@
 #ifndef IHEX_H
-#define	IHEX_H
+#define IHEX_H
 
 #include "common.h"
 

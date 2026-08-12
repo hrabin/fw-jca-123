@@ -161,14 +161,14 @@ void tracer_h02_rq_add_auth(u8 id, ascii *data)
 }
 
 const tracer_proto_t tracer_proto_h02 = {
-	.reinit          = tracer_h02_reinit,
-	.new_track       = tracer_h02_new_track,
-	.packet_ready    = tracer_h02_packet_ready,
-	.packet_done     = tracer_h02_packet_done,
-	.packet_size     = tracer_h02_packet_size,
-	.packet_reply_ok = tracer_h02_packet_reply_ok,
-	.new_point       = tracer_h02_new_point,
-	.get_packet      = NULL,
-	.track_end       = tracer_h02_track_end,
-	.rq_add_auth     = tracer_h02_rq_add_auth,
+    .reinit          = tracer_h02_reinit,
+    .new_track       = tracer_h02_new_track,
+    .packet_ready    = tracer_h02_packet_ready,
+    .packet_done     = tracer_h02_packet_done,
+    .packet_size     = tracer_h02_packet_size,
+    .packet_reply_ok = tracer_h02_packet_reply_ok,
+    .new_point       = tracer_h02_new_point,
+    .get_packet      = NULL,
+    .track_end       = tracer_h02_track_end,
+    .rq_add_auth     = tracer_h02_rq_add_auth,
 };

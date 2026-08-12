@@ -18,8 +18,8 @@
 typedef enum {
 
     CMD_ASYNC_NONE = 0,
-	CMD_ASYNC_OFF,
-	CMD_ASYNC_REBOOT,
+    CMD_ASYNC_OFF,
+    CMD_ASYNC_REBOOT,
 
     CMD_ASYNC_SIZE
 
@@ -39,8 +39,8 @@ typedef struct _cmd_t {
     const char *text;
     bool (*pfunc)(buf_t *result, const struct _cmd_t *cmd, access_t *access);
     bool (*pfunc_set)(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access);
-	u32 flags;
-	access_auth_t auth;
+    u32 flags;
+    access_auth_t auth;
 #if CMD_USE_HELP == 1
     const char *help;
 #endif // CMD_USE_HELP == 1

@@ -1,20 +1,20 @@
 #ifndef TRACER_H
-#define	TRACER_H
+#define TRACER_H
 
 #include "type.h"
 
 typedef union {
-	struct {
-		u32 driver_id:7;
-		u32 track_type:1;
-		u32 inputs:8;
-		u32 outputs:8;
-		u32 res:8;
-	} s;
-	u32 dw;
+    struct {
+        u32 driver_id:7;
+        u32 track_type:1;
+        u32 inputs:8;
+        u32 outputs:8;
+        u32 res:8;
+    } s;
+    u32 dw;
 } track_info_t;
 
-#define	TRACER_PACKET_BUFFER_SIZE (256)
+#define TRACER_PACKET_BUFFER_SIZE (256)
 extern u8 tracer_packet_buffer[];
 
 bool tracer_init (void);

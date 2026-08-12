@@ -5,7 +5,7 @@
 #include "modem.h"
 #include "sms.h"
 
-#define	MODEM_SMS_MAX 0xFF
+#define MODEM_SMS_MAX 0xFF
 
 extern void modem_sms_init (modem_t *m);
 extern bool modem_sms_send_now (modem_t *m, sms_struct_t *sms);

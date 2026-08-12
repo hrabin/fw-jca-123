@@ -70,12 +70,12 @@ typedef enum {
 // The modem reports WHAT happened; the app decides HOW to react
 // (LED signalization, notifications, ...).
 typedef enum {
-	MODEM_EVENT_SMS_INCOMMING,
-	MODEM_EVENT_SMS_SENDING,
-	MODEM_EVENT_SMS_ERROR,
-	MODEM_EVENT_CALL_INCOMMING,
+    MODEM_EVENT_SMS_INCOMMING,
+    MODEM_EVENT_SMS_SENDING,
+    MODEM_EVENT_SMS_ERROR,
+    MODEM_EVENT_CALL_INCOMMING,
 
-	MODEM_EVENT_SIZE
+    MODEM_EVENT_SIZE
 } modem_event_e;
 
 typedef void (*modem_event_callback_t)(modem_event_e event);
@@ -116,8 +116,8 @@ typedef struct _modem_t {
 // Report a modem event to the application (no-op if no callback registered).
 static inline void modem_event(modem_t *m, modem_event_e event)
 {
-	if (m->pfunc_event != NULL)
-		m->pfunc_event(event);
+    if (m->pfunc_event != NULL)
+        m->pfunc_event(event);
 }
 
 char *modem_parse_pattern(const char *s, const char *pattern);

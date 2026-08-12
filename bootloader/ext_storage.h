@@ -1,10 +1,10 @@
 #ifndef EXT_STORAGE_H
-#define	EXT_STORAGE_H
+#define EXT_STORAGE_H
 
 #include "common.h"
 #include "container.h"
 
-#define	EXT_STORAGE_SECTOR_SIZE (512)
+#define EXT_STORAGE_SECTOR_SIZE (512)
 
 bool ext_storage_init (void);
 

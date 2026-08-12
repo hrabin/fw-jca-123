@@ -7,20 +7,20 @@
 #include "buf.h"
 #include "nmea.h"
 
-#define	GPS_NMEA_GGA (1 << 0)
-#define	GPS_NMEA_GSA (1 << 1)
-#define	GPS_NMEA_GSV (1 << 2)
-#define	GPS_NMEA_RMC (1 << 3)
-#define	GPS_NMEA_VTG (1 << 4)
-#define	GPS_NMEA_GLL (1 << 5)
-#define	GPS_NMEA_PMTK (1 << 6)
+#define GPS_NMEA_GGA (1 << 0)
+#define GPS_NMEA_GSA (1 << 1)
+#define GPS_NMEA_GSV (1 << 2)
+#define GPS_NMEA_RMC (1 << 3)
+#define GPS_NMEA_VTG (1 << 4)
+#define GPS_NMEA_GLL (1 << 5)
+#define GPS_NMEA_PMTK (1 << 6)
 
-#define	GPS_NMEA_ALL (GPS_NMEA_GGA+GPS_NMEA_GSA+GPS_NMEA_GSV+GPS_NMEA_RMC+GPS_NMEA_VTG+GPS_NMEA_GLL)
+#define GPS_NMEA_ALL (GPS_NMEA_GGA+GPS_NMEA_GSA+GPS_NMEA_GSV+GPS_NMEA_RMC+GPS_NMEA_VTG+GPS_NMEA_GLL)
 
 typedef nmea_data_t gps_stamp_t;  // defined in lib/nmea/nmea.h
 
-extern gps_stamp_t	gps_stamp_last;
-extern gps_stamp_t	gps_stamp_last_valid;
+extern gps_stamp_t  gps_stamp_last;
+extern gps_stamp_t  gps_stamp_last_valid;
 
 extern bool gps_save_position (u16 mem_id, gps_stamp_t *pos);
 extern bool gps_load_position (gps_stamp_t *dest, u16 mem_id);
@@ -46,4 +46,4 @@ extern u16 gps_get_speed (void);
 extern u8 gps_get_nbsat (bool in_use);
 extern u8 gps_get_glonass_nbsat (bool in_use);
 
-#endif	// ~GPS_H
+#endif  // ~GPS_H

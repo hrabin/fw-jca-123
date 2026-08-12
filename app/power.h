@@ -1,12 +1,12 @@
 #ifndef POWER_H
-#define	POWER_H
+#define POWER_H
 
 #include "type.h"
 
 typedef enum {
-	POWER_OK   = 0,
-	POWER_LOW  = 1,
-	POWER_FAIL = 2
+    POWER_OK   = 0,
+    POWER_LOW  = 1,
+    POWER_FAIL = 2
 } power_status_e;
 
 bool power_init(void);

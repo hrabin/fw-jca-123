@@ -23,7 +23,7 @@ typedef uint32_t            u32;
 typedef uint64_t            u64;
 
 #ifndef KB
-	#define KB 1024
+    #define KB 1024
 #endif
 
 #endif // ! TYPE_H

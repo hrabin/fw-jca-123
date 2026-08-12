@@ -12,17 +12,17 @@ typedef u32 os_timer_t;
 
 static inline os_timer_t OS_TIMER(void)
 {
-	return (0);
+    return (0);
 }
 
 static inline os_timer_t os_timer_get(void)
 {
-	return (0);
+    return (0);
 }
 
 static inline void OS_DELAY(u32 ms)
 {
-	(void)ms;
+    (void)ms;
 }
 
 #define OS_TASK_YIELD()

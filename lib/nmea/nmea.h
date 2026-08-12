@@ -9,15 +9,15 @@
 // Application layer typedefs this as gps_stamp_t (see gps.h).
 
 typedef struct {
-	s32 lon_sec;      // longitude, seconds*100, negative = West
-	s32 lat_sec;      // latitude, seconds*100, negative = South
-	u32 speed:15;     // km/h * 10
-	u32 angle:9;      // 0..359 degrees
-	u32 accuracy:8;   // meters
-	s16 alt;          // meters
-	u8  fix;          // 0=invalid, 1=GPS, 2=DGPS
-	u8  nbsat;        // satellites in use
-	rtc_t time;        // UTC time of fix
+    s32 lon_sec;      // longitude, seconds*100, negative = West
+    s32 lat_sec;      // latitude, seconds*100, negative = South
+    u32 speed:15;     // km/h * 10
+    u32 angle:9;      // 0..359 degrees
+    u32 accuracy:8;   // meters
+    s16 alt;          // meters
+    u8  fix;          // 0=invalid, 1=GPS, 2=DGPS
+    u8  nbsat;        // satellites in use
+    rtc_t time;        // UTC time of fix
 } __attribute__((packed)) nmea_data_t;
 
 // Parse $--GGA sentence. Fills lat_sec, lon_sec, fix, nbsat, accuracy, alt.

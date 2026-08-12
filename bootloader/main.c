@@ -33,72 +33,72 @@ static u8 reset_type = RESET_POWER_ON;
 static u32 bl_timeout = 0;
 
 static void _tty_rx_parser(char *data)
-{	// RX iHEX FW file
-	if (data[0] == ':')
-	{
-		if (ihex_parse(data))
-		{
-			OS_PRINTF("OK" NL);
-			bl_timeout = 0;
-		}
-		else
-		{
-			OS_PRINTF("ERROR" NL);
-		}
+{   // RX iHEX FW file
+    if (data[0] == ':')
+    {
+        if (ihex_parse(data))
+        {
+            OS_PRINTF("OK" NL);
+            bl_timeout = 0;
+        }
+        else
+        {
+            OS_PRINTF("ERROR" NL);
+        }
 
-		OS_FLUSH();
-		return;
-	}
+        OS_FLUSH();
+        return;
+    }
 
-	switch (data[0])
-	{
+    switch (data[0])
+    {
     case 'B':
         OS_PRINTF("go to BL" NL);
         GPREG_WRITE(GPREG_BOOT, GPREG_BOOT_STAY_IN_BOOT);
         GPREG_WRITE(GPREG_WDID, GPREG_WDID_REBOOT_RQ);
-		wd_reset();
+        wd_reset();
         break;
 
-	case 'F':
-		ext_storage_flush_cache();
-		OS_PRINTF("FLASH" NL);
-		GPREG_WRITE(GPREG_BOOT, GPREG_BOOT_FLASH_RQ);
-   		GPREG_WRITE(GPREG_WDID, GPREG_WDID_REBOOT_RQ);
-		wd_reset();
-		break;
+    case 'F':
+        ext_storage_flush_cache();
+        OS_PRINTF("FLASH" NL);
+        GPREG_WRITE(GPREG_BOOT, GPREG_BOOT_FLASH_RQ);
+        GPREG_WRITE(GPREG_WDID, GPREG_WDID_REBOOT_RQ);
+        wd_reset();
+        break;
 
-	case 'T':
-		OS_PRINTF("TEST OK" NL);
-		break;
+    case 'T':
+        OS_PRINTF("TEST OK" NL);
+        break;
 
-	case 'R':
-		ext_storage_flush_cache();
-		OS_PRINTF("RESET" NL);
-		wd_reset();
-		break;
+    case 'R':
+        ext_storage_flush_cache();
+        OS_PRINTF("RESET" NL);
+        wd_reset();
+        break;
 
-	case 'W':
-		OS_PRINTF("WDR TEST" NL);
-		while (1)
-			;
-	}
+    case 'W':
+        OS_PRINTF("WDR TEST" NL);
+        while (1)
+            ;
+    }
 }
 
 static void _bl_task_delay(u32 delay)
 {
-	utime_t time;
-	delay*=TIMER_MS;
-	time=timer_get_time();
+    utime_t time;
+    delay*=TIMER_MS;
+    time=timer_get_time();
 
-	while ((utime_t)(timer_get_time()-time)<delay)
-	{
+    while ((utime_t)(timer_get_time()-time)<delay)
+    {
         tty_rx_task();
-	}
+    }
 }
 
 static void _bl_task(void)
 {
-	GPREG_WRITE(GPREG_BOOT, 0)
+    GPREG_WRITE(GPREG_BOOT, 0)
 
     while (1)
     {
@@ -109,12 +109,12 @@ static void _bl_task(void)
 
         wd_feed();
 
-		if (++bl_timeout >= BL_TIMEOUT)
-			break;
+        if (++bl_timeout >= BL_TIMEOUT)
+            break;
     }
 
     OS_PRINTF("TIMEOUT REBOOT");
-	wd_reset();
+    wd_reset();
 }
 
 void main_fatal_error(char *msg)
@@ -127,72 +127,72 @@ void main_fatal_error(char *msg)
     }
     OS_PRINTF(NL);
 
-	_bl_task();
+    _bl_task();
 }
 
 static bool main_flash_app(void)
 {
-	container_hdr_t container;
-	u32 buf[EXT_STORAGE_SECTOR_SIZE/4];
-	u32 dest, i;
+    container_hdr_t container;
+    u32 buf[EXT_STORAGE_SECTOR_SIZE/4];
+    u32 dest, i;
 
     if (! ext_storage_init())
     {
-		LOG_ERROR("ext storage HW init failed !");
+        LOG_ERROR("ext storage HW init failed !");
         return (false);
     }
     if (! ext_storage_check_fw(&container))
     {
-		LOG_ERROR("ext storage firmware not found !");
+        LOG_ERROR("ext storage firmware not found !");
         return (false);
     }
-	OS_PRINTF("ext storage firmware OK" NL);
+    OS_PRINTF("ext storage firmware OK" NL);
 
-	dest = APP_INFO_PAGE_ADDR;
-	for (i=0; i<container.data_size; i+=EXT_STORAGE_SECTOR_SIZE)
-	{
-		ext_storage_read_fw((u8 *)buf, sizeof(buf), i);
+    dest = APP_INFO_PAGE_ADDR;
+    for (i=0; i<container.data_size; i+=EXT_STORAGE_SECTOR_SIZE)
+    {
+        ext_storage_read_fw((u8 *)buf, sizeof(buf), i);
 
-		int_flash_write(dest, buf, EXT_STORAGE_SECTOR_SIZE);
-		dest += EXT_STORAGE_SECTOR_SIZE;
-	}
-	OS_PRINTF(NL);
+        int_flash_write(dest, buf, EXT_STORAGE_SECTOR_SIZE);
+        dest += EXT_STORAGE_SECTOR_SIZE;
+    }
+    OS_PRINTF(NL);
     return (true);
 }
 
 static bool main_app_ok(void)
 {   // check application CRC
-	u8 *app_ptr;
-	u32 crc;
+    u8 *app_ptr;
+    u32 crc;
 
-	// LOG_DUMP("APP", (u8 *)&APP_INFO, sizeof(APP_INFO));
-	if ((APP_INFO.size > APP_MAX_SIZE) || (APP_INFO.size < APP_MIN_SIZE))
-	{
-		LOG_ERROR("FW size mismatch");
-		return (false);
-	}
+    // LOG_DUMP("APP", (u8 *)&APP_INFO, sizeof(APP_INFO));
+    if ((APP_INFO.size > APP_MAX_SIZE) || (APP_INFO.size < APP_MIN_SIZE))
+    {
+        LOG_ERROR("FW size mismatch");
+        return (false);
+    }
 
-	app_ptr = (u8 *)APP_START_ADDR;
-	crc = app_crc(app_ptr, APP_INFO.size);
+    app_ptr = (u8 *)APP_START_ADDR;
+    crc = app_crc(app_ptr, APP_INFO.size);
 
-	if (crc == APP_INFO.crc)
-	{
-		return (true);
-	}
+    if (crc == APP_INFO.crc)
+    {
+        return (true);
+    }
 
     LOG_ERROR("APP CHSUM FAILED (0x%lX != 0x%lX)" NL, crc, APP_INFO.crc);
     return (false);
 }
 
-typedef unsigned long (*pfunc_void)	(void);
+typedef unsigned long (*pfunc_void) (void);
 
 static void _jump_to_app(void)
 {
-	pfunc_void app;
-	app=(pfunc_void)(*((u32*)(APP_START_ADDR+4)));
-	__set_MSP(*(__IO uint32_t*) APP_START_ADDR);
+    pfunc_void app;
+    app=(pfunc_void)(*((u32*)(APP_START_ADDR+4)));
+    __set_MSP(*(__IO uint32_t*) APP_START_ADDR);
 
-	app();
+    app();
 }
 
 int main (void)
@@ -200,11 +200,11 @@ int main (void)
     bool app_ok = false;
     bool flash_rq = false;
 
-	reset_type = reset_get_type();
+    reset_type = reset_get_type();
 
     sys_init();
     sys_clock_config();
-	sys_run();
+    sys_run();
     timer2_free_run();
 
     wd_init();
@@ -252,13 +252,13 @@ int main (void)
             OS_PRINTF("FLASH RQ CMD" NL);
             flash_rq = true;
         }
-		else if (GPREG_BOOT == GPREG_BOOT_STAY_IN_BOOT)
-		{
+        else if (GPREG_BOOT == GPREG_BOOT_STAY_IN_BOOT)
+        {
             OS_PRINTF("BOOT STAY" NL);
-   			ext_storage_init();
-			_bl_task();
-		}
-		GPREG_WRITE(GPREG_BOOT, 0)
+            ext_storage_init();
+            _bl_task();
+        }
+        GPREG_WRITE(GPREG_BOOT, 0)
     }
 
     if ((flash_rq) || (app_ok == false))
@@ -274,26 +274,26 @@ int main (void)
         {
             OS_PRINTF("FLASH SUCCESSFUL" NL);
         }
-	    app_ok = main_app_ok();
+        app_ok = main_app_ok();
     }
 
-	GPREG_WRITE(GPREG_BOOTLOOP, GPREG_BOOTLOOP + 1);
+    GPREG_WRITE(GPREG_BOOTLOOP, GPREG_BOOTLOOP + 1);
 
-	if (GPREG_BOOTLOOP > 5)
-	{
+    if (GPREG_BOOTLOOP > 5)
+    {
         OS_PRINTF("BOOT LOOP" NL);
-		GPREG_WRITE(GPREG_BOOTLOOP, 0);
-   		ext_storage_init();
-		_bl_task();
-	}
-	if (app_ok)
-	{
+        GPREG_WRITE(GPREG_BOOTLOOP, 0);
+        ext_storage_init();
+        _bl_task();
+    }
+    if (app_ok)
+    {
         OS_DELAY(50);
-    	OS_PRINTF("BL RUN APP" NL);
-    	OS_PRINTF(NL);
+        OS_PRINTF("BL RUN APP" NL);
+        OS_PRINTF(NL);
         OS_DELAY(50);
- 		_jump_to_app();
-	}
+        _jump_to_app();
+    }
 
     main_fatal_error("NO FIRMWARE AVAILABLE"); // endless loop
 

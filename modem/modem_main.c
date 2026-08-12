@@ -224,12 +224,12 @@ static void _set_state(modem_main_state_e new_state)
         break;
 
     case MODEM_MAIN_STATE_DEBUG:
-		break;
+        break;
 
     default:
         return;
     }
-	LOG_DEBUGL(LOG_SELECT_MODEM, "new state: %d", new_state);
+    LOG_DEBUGL(LOG_SELECT_MODEM, "new state: %d", new_state);
 
     _ms.state = new_state;
 }
@@ -268,9 +268,9 @@ static void _modem_command_exec(modem_command_e cmd)
         break;
 
     case MODEM_COMMAND_RESET:
-		MODEM.pfunc_off();
-		// keep it off, it will wake up on next check
-		break;
+        MODEM.pfunc_off();
+        // keep it off, it will wake up on next check
+        break;
 
     case MODEM_COMMAND_DEBUG:
         _set_state(MODEM_MAIN_STATE_DEBUG);

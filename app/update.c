@@ -76,7 +76,7 @@ static bool _send_packet(u8 *data, size_t len)
         return (true);
     }
     _dly(5);
-	return (false);
+    return (false);
 }
 
 static bool _update_req(void)
@@ -87,7 +87,7 @@ static bool _update_req(void)
     data.hdr.unit_id = HW_INFO.addr;
     data.ver = (SW_VERSION_MAJOR<<16) + (SW_VERSION_MINOR << 8) + SW_VERSION_PATCH;
 
-	return (_send_packet((u8 *)&data, sizeof(data)));
+    return (_send_packet((u8 *)&data, sizeof(data)));
 }
 
 static bool _update_phase(void)
@@ -98,15 +98,15 @@ static bool _update_phase(void)
     data.hdr.unit_id = HW_INFO.addr;
     data.chunk_id = _phase-1;
 
-	return (_send_packet((u8 *)&data, sizeof(data)));
+    return (_send_packet((u8 *)&data, sizeof(data)));
 }
 
 static void _write_chunk(u32 chunk_id, u8 *data)
 {
     u32 offset = chunk_id * UPDATE_CHUNK_SIZE;
 
-	if (! storage_write_fw(offset, data, UPDATE_CHUNK_SIZE))
-		LOG_ERROR("Write failed to 0x%x", offset);
+    if (! storage_write_fw(offset, data, UPDATE_CHUNK_SIZE))
+        LOG_ERROR("Write failed to 0x%x", offset);
 }
 
 bool update_packet_rx (u8 *data, u16 len, u16 port)
@@ -160,7 +160,7 @@ bool update_packet_rx (u8 *data, u16 len, u16 port)
                 _write_chunk(chunk_id, res->data);
                 LOG_INFO("update DONE !");
                 _update_rq = false;
-				main_flash();
+                main_flash();
             }
             else
             {

@@ -14,18 +14,18 @@
 #define CMS_SIA_IP_NUM_URIS         2
 
 typedef struct {
-	u32 timeout;
-	u32 object_id;
-	u16 wait_tm[CMS_SIA_IP_NUM_URIS];   // doba cekani na odpoved (meni se dynamicky)
-	u16 cnt;        // counter pro identifikaci paketu (1..9999)
-	u16 prefix;     // 
-	u8  retry_num[CMS_SIA_IP_NUM_URIS]; // hlavni/zalozni URL retry num
-	u8  cms_num;    // cislo CMS ke kteremu patri tato struktura
-	u8  enable_time_sync:1;
-	u8  enable_encrypt:1;
-	u8  enable_event_name:1;
-	u8  enable_event_time:1;
-	u8  enable_time_stamp:1;
+    u32 timeout;
+    u32 object_id;
+    u16 wait_tm[CMS_SIA_IP_NUM_URIS];   // doba cekani na odpoved (meni se dynamicky)
+    u16 cnt;        // counter pro identifikaci paketu (1..9999)
+    u16 prefix;     // 
+    u8  retry_num[CMS_SIA_IP_NUM_URIS]; // hlavni/zalozni URL retry num
+    u8  cms_num;    // cislo CMS ke kteremu patri tato struktura
+    u8  enable_time_sync:1;
+    u8  enable_encrypt:1;
+    u8  enable_event_name:1;
+    u8  enable_event_time:1;
+    u8  enable_time_stamp:1;
 } cms_sia_ip_state_t;
 
 extern void cms_sia_ip_init (cms_sia_ip_state_t *s);
