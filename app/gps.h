@@ -5,6 +5,7 @@
 #include "type.h"
 #include "rtc.h"
 #include "buf.h"
+#include "nmea.h"
 
 #define	GPS_NMEA_GGA (1 << 0)
 #define	GPS_NMEA_GSA (1 << 1)
@@ -16,19 +17,7 @@
 
 #define	GPS_NMEA_ALL (GPS_NMEA_GGA+GPS_NMEA_GSA+GPS_NMEA_GSV+GPS_NMEA_RMC+GPS_NMEA_VTG+GPS_NMEA_GLL)
 
-struct _gps_stamp_t {
-	s32 lon_sec;	// [seconds*100]
-	s32 lat_sec;	// [seconds*100]
-	u32 speed:15;   // [km/h*10]
-	u32 angle:9;    // 0..359
-	u32	accuracy:8; // [m]
-	s16 alt;        // elevation
-	u8	fix;        // 0=ivalid, 1=OK, 2=3D
-	u8	nbsat;      // number of sats in view
-	rtc_t time;     // time of fix
-} PACK ;			// sizeof(gps_stamp_t) = 22
-
-typedef struct _gps_stamp_t gps_stamp_t;
+typedef nmea_data_t gps_stamp_t;  // defined in lib/nmea/nmea.h
 
 extern gps_stamp_t	gps_stamp_last;
 extern gps_stamp_t	gps_stamp_last_valid;

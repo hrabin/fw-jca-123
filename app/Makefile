@@ -108,6 +108,7 @@ C_SOURCES +=  \
   $(DIR_MODEM)/multi_sms.c \
   $(DIR_MODEM)/modem_udp.c \
   \
+  $(DIR_LIB)/nmea/nmea.c \
   $(DIR_LIB)/pdu/pdu.c \
 
 
@@ -122,6 +123,7 @@ C_INCLUDES +=  \
 -I$(DIR_HW) \
 -I$(DIR_NET) \
 -I$(DIR_LIB) \
+-I$(DIR_LIB)/nmea \
 -I$(DIR_MODEM) \
 -I$(DIR_RTOS)/source/include \
 -I$(DIR_RTOS)/source/CMSIS_RTOS_V2 \
