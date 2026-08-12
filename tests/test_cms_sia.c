@@ -1,5 +1,6 @@
 #include "test.h"
 #include "cms_sia_ip.h"
+#include "cms_proto.h"
 #include "rtc.h"
 #include <string.h>
 
@@ -408,4 +409,109 @@ TEST(sia_not_ack_frame)
     len = _test_frame(buf, "\"SIA-DCS\"0001L0#1234[|Nri01/BA4^^]");
 
     ASSERT(!cms_sia_ip_rx_ack(&s, buf, len, &seq, &is_nak));
+}
+
+// ---- cms_proto_t interface (SIA-IP instance) ----
+
+TEST(sia_proto_lifecycle)
+{
+    event_t e;
+    u8 buf[CMS_SIA_IP_MAX_PACKET_LEN];
+    u16 len;
+
+    cms_proto_sia_ip.reinit(0x1234);
+    _event_set(&e, EVENT_ID_ALARM, EVENT_SOURCE_SHOCK);
+
+    // prepare an event
+    ASSERT(cms_proto_sia_ip.new_event(&e));
+    ASSERT(cms_proto_sia_ip.packet_ready());
+
+    len = cms_proto_sia_ip.packet_size();
+    ASSERT(len > 0);
+
+    cms_proto_sia_ip.get_packet(buf);
+
+    // the copied packet must be a valid SIA frame with seq 1
+    ASSERT(cms_sia_ip_rx(buf, len));
+    ASSERT(strstr((char *)buf, "\"SIA-DCS\"0001L0#1234[") != NULL);
+
+    // a matching ACK completes the exchange
+    u8 ack[CMS_SIA_IP_MAX_PACKET_LEN];
+    u16 ack_len = _test_frame(ack, "\"ACK\"0001L0#1234[]");
+
+    ASSERT_EQ(cms_proto_sia_ip.packet_reply(ack, ack_len), CMS_REPLY_ACK);
+
+    cms_proto_sia_ip.packet_done();
+    ASSERT(!cms_proto_sia_ip.packet_ready());
+}
+
+TEST(sia_proto_nak)
+{
+    event_t e;
+    u8 ack[CMS_SIA_IP_MAX_PACKET_LEN];
+    u16 ack_len;
+
+    cms_proto_sia_ip.reinit(0x1234);
+    _event_set(&e, EVENT_ID_SET, EVENT_SOURCE_UNIT);
+    ASSERT(cms_proto_sia_ip.new_event(&e));
+
+    ack_len = _test_frame(ack, "\"NAK\"0001L0");
+    ASSERT_EQ(cms_proto_sia_ip.packet_reply(ack, ack_len), CMS_REPLY_NAK);
+
+    cms_proto_sia_ip.packet_done();
+}
+
+TEST(sia_proto_wrong_seq)
+{
+    event_t e;
+    u8 ack[CMS_SIA_IP_MAX_PACKET_LEN];
+    u16 ack_len;
+
+    cms_proto_sia_ip.reinit(0x1234);
+    _event_set(&e, EVENT_ID_ALARM, EVENT_SOURCE_DOOR);
+    ASSERT(cms_proto_sia_ip.new_event(&e));   // seq becomes 1
+
+    // ACK for a different sequence number
+    ack_len = _test_frame(ack, "\"ACK\"0007L0#1234[]");
+    ASSERT_EQ(cms_proto_sia_ip.packet_reply(ack, ack_len), CMS_REPLY_NONE);
+
+    cms_proto_sia_ip.packet_done();
+}
+
+TEST(sia_proto_not_reportable)
+{
+    event_t e;
+
+    cms_proto_sia_ip.reinit(0x1234);
+    _event_set(&e, EVENT_ID_ALARM_TIMEOUT, EVENT_SOURCE_UNIT);
+
+    // event without a SIA code — no packet is built
+    ASSERT(!cms_proto_sia_ip.new_event(&e));
+    ASSERT(!cms_proto_sia_ip.packet_ready());
+}
+
+TEST(sia_proto_seq_increments)
+{
+    event_t e;
+    u8 buf[CMS_SIA_IP_MAX_PACKET_LEN];
+    u16 len;
+
+    cms_proto_sia_ip.reinit(0x1234);
+
+    // two events — seq must increment 1 → 2
+    _event_set(&e, EVENT_ID_ALARM, EVENT_SOURCE_SHOCK);
+    ASSERT(cms_proto_sia_ip.new_event(&e));
+    len = cms_proto_sia_ip.packet_size();
+    cms_proto_sia_ip.get_packet(buf);
+    ASSERT(strstr((char *)buf, "\"SIA-DCS\"0001L0") != NULL);
+
+    cms_proto_sia_ip.packet_done();
+
+    _event_set(&e, EVENT_ID_FAULT, EVENT_SOURCE_BATTERY);
+    ASSERT(cms_proto_sia_ip.new_event(&e));
+    len = cms_proto_sia_ip.packet_size();
+    cms_proto_sia_ip.get_packet(buf);
+    ASSERT(strstr((char *)buf, "\"SIA-DCS\"0002L0") != NULL);
+
+    cms_proto_sia_ip.packet_done();
 }

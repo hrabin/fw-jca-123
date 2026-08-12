@@ -1,6 +1,6 @@
 #include "common.h"
 #include "cms_main.h"
-#include "cms_sia_ip.h"
+#include "cms_proto.h"
 #include "event_buf.h"
 #include "cfg.h"
 #include "net.h"
@@ -10,16 +10,18 @@ LOG_DEF("CMS");
 
 #ifndef NO_CMS
 
-#define CMS_BUF_SIZE     32
+#define CMS_BUF_SIZE      32
 #define CMS_RETRY_DEFAULT 5
 #define CMS_WAIT_TMOUT  (10 * OS_TIMER_SECOND)   // wait for ACK per attempt
 
+#define CMS_PROTO_SIA_IP 0
+#define CMS_PROTO_DEFAULT CMS_PROTO_SIA_IP
+
 typedef struct {
-    cms_sia_ip_state_t sia;
     ip_addr_t server_ip;
     u16 server_port;
+    u32 account;
     os_timer_t wait_tmr;
-    event_t pending_event;   // event being sent (for retries)
     u8 retry;
     u8 waiting:1;
 } cms_t;
@@ -28,14 +30,30 @@ static cms_t _cms;
 
 static event_buf_item_t _cms_items[CMS_BUF_SIZE];
 static event_buf_t _cms_buf;
-static u8 _packet_buf[CMS_SIA_IP_MAX_PACKET_LEN];
+static u8 _packet_buf[CMS_MAX_PACKET_LEN];
+static u16 _packet_len = 0;
+
+// protocol interface — set by _proto_select()
+static const cms_proto_t *_proto = NULL;
+
+static void _proto_select(u8 protocol)
+{
+    switch (protocol)
+    {
+    case CMS_PROTO_SIA_IP:
+    default:
+        _proto = &cms_proto_sia_ip;
+        break;
+    }
+}
 
 bool cms_init(void)
 {
-    cms_sia_ip_init(&_cms.sia);
     event_buf_init(&_cms_buf, _cms_items, CMS_BUF_SIZE);
     _cms.waiting = false;
     _cms.retry = 0;
+
+    _proto_select(CMS_PROTO_DEFAULT);
 
     return (cms_reinit());
 }
@@ -55,15 +73,17 @@ bool cms_reinit(void)
     if (cfg_read(&buf, CFG_ID_CMS_ACCOUNT, ACCESS_SYSTEM))
     {
         if (sscanf(cfg, "%" SCNx32, &account) == 1)
-            _cms.sia.account = account;
+            _cms.account = account;
     }
+
+    _proto->reinit(_cms.account);
 
     LOG_INFO("CMS %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 ":%d, acct=%" PRIX32,
              _cms.server_ip.addr & 0xFF,
              (_cms.server_ip.addr >> 8) & 0xFF,
              (_cms.server_ip.addr >> 16) & 0xFF,
              (_cms.server_ip.addr >> 24) & 0xFF,
-             _cms.server_port, _cms.sia.account);
+             _cms.server_port, _cms.account);
 
     return ((_cms.server_ip.addr != 0) && (_cms.server_port != 0));
 }
@@ -72,9 +92,6 @@ bool cms_new_event(event_t *event)
 {
     if ((_cms.server_ip.addr == 0) || (_cms.server_port == 0))
         return (false);  // not configured
-
-    if (++_cms.sia.cnt > 9999)
-        _cms.sia.cnt = 1;
 
     // store event, send it later from cms_main_process()
     if (! event_buf_add_event(&_cms_buf, event, EVENT_PRIO_STD, EVENT_USER_NONE))
@@ -98,65 +115,39 @@ static bool _cms_send_packet(u8 *data, u16 len)
     return (net_udp_tx(&packet));
 }
 
-static bool _cms_build_and_send(event_t *event)
-{
-    buf_t buf;
-    u16 len;
-
-    if (! buf_init(&buf, (char *)_packet_buf, sizeof(_packet_buf)))
-        return (false);
-
-    len = cms_sia_ip_build_msg(&_cms.sia, &buf, event, NULL);
-    if (len == 0)
-        return (false);
-
-    LOG_INFO("SEND seq=%d", _cms.sia.cnt);
-
-    if (! _cms_send_packet(_packet_buf, len))
-    {
-        LOG_ERROR("send failed");
-        return (false);
-    }
-    return (true);
-}
-
 static void _cms_fail(void)
 {   // retries exhausted, discard the event
     LOG_ERROR("CMS event delivery failed");
     event_buf_done_events(&_cms_buf, false);
+    _proto->packet_done();
     _cms.waiting = false;
     _cms.retry = 0;
 }
 
 bool cms_udp_rx(u8 *data, u16 len, u16 port)
 {
-    u16 ack_seq;
-    bool is_nak;
+    cms_reply_t reply;
 
     if (port != _cms.server_port)
         return (false);  // not from our CMS server
 
-    if (! cms_sia_ip_rx_ack(&_cms.sia, data, len, &ack_seq, &is_nak))
-        return (false);  // not an ACK/NAK for us
+    reply = _proto->packet_reply(data, len);
+    if (reply == CMS_REPLY_NONE)
+        return (false);  // not a reply for the pending packet
 
     if (! _cms.waiting)
-        return (false);
+        return (true);
 
-    if (ack_seq != _cms.sia.cnt)
-    {
-        LOG_WARNING("ACK seq mismatch %d != %d", ack_seq, _cms.sia.cnt);
-        return (false);
-    }
-
-    if (is_nak)
+    if (reply == CMS_REPLY_NAK)
     {
         LOG_ERROR("NAK received");
         _cms_fail();
         return (true);
     }
 
-    LOG_INFO("ACK seq=%d", ack_seq);
+    LOG_INFO("ACK");
     event_buf_done_events(&_cms_buf, true);
+    _proto->packet_done();
     _cms.waiting = false;
     _cms.retry = 0;
     return (true);
@@ -174,12 +165,12 @@ void cms_main_process(void)
         if (now < _cms.wait_tmr)
             return;  // still waiting
 
-        // timeout — retry the same event with the same counter
+        // timeout — resend the same packet
         if (_cms.retry < CMS_RETRY_DEFAULT)
         {
             _cms.retry++;
             LOG_WARNING("CMS retry %d", _cms.retry);
-            _cms_build_and_send(&_cms.pending_event);
+            _cms_send_packet(_packet_buf, _packet_len);
             _cms.wait_tmr = now + CMS_WAIT_TMOUT;
         }
         else
@@ -189,20 +180,33 @@ void cms_main_process(void)
         return;
     }
 
-    // idle — send the next event if there is one
-    event_t event;
-    u16 user;
+    // idle — prepare the next event
+    if (! _proto->packet_ready())
+    {
+        event_t event;
+        u16 user;
 
-    if (! event_buf_get_event(&_cms_buf, &event, &user, NULL))
-        return;  // nothing to send
+        if (! event_buf_get_event(&_cms_buf, &event, &user, NULL))
+            return;  // nothing to send
 
-    if (! _cms_build_and_send(&event))
-    {   // event without SIA code or build error — discard it
-        event_buf_done_events(&_cms_buf, false);
-        return;
+        if (! _proto->new_event(&event))
+        {   // event not reportable by this protocol — discard it
+            event_buf_done_events(&_cms_buf, false);
+            return;
+        }
     }
 
-    _cms.pending_event = event;
+    // send the prepared packet
+    _packet_len = _proto->packet_size();
+    _proto->get_packet(_packet_buf);
+    LOG_INFO("SEND len=%d", _packet_len);
+
+    if (! _cms_send_packet(_packet_buf, _packet_len))
+    {
+        LOG_ERROR("send failed");
+        return;  // packet stays ready, next process() call resends it
+    }
+
     _cms.waiting = true;
     _cms.wait_tmr = now + CMS_WAIT_TMOUT;
 }

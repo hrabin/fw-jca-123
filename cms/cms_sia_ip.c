@@ -1,5 +1,6 @@
 #include "common.h"
 #include "cms_sia_ip.h"
+#include "cms_proto.h"
 #include "rtc.h"
 #include "cfg.h"
 #include "log.h"
@@ -180,7 +181,7 @@ void cms_sia_ip_init (cms_sia_ip_state_t *s)
     s->enable_event_name = 1;
     s->enable_event_time = 1;
     s->enable_time_stamp = 1;
-    s->cnt = 1;
+    s->cnt = 0;   // the first new_event() increments to 1
 }
 
 static bool _sia_msg_add_event (buf_t *dest, event_t *e)
@@ -370,3 +371,84 @@ bool cms_sia_ip_rx_ack (cms_sia_ip_state_t *s, u8 *udpdata, u16 len,
 
     return (false);  // not an ACK/NAK frame
 }
+
+// ---- cms_proto_t interface implementation ----
+
+static cms_sia_ip_state_t _sia;
+static u8 _sia_packet[CMS_SIA_IP_MAX_PACKET_LEN];
+static buf_t _sia_packet_buf;
+static bool _sia_packet_ok = false;
+
+static void _sia_proto_reinit(u32 account)
+{
+    cms_sia_ip_init(&_sia);
+    _sia.account = account;
+    _sia_packet_ok = false;
+}
+
+static bool _sia_proto_new_event(event_t *e)
+{
+    if (_sia_packet_ok)
+    {
+        LOG_ERROR("pending packet");
+        return (false);
+    }
+
+    if (++_sia.cnt > 9999)
+        _sia.cnt = 1;
+
+    buf_init(&_sia_packet_buf, (char *)_sia_packet, sizeof(_sia_packet));
+
+    if (cms_sia_ip_build_msg(&_sia, &_sia_packet_buf, e, NULL) == 0)
+        return (false);  // event not reportable by this protocol
+
+    _sia_packet_ok = true;
+    return (true);
+}
+
+static bool _sia_proto_packet_ready(void)
+{
+    return (_sia_packet_ok);
+}
+
+static u16 _sia_proto_packet_size(void)
+{
+    return (buf_length(&_sia_packet_buf));
+}
+
+static void _sia_proto_get_packet(u8 *dest)
+{
+    memcpy(dest, _sia_packet, buf_length(&_sia_packet_buf));
+}
+
+static void _sia_proto_packet_done(void)
+{
+    _sia_packet_ok = false;
+}
+
+static cms_reply_t _sia_proto_packet_reply(u8 *data, u16 len)
+{
+    u16 ack_seq;
+    bool is_nak;
+
+    if (! cms_sia_ip_rx_ack(&_sia, data, len, &ack_seq, &is_nak))
+        return (CMS_REPLY_NONE);
+
+    if (ack_seq != _sia.cnt)
+    {
+        LOG_WARNING("SIA ACK seq mismatch %d != %d", ack_seq, _sia.cnt);
+        return (CMS_REPLY_NONE);
+    }
+
+    return (is_nak ? CMS_REPLY_NAK : CMS_REPLY_ACK);
+}
+
+const cms_proto_t cms_proto_sia_ip = {
+    .reinit       = _sia_proto_reinit,
+    .new_event    = _sia_proto_new_event,
+    .packet_ready = _sia_proto_packet_ready,
+    .packet_size  = _sia_proto_packet_size,
+    .get_packet   = _sia_proto_get_packet,
+    .packet_done  = _sia_proto_packet_done,
+    .packet_reply = _sia_proto_packet_reply,
+};
