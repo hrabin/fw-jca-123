@@ -201,13 +201,11 @@ TEST(pdu_decode_national_number)
     ASSERT_STREQ(pdu.tel_num, "12345678901");
 }
 
-TEST(pdu_decode_ton_unknown_bug)
+TEST(pdu_decode_ton_unknown)
 {
-    // BUG: the ENCODER uses type 0x81 (TON=unknown, NPI=ISDN) for
-    // national numbers (PDU_SME_ISDN), but the DECODER treats TON=0
-    // as "unknown format" and skips the digits. Encoder output with
-    // a local number cannot be decoded back. Fixing the decoder here
-    // would require updating this test.
+    // The encoder uses type 0x81 (TON=unknown, NPI=ISDN) for numbers
+    // without '+'. The decoder must accept TON=0 as digits.
+    // Currently returns "unknown_81".
     pdu_t pdu;
     ascii content[200], phone[24];
 
@@ -219,7 +217,7 @@ TEST(pdu_decode_ton_unknown_bug)
     s16 len = pdu_decode(&pdu, v);
 
     ASSERT_EQ(len, 0);
-    ASSERT_STREQ(pdu.tel_num, "unknown_81");
+    ASSERT_STREQ(pdu.tel_num, "12345678901");
 }
 
 // ---- decode: edge cases ----
@@ -477,16 +475,16 @@ TEST(pdu_encode_invalid_number)
     ASSERT_EQ(pdu_encode(buf, &pdu), -2);
 }
 
-// ---- known-bug documentation tests ----
+// ---- bug discovery tests ----
 //
-// Each test below pins the CURRENT (buggy) behavior. When the bug is
-// fixed, update the assertion to the correct expectation.
+// These tests assert the CORRECT per-spec behavior and FAIL against
+// the current implementation. Fix the bugs, then these go green.
 
-TEST(pdu_bug_extension_chars_not_encodable)
+TEST(pdu_extension_chars_encodable)
 {
-    // BUG: _enc7b() has no extension-table handling — characters
-    // ^ { } \ [ ~ ] | € are not in the main 7-bit table and silently
-    // become '?'. Encoding "a^b" must produce the same PDU as "a?b".
+    // _enc7b() must encode extension-table characters:
+    //   '^' == ESC(0x1B) + extension 0x14
+    // Currently '^' silently becomes '?'.
     pdu_t pdu;
     ascii buf[PDU_MAX_LENGTH];
 
@@ -502,14 +500,15 @@ TEST(pdu_bug_extension_chars_not_encodable)
 
     pdu_encode(buf, &pdu);
 
-    // UD for "a?b" — the '^' was replaced by '?'
-    ASSERT_STREQ(buf, "0011000C9124103254769800008F03E19F18");
+    // septets a=61, ESC=1B, ext=14, b=62 → packed E1 0D 45 0C
+    ASSERT_STREQ(buf, "0011000C9124103254769800008F04E10D450C");
 }
 
-TEST(pdu_bug_euro_extension_decode)
+TEST(pdu_euro_extension_decode)
 {
-    // BUG: GSM 03.38 extension 0x65 is €, but _7b_escape maps it to
-    // 164 == ¤. Also the escape path writes the raw byte, not UTF-8.
+    // GSM 03.38 extension 0x65 is € (U+20AC) — must decode to the
+    // UTF-8 sequence E2 82 AC. Currently maps to ¤ and is written
+    // as a raw byte instead of UTF-8.
     pdu_t pdu;
     ascii content[200], phone[24];
 
@@ -521,37 +520,34 @@ TEST(pdu_bug_euro_extension_decode)
 
     s16 len = pdu_decode(&pdu, v);
 
-    ASSERT_EQ(len, 1);
-    // currently ¤ (raw Latin-1 0xA4); should be "€" (UTF-8 E2 82 AC)
-    ASSERT_EQ((u8)content[0], 164);
+    ASSERT_EQ(len, 3);
+    ASSERT_STREQ(pdu.content, "\xE2\x82\xAC");
 }
 
-TEST(pdu_bug_multipart_ucs2_udh_not_subtracted)
+TEST(pdu_multipart_ucs2_udh_subtracted)
 {
-    // BUG: the UCS2 decode branch does not subtract the UDH octets
-    // from the user-data length, so every concatenated UCS2 part
-    // reads udh_len/2 extra characters past the real text.
+    // The UCS2 decode branch must subtract the UDH octets from the
+    // user-data length. Currently the extra octets leak into the text.
     pdu_t pdu;
     ascii content[200], phone[24];
 
     _pdu_setup(&pdu, content, phone);
 
     // type=44 (UDHI), DCS=08, UDL=0A (6 UDH + 4 data octets = 2 chars)
-    // UDH: 05 00 03 07 02 01, data "He", trailing byte "0041" must NOT
-    // be read — currently it is, producing "HeA"
+    // UDH: 05 00 03 07 02 01, data "He", trailing "0041" must NOT be read
     const ascii *v =
         "00440C912410325476980008029012514260800A050003070201004800650041";
 
     s16 len = pdu_decode(&pdu, v);
 
-    ASSERT_EQ(len, 3);              // should be 2
-    ASSERT_STREQ(pdu.content, "HeA");  // should be "He"
+    ASSERT_EQ(len, 2);
+    ASSERT_STREQ(pdu.content, "He");
 }
 
-TEST(pdu_bug_greek_alphabet_placeholder)
+TEST(pdu_greek_alphabet_decode)
 {
-    // BUG: GSM 0x10 is Δ (U+0394) but pdu_7b_table[0x10] = 16 —
-    // a control character placeholder.
+    // GSM 0x10 is Δ (U+0394) — must decode to UTF-8 CE 94.
+    // Currently maps to control char 0x10.
     pdu_t pdu;
     ascii content[200], phone[24];
 
@@ -563,8 +559,8 @@ TEST(pdu_bug_greek_alphabet_placeholder)
 
     s16 len = pdu_decode(&pdu, v);
 
-    ASSERT_EQ(len, 1);
-    ASSERT_EQ((u8)content[0], 16);   // should be Δ (UTF-8 CE 94)
+    ASSERT_EQ(len, 2);
+    ASSERT_STREQ(pdu.content, "\xCE\x94");
 }
 
 // ---- pdu_init defaults ----
