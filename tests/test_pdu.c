@@ -1,0 +1,495 @@
+#include "test.h"
+#include "pdu.h"
+#include <string.h>
+
+// PDU encode/decode tests — GSM 03.40 SMS-SUBMIT / SMS-DELIVER formats.
+//
+// 7-bit packing per GSM 03.38:
+//   octet[n] = (septet[n] >> (n%7)) | (septet[n+1] << (7 - n%7))
+// "Hello" packs to C8 32 9B FD 06.
+//
+// SCTS semi-octets are low-nibble-first:
+//   20/09/21 15:24:06 +08  →  "02901251426080"
+//
+// Phone number BCD: digits swapped pairwise, odd length filled with F:
+//   420123456789  →  "241032547698"
+
+// Helper: prepare a decode context
+static void _pdu_setup(pdu_t *pdu, ascii *content, ascii *phone)
+{
+    pdu_init(pdu);
+    pdu->content = content;
+    pdu->tel_num = phone;
+    memset(content, 0, 200);
+    memset(phone, 0, 24);
+}
+
+// ---- decode: basic SMS-DELIVER, 7-bit ----
+
+TEST(pdu_decode_text7)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // SCA=00, type=04 (DELIVER), OA=+420123456789, PID=00, DCS=00,
+    // SCTS=20/09/21 15:24:06 +08, UDL=05, UD="Hello"
+    const ascii *v =
+        "00040C9124103254769800000290125142608005C8329BFD06";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 5);
+    ASSERT_EQ(pdu.type, PDU_TYPE_TEXT7);
+    ASSERT_EQ(pdu.size, 5);
+    ASSERT_STREQ(pdu.tel_num, "+420123456789");
+    ASSERT_STREQ(pdu.content, "Hello");
+    ASSERT_EQ(pdu.timestamp[0], 20);
+    ASSERT_EQ(pdu.timestamp[1], 9);
+    ASSERT_EQ(pdu.timestamp[2], 21);
+    ASSERT_EQ(pdu.timestamp[3], 15);
+    ASSERT_EQ(pdu.timestamp[4], 24);
+    ASSERT_EQ(pdu.timestamp[5], 6);
+}
+
+// ---- decode: SMSC address is skipped ----
+
+TEST(pdu_decode_smsc_skipped)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // same as above but with 7-octet SMSC prepended
+    const ascii *v =
+        "07916407058099F9040C9124103254769800000290125142608005C8329BFD06";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 5);
+    ASSERT_STREQ(pdu.tel_num, "+420123456789");
+    ASSERT_STREQ(pdu.content, "Hello");
+}
+
+// ---- decode: 8-bit data ----
+
+TEST(pdu_decode_text8)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // DCS=04 (8-bit), UDL=05, raw ASCII
+    const ascii *v =
+        "00040C912410325476980004029012514260800548656C6C6F";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 5);
+    ASSERT_EQ(pdu.type, PDU_TYPE_TEXT8);
+    ASSERT_STREQ(pdu.content, "Hello");
+}
+
+// ---- decode: UCS2 ----
+
+TEST(pdu_decode_ucs2)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // DCS=08 (UCS2), UDL=04 octets = 2 chars "He"
+    const ascii *v =
+        "00040C912410325476980008029012514260800400480065";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 2);
+    ASSERT_EQ(pdu.type, PDU_TYPE_UCS2);
+    ASSERT_STREQ(pdu.content, "He");
+}
+
+// ---- decode: concatenated 8-bit ----
+
+TEST(pdu_decode_concat_text8)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // type=44 (UDHI), DCS=04, UDL=8 (6 UDH + 2 data)
+    // UDH: len=05, IEI=00, IEDL=03, ref=07, max=02, seq=01
+    const ascii *v =
+        "00440C91241032547698000402901251426080080500030702014142";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 2);
+    ASSERT_EQ(pdu.id, 7);
+    ASSERT_EQ(pdu.count, 2);
+    ASSERT_EQ(pdu.nr, 1);
+    ASSERT_STREQ(pdu.content, "AB");
+}
+
+// ---- decode: concatenated 7-bit ----
+
+TEST(pdu_decode_concat_text7)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDL=09 (7 UDH septets + 2 text), 7-bit text after 48-bit UDH
+    // starts at bit offset 1: "A"=82, "B"=42
+    const ascii *v =
+        "00440C91241032547698000002901251426080090500030702018242";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 2);
+    ASSERT_EQ(pdu.id, 7);
+    ASSERT_EQ(pdu.count, 2);
+    ASSERT_EQ(pdu.nr, 1);
+    ASSERT_STREQ(pdu.content, "AB");
+}
+
+// ---- decode: status report ----
+
+TEST(pdu_decode_status_report)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // type=02 (STATUS-REPORT), MR=05, RA=+420123456789,
+    // SCTS+DT (2x7 octets), ST=00
+    const ascii *v =
+        "0002050C91241032547698029012514260800290125142608000";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 2);
+    ASSERT_EQ(pdu.type, PDU_TYPE_SR);
+    ASSERT_EQ(pdu.content[0], 5);   // message reference
+    ASSERT_EQ(pdu.content[1], 0);   // status code
+    ASSERT_STREQ(pdu.tel_num, "+420123456789");
+}
+
+// ---- decode: national number format ----
+
+TEST(pdu_decode_national_number)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // OA type=A1 (TON=national, NPI=ISDN), 11 digits + F fill
+    const ascii *v =
+        "00040BA12143658709F100000290125142608000";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 0);
+    ASSERT_STREQ(pdu.tel_num, "12345678901");
+}
+
+TEST(pdu_decode_ton_unknown_bug)
+{
+    // BUG: the ENCODER uses type 0x81 (TON=unknown, NPI=ISDN) for
+    // national numbers (PDU_SME_ISDN), but the DECODER treats TON=0
+    // as "unknown format" and skips the digits. Encoder output with
+    // a local number cannot be decoded back. Fixing the decoder here
+    // would require updating this test.
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    const ascii *v =
+        "00040B812143658709F100000290125142608000";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 0);
+    ASSERT_STREQ(pdu.tel_num, "unknown_81");
+}
+
+// ---- decode: edge cases ----
+
+TEST(pdu_decode_zero_length)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDL=00 — zero length is valid
+    const ascii *v =
+        "00040C9124103254769800000290125142608000";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 0);
+    ASSERT_EQ(pdu.size, 0);
+}
+
+TEST(pdu_decode_wrong_size)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDL=A1 (161) — over the maximum
+    const ascii *v =
+        "00040C91241032547698000002901251426080A1";
+
+    ASSERT_EQ(pdu_decode(&pdu, v), 0);
+}
+
+TEST(pdu_decode_unknown_mti)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // type=01 (SUBMIT) — not supported in decode direction
+    const ascii *v =
+        "00010C9124103254769800000290125142608000";
+
+    ASSERT_EQ(pdu_decode(&pdu, v), -2);
+}
+
+TEST(pdu_decode_unknown_dcs)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // DCS=E4 — coding group 1110 reserved → rejected
+    const ascii *v =
+        "00040C9124103254769800E40290125142608000";
+
+    ASSERT_EQ(pdu_decode(&pdu, v), -4);
+}
+
+// ---- decode: unknown UDH IEI is discarded ----
+
+TEST(pdu_decode_unknown_udh)
+{
+    pdu_t pdu;
+    ascii content[200], phone[24];
+
+    _pdu_setup(&pdu, content, phone);
+
+    // UDH with IEI=24 (language shift) — not concatenation,
+    // UDH discarded, content must still be extracted
+    const ascii *v =
+        "00440C91241032547698000402901251426080080524030102034142";
+
+    s16 len = pdu_decode(&pdu, v);
+
+    ASSERT_EQ(len, 2);
+    ASSERT_EQ(pdu.count, 0);        // no concat info
+    ASSERT_STREQ(pdu.content, "AB");
+}
+
+// ---- encode: basic SMS-SUBMIT, 7-bit ----
+
+TEST(pdu_encode_text7)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "Hello";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 5;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+    pdu.sr        = false;
+
+    s16 len = pdu_encode(buf, &pdu);
+
+    // SCA=00, type=11, MR=00, DA=0C 91 241032547698,
+    // PID=00, DCS=00, VP=8F, UDL=05, UD=C8329BFD06
+    // 20 octets total, SMSC octet excluded from the returned length
+    ASSERT_EQ(len, 19);
+    ASSERT_STREQ(buf, "0011000C9124103254769800008F05C8329BFD06");
+}
+
+// ---- encode: status report requested ----
+
+TEST(pdu_encode_srr)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "Hello";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 5;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+    pdu.sr        = true;
+
+    pdu_encode(buf, &pdu);
+
+    // PDU type byte has SRR bit: 11 | 20 = 31
+    ASSERT_STREQ(buf, "0031000C9124103254769800008F05C8329BFD06");
+}
+
+// ---- encode: concatenated 7-bit ----
+
+TEST(pdu_encode_concat_text7)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "AB";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 2;
+    pdu.count     = 2;
+    pdu.nr        = 1;
+    pdu.sr        = false;
+
+    pdu_encode(buf, &pdu);
+
+    // type=51 (UDHI), UDL=09 (7 UDH septets + 2),
+    // UDH: 05 00 03 00 02 01, 7-bit "AB" with 1 fill bit: 82 42
+    ASSERT_STREQ(buf, "0051000C9124103254769800008F090500030002018242");
+}
+
+// ---- encode: UCS2 raw data ----
+
+TEST(pdu_encode_ucs2)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "\x00\x48\x00\x65";   // raw UCS2 "He"
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_UCS2;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 4;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+    pdu.sr        = false;
+
+    pdu_encode(buf, &pdu);
+
+    // DCS=08, UDL=04 octets
+    ASSERT_STREQ(buf, "0011000C9124103254769800088F0400480065");
+}
+
+// ---- encode: national number (no '+') ----
+
+TEST(pdu_encode_national_number)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "Hi";
+    pdu.tel_num   = "123456789";    // 9 digits, odd → F fill
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 2;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+    pdu.sr        = false;
+
+    pdu_encode(buf, &pdu);
+
+    // DA type=81 (not 91), 9 digits + F → 21436587F9
+    // "Hi" packs to C8 34
+    ASSERT_STREQ(buf, "001100098121436587F900008F02C834");
+}
+
+// ---- encode: error cases ----
+
+TEST(pdu_encode_nr_out_of_range)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "AB";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 2;
+    pdu.count     = 2;
+    pdu.nr        = 3;              // nr > count
+
+    ASSERT_EQ(pdu_encode(buf, &pdu), -1);
+}
+
+TEST(pdu_encode_empty_text7)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "";
+    pdu.tel_num   = "+420123456789";
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 0;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+
+    ASSERT_EQ(pdu_encode(buf, &pdu), -3);
+}
+
+TEST(pdu_encode_invalid_number)
+{
+    pdu_t pdu;
+    ascii buf[PDU_MAX_LENGTH];
+
+    pdu_init(&pdu);
+    pdu.content   = "Hi";
+    pdu.tel_num   = "1";            // too short
+    pdu.type      = PDU_TYPE_TEXT7;
+    pdu.data_type = PDU_DATA_RAW;
+    pdu.size      = 2;
+    pdu.count     = 1;
+    pdu.nr        = 1;
+
+    ASSERT_EQ(pdu_encode(buf, &pdu), -2);
+}
+
+// ---- pdu_init defaults ----
+
+TEST(pdu_init_defaults)
+{
+    pdu_t pdu;
+
+    pdu_init(&pdu);
+
+    ASSERT_EQ(pdu.type, PDU_TYPE_UNKNOWN);
+    ASSERT_EQ(pdu.data_type, PDU_DATA_UTF8);
+    ASSERT_EQ(pdu.count, 1);
+    ASSERT_EQ(pdu.nr, 0);
+    ASSERT_EQ(pdu.size, 0);
+    ASSERT(pdu.content == NULL);
+    ASSERT(pdu.tel_num == NULL);
+}

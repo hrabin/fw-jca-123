@@ -3,6 +3,8 @@
 #define OS_H
 
 #include "type.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef u32 os_timer_t;
 

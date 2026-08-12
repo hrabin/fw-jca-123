@@ -7,7 +7,7 @@
 #   make add      create a new test_xxx.c skeleton
 
 CC         = gcc
-CFLAGS     = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -Os
+CFLAGS     = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-sign-compare -Os
 BUILD_DIR  = build
 TARGET     = $(BUILD_DIR)/test_runner
 
@@ -16,6 +16,7 @@ INCLUDES   = -I./stubs \
              -I../sdk/common \
              -I../sdk/drv_g4 \
              -I../lib/nmea \
+             -I../lib/pdu \
              -I../modem \
              -I../net
 
@@ -25,6 +26,7 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../sdk/common/buf.c \
                  ../sdk/common/util.c \
                  ../sdk/common/text_lib.c \
+                 ../lib/pdu/pdu.c \
                  ../modem/modem.c \
                  ../modem/modem_at.c \
                  ../modem/multi_sms.c
