@@ -5,6 +5,7 @@
 #include "can.h"
 #include "cfg.h"
 #include "cmd.h"
+#include "cms_main.h"
 #include "event.h"
 #include "gps.h"
 #include "hardware.h"
@@ -297,6 +298,12 @@ void app_reinit_req(cfg_id_t id)
     case CFG_ID_MODEM_BAND:
         _reinit_mask |= _REINIT_MODEM;
         break;
+
+    case CFG_ID_SERVER_ADDR:
+    case CFG_ID_CMS_ACCOUNT:
+        cms_reinit();
+        break;
+
     default:
         break;
     }
@@ -330,6 +337,7 @@ void app_main_init (void)
     APP_INIT ("INIT BLE      ... ", ble_init(_ble_rx_parser));
 
     net_init();
+    cms_init();
 
     app_main_reinit();
 
@@ -379,6 +387,7 @@ void app_task_comm(void)
     }
 
     tracer_comm_process();
+    cms_main_process();
     event_comm_task();
     sms_process();
     update_task();

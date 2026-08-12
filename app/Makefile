@@ -12,6 +12,7 @@ DIR_ROOT  ?= .
 DIR_HW     := ../hw
 DIR_MODEM  := ../modem
 DIR_NET    := ../net
+DIR_CMS    := ../cms
 DIR_LIB    := ../lib
 DIR_SDK    := ../sdk
 DIR_UTILS  := ../ut
@@ -100,6 +101,9 @@ C_SOURCES +=  \
   \
   $(DIR_NET)/udp.c \
   \
+  $(DIR_CMS)/cms_main.c \
+  $(DIR_CMS)/cms_sia_ip.c \
+  \
   $(DIR_MODEM)/modem.c \
   $(DIR_MODEM)/modem_at.c \
   $(DIR_MODEM)/modem_bg95.c \
@@ -122,6 +126,7 @@ C_INCLUDES +=  \
 -I$(DIR_ROOT) \
 -I$(DIR_HW) \
 -I$(DIR_NET) \
+-I$(DIR_CMS) \
 -I$(DIR_LIB) \
 -I$(DIR_LIB)/nmea \
 -I$(DIR_MODEM) \

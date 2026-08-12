@@ -8,7 +8,7 @@
 bool cms_init(void);
 bool cms_reinit(void);
 bool cms_new_event(event_t *event);
-void cms_udp_rx(u8 *data, u16 len);
+bool cms_udp_rx(u8 *data, u16 len, u16 port);
 void cms_main_process(void);
 void cms_tick(void);
 
@@ -17,7 +17,7 @@ void cms_tick(void);
 #define cms_init()      (true)
 #define cms_reinit()    (true)
 #define cms_new_event(e) (true)
-#define cms_udp_rx(d,l)
+#define cms_udp_rx(d,l,p) (false)
 #define cms_main_process()
 #define cms_tick()
 

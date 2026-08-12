@@ -10,6 +10,7 @@
 #include "sms_processing.h"
 #include "system.h"
 #include "rtc.h"
+#include "cms_main.h"
 
 LOG_DEF("EVENT");
 
@@ -211,6 +212,11 @@ void event_task(void)
                         LOG_DEBUG("call to user %d", user);
                         // event_buf_add_event(&voice_buf, e, EVENT_PRIO_STD, user);
                     }
+                    continue;
+
+                case 'C':
+                    LOG_DEBUG("send to CMS");
+                    cms_new_event(e);
                     continue;
 
                 case ',':

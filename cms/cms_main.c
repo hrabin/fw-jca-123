@@ -128,34 +128,38 @@ static void _cms_fail(void)
     _cms.retry = 0;
 }
 
-void cms_udp_rx(u8 *data, u16 len)
+bool cms_udp_rx(u8 *data, u16 len, u16 port)
 {
     u16 ack_seq;
     bool is_nak;
 
+    if (port != _cms.server_port)
+        return (false);  // not from our CMS server
+
     if (! cms_sia_ip_rx_ack(&_cms.sia, data, len, &ack_seq, &is_nak))
-        return;  // not an ACK/NAK for us
+        return (false);  // not an ACK/NAK for us
 
     if (! _cms.waiting)
-        return;
+        return (false);
 
     if (ack_seq != _cms.sia.cnt)
     {
         LOG_WARNING("ACK seq mismatch %d != %d", ack_seq, _cms.sia.cnt);
-        return;
+        return (false);
     }
 
     if (is_nak)
     {
         LOG_ERROR("NAK received");
         _cms_fail();
-        return;
+        return (true);
     }
 
     LOG_INFO("ACK seq=%d", ack_seq);
     event_buf_done_events(&_cms_buf, true);
     _cms.waiting = false;
     _cms.retry = 0;
+    return (true);
 }
 
 void cms_main_process(void)
