@@ -2,7 +2,7 @@
 #define NMEA_H
 
 #include "type.h"
-#include "rtc.h"
+#include "rtc_type.h"
 
 // Canonical GPS data from NMEA sentences.
 // Used as the parameter type for all nmea_parse_*() functions.
