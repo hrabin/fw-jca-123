@@ -4,35 +4,31 @@
 #include "tracer.h"
 #include "tracer_sia.h"
 #include "tracer_proto.h"
-#include "system.h" // inputs/outputs
-#include "util.h"
 #include "cms_sia_ip.h"
-#include "event_defs.h"
+#include "event.h"
+#include "log.h"
 
+LOG_DEF("SIA");
 
-cms_sia_ip_state_t  sia_state;
-
+static cms_sia_ip_state_t sia_state;
 static bool sia_packet_ok = false;
 static buf_t sia_packet;
 
 void tr_sia_reinit(u32 unit_id)
 {
-    memset (&sia_state, 0, sizeof(cms_sia_ip_state_t));
-    sia_state.enable_event_name = 1;
-    sia_state.enable_event_time = 1;
-    sia_state.enable_time_stamp = 1;
-    sia_state.enable_time_sync  = 1;
-    sia_state.object_id = unit_id;
+    cms_sia_ip_init(&sia_state);
+    sia_state.account = unit_id;
 
     buf_init(&sia_packet, (char *)tracer_packet_buffer, TRACER_PACKET_BUFFER_SIZE);
+    sia_packet_ok = false;
 }
 
-u32  tr_sia_unit_id (void)
+u32 tr_sia_unit_id (void)
 {
-    return (sia_state.object_id);
+    return (sia_state.account);
 }
 
-u16  tr_sia_packet_size(void)
+u16 tr_sia_packet_size(void)
 {
     return (buf_length(&sia_packet));
 }
@@ -59,37 +55,21 @@ void tr_sia_packet_done (void)
 
 bool tr_sia_packet_reply_ok (u8 *data, u16 len)
 {
-    s32 a;
-    u32 b,c;
+    u16 ack_seq;
+    bool is_nak;
 
-    if (! cms_sia_ip_rx(&sia_state, data, len))
+    if (! cms_sia_ip_rx_ack(&sia_state, data, len, &ack_seq, &is_nak))
         return (false);
 
-    data += SIA_IDX_DATA;
-
-    if (sscanf((char *)data, "\"ACK\"%" SCNd32 "L%" SCNx32 "#%" SCNx32 "[",
-               &a, &b, &c) == 3)
-    {
-        if (a != sia_state.cnt)
-        {   // neni to odpoved na moji zpravu
-            LOG_ERROR("SIA ACK cnt");
-            return (false);
-        }
-    }
-    else if (sscanf((char *)data, "\"NAK\"%dL%X", &a, &b) == 2)
-    {
-        LOG_ERROR("SIA NACK");
-        // muze to byt NACK z duvodu ujeteho casu
-        // return (false);
-    }
-    else
-    {
-        LOG_ERROR("SIA RX");
-        // return (false);
+    if (ack_seq != sia_state.cnt)
+    {   // not the reply to our message
+        LOG_ERROR("SIA ACK seq mismatch %d != %d", ack_seq, sia_state.cnt);
+        return (false);
     }
 
-    // TODO
-    sia_state.cnt++;
+    if (is_nak)
+        LOG_ERROR("SIA NAK");
+
     return (true);
 }
 
@@ -114,27 +94,33 @@ void tr_sia_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t *inf
         LOG_ERROR ("pending packet");
         return;
     }
-    e.evt = EVENT_TRACKING;
-    e.src = SOURCE_SELF;
-    e.time.dw = pos->time.dw;
+
+    e.id = EVENT_ID_TRACKING;
+    e.source = EVENT_SOURCE_UNIT;
+    e.time = pos->time;
+
+    if (++sia_state.cnt > 9999)
+        sia_state.cnt = 1;
 
     buf_init(&buf, data, SIA_MAX_DATA_LEN);
 
-    // podle standardu SIA je to ukecane a navic chybi rychlost atd.
+    // longitude
     a = pos->lon_sec; c = 'E';
-    if (a<0) { a=0-a; c = 'W'; }
-    s = a/(60*60*100); a%=(60*60*100); // stupne
-    m = a/(60*100); a%=(60*100); // minuty
-    f = a/60; // zlomek minut
+    if (a<0) { a = 0 - a; c = 'W'; }
+    s = a/(60*60*100); a%=(60*60*100); // degrees
+    m = a/(60*100); a%=(60*100);       // minutes
+    f = a/60;                          // fraction of minutes
     buf_append_fmt (&buf, "[X%03d%c%02d.%02d0]", s, c, m, f);
 
+    // latitude
     a = pos->lat_sec; c = 'N';
-    if (a<0) { a=0-a; c = 'S'; }
-    s = a/(60*60*100); a%=(60*60*100); // stupne
-    m = a/(60*100); a%=(60*100); // minuty
-    f = a/60;  // zlomek minut
+    if (a<0) { a = 0 - a; c = 'S'; }
+    s = a/(60*60*100); a%=(60*60*100);
+    m = a/(60*100); a%=(60*100);
+    f = a/60;
     buf_append_fmt (&buf, "[Y%02d%c%02d.%02d0]", s, c, m, f);
 
+    // altitude
     a = pos->alt;
     buf_append_fmt (&buf, "[Z%04dM]", a);
 

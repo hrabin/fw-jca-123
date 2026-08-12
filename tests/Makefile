@@ -20,6 +20,7 @@ INCLUDES   = -I./stubs \
              -I../modem \
              -I../net \
              -I../app/cms \
+             -I../app/tracer \
              -I../app
 
 # Source files under test (from the main project)
@@ -30,12 +31,14 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../sdk/common/text_lib.c \
                  ../lib/pdu/pdu.c \
                  ../app/cms/cms_sia_ip.c \
+                 ../app/tracer/tracer_h02.c \
+                 ../app/tracer/tracer_sia.c \
                  ../modem/modem.c \
                  ../modem/modem_at.c \
                  ../modem/multi_sms.c
 
 # Test source files (auto-discovered: test_*.c)
-TEST_SRCS      = $(wildcard test_*.c) test_main.c
+TEST_SRCS      = $(wildcard test_*.c) test_main.c mock_rtc.c
 
 ALL_SRCS       = $(TEST_SRCS) $(SRC_UNDER_TEST)
 OBJECTS        = $(addprefix $(BUILD_DIR)/,$(notdir $(ALL_SRCS:.c=.o)))

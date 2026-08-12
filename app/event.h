@@ -23,6 +23,7 @@ enum {
     EVENT_ID_FAULT_RECOVERY,
     EVENT_ID_JAMMING_ACT,
     EVENT_ID_JAMMING_DACT,
+    EVENT_ID_TRACKING,     // tracker position report (not via event_task)
 
     EVENT_ID_SIZE
 };

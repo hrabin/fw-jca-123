@@ -30,6 +30,7 @@ static const _sia_event_t _SIA_EVENT_TABLE[] = {
     {EVENT_ID_FAULT_RECOVERY,   "UR"},   // untested restore
     {EVENT_ID_JAMMING_ACT,      "XQ"},   // RF jamming
     {EVENT_ID_JAMMING_DACT,     "XH"},   // RF jamming restore
+    {EVENT_ID_TRACKING,         "TL"},   // track location (position report)
 };
 
 // SIA zone id translation — our event sources to a single hex digit.
@@ -72,6 +73,7 @@ static const cfg_id_t _EVENT_TEXT_ID[] = {
     CFG_ID_TEXT_EVENT_NAME_013,   // FAULT_RECOVERY
     CFG_ID_TEXT_EVENT_NAME_014,   // JAMMING_ACT
     CFG_ID_TEXT_EVENT_NAME_015,   // JAMMING_DACT
+    CFG_ID_TEXT_EVENT_NAME_016,   // TRACKING
 };
 
 static const cfg_id_t _SOURCE_TEXT_ID[] = {

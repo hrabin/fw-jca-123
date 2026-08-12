@@ -10,18 +10,7 @@
 //   <crc>  4 hex chars, CRC-16-IBM of the data region
 //   <0LLL> 4 hex chars, '0' + 3-char hex length of the data region
 
-// ---- mocks ----
-
-void rtc_get_time(rtc_t *time)
-{
-    // fixed current time for deterministic timestamps
-    time->second = 56;
-    time->minute = 34;
-    time->hour   = 12;
-    time->day    = 12;
-    time->month  = 8;
-    time->year   = 26;
-}
+// ---- test helpers ----
 
 // Reference CRC-16-IBM (poly 0xA001, init 0) — bitwise implementation,
 // equivalent to the table-driven version inside the codec.
