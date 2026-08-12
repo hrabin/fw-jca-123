@@ -550,38 +550,6 @@ bool modem_config_table(modem_t *m, const modem_config_t *table)
     }
     modem_at_unlock(m);
 
-    // second round for commands without reading state
-/*  p = table;
-    while (p->set != NULL)
-    {
-        if (p->ask == NULL)
-        {   // now process which was not processed in first round
-            OS_DELAY(100);
-            if (! modem_at_ok_cmd(m, p->set))
-            {
-                LOG_ERROR("cfg \"%s\" failed", p->set);
-            }
-        }
-        p++;
-    }*/
-
-/*  if (cfg_ok)
-        return (true);
-
-    LOG_WARNING("reconfig");
-    p = table;
-
-    while (p->ask != NULL)
-    {
-        if (p->set != NULL)
-        {
-            if (! modem_at_ok_cmd(m, p->set))
-            {
-                LOG_ERROR("cfg \"%s\" failed", p->set);
-            }
-        }
-        p++;
-    }*/
     return (cfg_ok);
 }
 
