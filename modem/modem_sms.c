@@ -32,8 +32,7 @@ bool send_pdu_now (modem_t *m, u8 *pdu_raw_data, int data_len, u8 *sms_id)
     modem_at_lock (m);
     while (retry--)
     {
-        if (m->pfunc_event != NULL)
-            m->pfunc_event(MODEM_EVENT_SMS_SENDING);
+        modem_event(m, MODEM_EVENT_SMS_SENDING);
         sprintf (tmp_buf, "AT+CMGS=%d", data_len);
         modem_at_cmd_nolock (m, tmp_buf);
         // result is ">" then awaiting PDU string
@@ -217,8 +216,7 @@ bool modem_sms_send_now (modem_t *m, sms_struct_t *sms)
 g_s_s_false:
             OS_MEM_FREE (pdu.content);
             OS_MEM_FREE (raw_data);
-            if (m->pfunc_event != NULL)
-                m->pfunc_event(MODEM_EVENT_SMS_ERROR);
+            modem_event(m, MODEM_EVENT_SMS_ERROR);
             m->sms_error_counter++;
             return (false);
         }

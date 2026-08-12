@@ -113,6 +113,13 @@ typedef struct _modem_t {
 
 } modem_t;
 
+// Report a modem event to the application (no-op if no callback registered).
+static inline void modem_event(modem_t *m, modem_event_e event)
+{
+	if (m->pfunc_event != NULL)
+		m->pfunc_event(event);
+}
+
 char *modem_parse_pattern(const char *s, const char *pattern);
 
 void modem_hw_init(modem_t *m);
