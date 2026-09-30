@@ -424,7 +424,7 @@ echo:
     {
         log_lock();
         OS_PUTTEXT (NL);
-        OS_PUTTEXT (buf_data(inbuf)) ;
+        OS_PRINTF ("%s", buf_data(inbuf));   // never use received data as a format string
         log_unlock();
     }
 }

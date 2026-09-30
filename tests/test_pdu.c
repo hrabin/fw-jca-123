@@ -579,3 +579,57 @@ TEST(pdu_init_defaults)
     ASSERT(pdu.content == NULL);
     ASSERT(pdu.tel_num == NULL);
 }
+
+// ---- regression: phone buffer is exactly PDU_MAX_PHONENUM_LEN (20 bytes) ----
+//
+// In the firmware the destination really is 20 bytes: sms_struct_t.tel_num is
+// SMS_MAX_PHONE_LEN (20) and modem_sms_unso_pdu_parse() passes a 20-byte
+// OS_MEM_ALLOC(MAX_PHONENUM_LEN). A 20-digit number with a non-international
+// TON used to write 20 digits + a NUL terminator into those 20 bytes, i.e. one
+// byte past the end (pdu_parse_telnum). Caught with ASan; the canary below
+// makes the overrun fail here without needing a sanitizer build.
+TEST(pdu_telnum_no_overrun_at_capacity)
+{
+    pdu_t pdu;
+    ascii content[PDU_MAX_SMS_LEN + 1];
+
+    struct {
+        ascii tel[PDU_MAX_PHONENUM_LEN];
+        u8    canary[8];
+    } s;
+
+    pdu_init(&pdu);
+    pdu.content = content;
+    pdu.tel_num = s.tel;
+    memset(content, 0, sizeof(content));
+    memset(s.tel, 0xA5, sizeof(s.tel));
+    memset(s.canary, 0xC7, sizeof(s.canary));
+
+    // SMS-DELIVER, OA length 0x14 (= 20 digits), TON 0x81 (national/unknown)
+    s16 len = pdu_decode(&pdu,
+                         "00" "04" "14" "81"
+                         "11111111111111111111"
+                         "00" "00" "00000000000000" "00");
+
+    ASSERT(len <= 0);              // 20 digits + NUL cannot fit in 20 bytes
+    ASSERT(s.canary[0] == 0xC7);   // nothing was written past tel[]
+    ASSERT(s.canary[7] == 0xC7);
+}
+
+// Numbers that do fit must still decode unchanged.
+TEST(pdu_telnum_18digit_decodes)
+{
+    pdu_t pdu;
+    ascii content[200];   // _pdu_setup() memsets 200 bytes
+    ascii phone[24];      // and 24 bytes here
+
+    _pdu_setup(&pdu, content, phone);
+
+    // OA length 0x12 (= 18 digits), TON 0x81
+    pdu_decode(&pdu,
+               "00" "04" "12" "81"
+               "222222222222222222"
+               "00" "00" "00000000000000" "00");
+
+    ASSERT_STREQ(pdu.tel_num, "222222222222222222");
+}

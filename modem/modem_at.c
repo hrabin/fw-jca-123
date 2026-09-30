@@ -94,7 +94,7 @@ bool modem_at_cmd_nolock(modem_t *m, const ascii *at_cmd)
     if (m->flags & MODEM_FLAG_ECHO)
     {
         OS_PUTTEXT("\r\n/");
-        OS_PUTTEXT(at_cmd);
+        OS_PRINTF("%s", at_cmd);
         OS_PUTTEXT(" ");
     }
 

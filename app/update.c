@@ -132,6 +132,9 @@ bool update_packet_rx (u8 *data, u16 len, u16 port)
         {
             update_res_packet_t *res = (update_res_packet_t *)data;
 
+            if (len < sizeof(*res))
+                return (false);
+
             if (res->result != UPDATE_RESULT_START)
             {
                 LOG_INFO("no FW");

@@ -20,7 +20,8 @@ volatile u16 buf_save_ptr = 0;
 volatile u16 buf_last_undelivered = 0;
 
 
-#define BUF_INC_PTR(x) {if((x)++>=BUF_STORE_LIMIT)x=0;}
+// advance a ring index, wrapping to 0 on reaching the end (indices 0..BUF_STORE_LIMIT-1)
+#define BUF_INC_PTR(x) {if(++(x)>=BUF_STORE_LIMIT)x=0;}
 
 bool tracer_buf_load (tracer_buf_t *buf, u16 mem_id);
 
@@ -206,7 +207,11 @@ s16 tracer_buf_read_next (gps_stamp_t *pos, u16 *track, u16 *point, u8 *flags, u
         return (-1);
 
     result = buf_read_ptr;
-    tracer_buf_load (buf, buf_read_ptr);
+    if (! tracer_buf_load (buf, buf_read_ptr))
+    {   // record unreadable/corrupt, dont hand back uninitialized data
+        OS_MEM_FREE (buf);
+        return (-1);
+    }
     memcpy ((u8 *)pos, (u8 *)&buf->position, sizeof(gps_stamp_t));
     *track = buf->track;
     *point = buf->point;

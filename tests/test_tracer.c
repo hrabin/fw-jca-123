@@ -292,3 +292,41 @@ TEST(sia_proto_lifecycle)
     tracer_proto_sia.packet_done();
     ASSERT(!tracer_proto_sia.packet_ready());
 }
+
+// ---- regression: longitude hemisphere ----
+//
+// The E/W letter was derived from the *latitude* sign, so any position whose
+// latitude and longitude signs differ (e.g. all of western Europe) was reported
+// mirrored across the prime meridian. _pos_set() only uses a +,+ position, so
+// it did not catch this.
+TEST(h02_longitude_west)
+{
+    gps_stamp_t pos;
+    track_info_t info;
+
+    tracer_h02_reinit(1000000001);
+    info.dw = 0;
+
+    _pos_set(&pos);
+    pos.lat_sec =  18270000;   // 50N
+    pos.lon_sec = -5580000;    // 15W
+    tracer_h02_new_point(&pos, 1, false, &info);
+
+    ASSERT(strstr((char *)tracer_packet_buffer, ",5045.0000,N,01530.0000,W,") != NULL);
+}
+
+TEST(h02_longitude_east)
+{
+    gps_stamp_t pos;
+    track_info_t info;
+
+    tracer_h02_reinit(1000000001);
+    info.dw = 0;
+
+    _pos_set(&pos);
+    pos.lat_sec = -18270000;   // 50S
+    pos.lon_sec =  5580000;    // 15E
+    tracer_h02_new_point(&pos, 1, false, &info);
+
+    ASSERT(strstr((char *)tracer_packet_buffer, ",5045.0000,S,01530.0000,E,") != NULL);
+}

@@ -138,7 +138,7 @@ void tracer_h02_new_point (gps_stamp_t *pos, u16 track, bool last, track_info_t 
     buf_append_fmt(&buf, "%02d%02d.%04d,%c,", dg, min, sub_min, symbol);
 
     // LON:
-    symbol = pos->lat_sec >= 0 ? 'E' : 'W';
+    symbol = pos->lon_sec >= 0 ? 'E' : 'W';
     sec = ABS(pos->lon_sec);
 
     dg  = sec / (6000UL*60);
