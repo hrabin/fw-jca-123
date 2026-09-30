@@ -22,6 +22,70 @@ static void _clear_buf(void)
     _tx_buf_rd_idx = _tx_buf_wr_idx;
 }
 
+// ---- module presence test ----
+
+#define _TEST_CMD        "AT+VERSION"
+// match the *answer*, not the echo: the module echoes "AT+VERSION", but only
+// the reply carries the '=' ("+VERSION=JDY-25M-V1.731")
+#define _TEST_REPLY      "+VERSION="
+#define _BOOT_DELAY_MS   200   // module boot time after the reset is released
+#define _TEST_TMOUT_MS   500
+#define _TEST_LINE_SIZE  64
+
+static void _ble_uart_put(const ascii *text)
+{   // raw write; no PWRC toggling (that is what the BLE= console command does)
+    while (*text != '\0')
+        HW_BLE_UART_PUTCHAR(*text++);
+
+    HW_BLE_UART_PUTCHAR('\r');
+    HW_BLE_UART_PUTCHAR('\n');
+}
+
+static bool _ble_comm_test(void)
+{
+    ascii line[_TEST_LINE_SIZE];
+    size_t n = 0;
+    os_timer_t timeout;
+    int ch;
+
+    // drop whatever the module said while it was booting
+    while (HW_BLE_UART_GETCHAR() >= 0)
+        ;
+
+    _ble_uart_put(_TEST_CMD);
+
+    timeout = os_timer_get() + _TEST_TMOUT_MS;
+    while (os_timer_get() < timeout)
+    {
+        ch = HW_BLE_UART_GETCHAR();
+        if (ch < 0)
+        {
+            OS_DELAY(1);
+            continue;
+        }
+
+        if ((ch == '\r') || (ch == '\n'))
+        {
+            if (n == 0)
+                continue;   // empty line
+
+            line[n] = '\0';
+            n = 0;
+            LOG_DEBUGL(5, "test: \"%s\"", line);
+
+            if (strstr(line, _TEST_REPLY) != NULL)
+                return (true);
+
+            continue;   // the module may answer with more than one line
+        }
+
+        if (n < (sizeof(line) - 1))
+            line[n++] = (char)ch;
+    }
+
+    return (false);
+}
+
 bool ble_init(tty_parse_callback_t callback)
 {
     HW_BLE_RST_INIT;
@@ -32,6 +96,18 @@ bool ble_init(tty_parse_callback_t callback)
     _rx_callback = callback;
     OS_DELAY(1);
     HW_BLE_RST_HI;
+
+    // Verify the module is really there and answering.  Nothing else is
+    // reading UART4 at this point (ble_task() runs later, from task_app_slow),
+    // so the reply can be collected here directly.
+    OS_DELAY(_BOOT_DELAY_MS);
+
+    if (! _ble_comm_test())
+    {
+        LOG_ERROR("no answer to " _TEST_CMD);
+        return (false);
+    }
+
     return (true);
 }
 

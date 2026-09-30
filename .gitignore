@@ -10,3 +10,5 @@ ut/app_container/ac.bin
 ut/upload/obj/*
 ut/upload/upload.bin
 tests/build/*
+__pycache__
+app/.codewhale
