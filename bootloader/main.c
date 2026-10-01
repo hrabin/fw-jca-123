@@ -222,7 +222,7 @@ int main (void)
     HW_LED_OFF;
 
     OS_PRINTF("# PLATFORM: " OS_PLATFORM_NAME NL);
-    OS_PRINTF("# BL VERSION: 0.0.1" NL);
+    OS_PRINTF("# BL VERSION: 0.9.0" NL);
     OS_PRINTF("# BL BUILD DATE: " __DATE__ NL);
 
     OS_PRINTF("# DEVICE ID: %d" NL, HW_INFO.device_id);
@@ -242,6 +242,7 @@ int main (void)
     OS_PRINTF(NL);
     OS_PRINTF(NL);
 
+    wd_feed();
     app_ok = main_app_ok();
 
     if (reset_type == RESET_USER_RQ)

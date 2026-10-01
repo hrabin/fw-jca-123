@@ -28,6 +28,7 @@ C_SOURCES +=  \
   $(DIR_HAL)/led.c \
   $(DIR_HAL)/log.c \
   $(DIR_HAL)/hw_info.c \
+  $(DIR_HAL)/syscalls.c \
   \
   $(DIR_DRV)/flash_spi_universal.c \
   $(DIR_DRV)/gpio.c \

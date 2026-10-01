@@ -2,7 +2,10 @@
 #define APP_H
 
 #define BL_SIZE (32*KB)
-#define APP_INFO_PAGE_SIZE 256
+
+/* Keep in sync with app/app_info.h and bootloader/app_info.h: 512 keeps
+   APP_START_ADDR (= SCB->VTOR) aligned to the 118-entry vector table. */
+#define APP_INFO_PAGE_SIZE 512
 
 #define APP_MAX_SIZE (512*KB - BL_SIZE - APP_INFO_PAGE_SIZE)
 #define APP_MIN_SIZE (1*KB)

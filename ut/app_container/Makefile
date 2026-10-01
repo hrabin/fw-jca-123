@@ -26,7 +26,9 @@ clean:
 	rm -f $(TARGET)
 
 
-$(OBJDIR)/main.o:     main.[ch]
+# depend on the shared flash-layout header: APP_INFO_PAGE_SIZE / APP_START_ADDR
+# live there, and a stale tool silently produces a wrong app_info.size.
+$(OBJDIR)/main.o:     main.[ch] $(CDIR)/app.h
 	$(CXX) $(CFLAGS) main.c -o $(OBJDIR)/main.o
 
 $(OBJDIR)/cfg.o:      cfg.[ch]

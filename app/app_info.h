@@ -4,7 +4,16 @@
 #include "type.h"
 
 #define BL_SIZE (32*KB)
-#define APP_INFO_PAGE_SIZE 256
+
+/* Reserved page between the bootloader and the application.
+  
+   APP_START_ADDR doubles as SCB->VTOR, and a Cortex-M requires the vector
+   table base to be aligned to the table size rounded up to a power of two.
+   This part has 118 exception vectors (472 bytes).
+
+   The APP_START_ADDR must be 512B aligned */
+
+#define APP_INFO_PAGE_SIZE 512
 
 #define APP_MAX_SIZE (512*KB - BL_SIZE - APP_INFO_PAGE_SIZE)
 #define APP_MIN_SIZE (1*KB)
