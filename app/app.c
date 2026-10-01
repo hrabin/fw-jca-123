@@ -45,9 +45,9 @@ static access_t _ble_access = {ACCESS_NONE};
 
 static void _siren_beep(void)
 {   // signalization beep
-    HW_SIREN_ON;
+    system_io_activate(SYSTEM_IO_SIREN);
     OS_DELAY(_siren_beep_time);
-    HW_SIREN_OFF;
+    system_io_deactivate(SYSTEM_IO_SIREN);
 }
 
 static void _led_update(void)
@@ -117,7 +117,8 @@ static inline void _io_input_task(void)
 }
 
 static inline void _io_output_task(void)
-{   //
+{
+    out_update();
 }
 
 void app_init(void)
@@ -303,6 +304,10 @@ void app_reinit_req(cfg_id_t id)
     case CFG_ID_CMS_SERVER_ADDR:
     case CFG_ID_CMS_ACCOUNT:
         cms_reinit();
+        break;
+
+    case CFG_ID_OUT_MAP:
+        out_table_reinit();
         break;
 
     default:

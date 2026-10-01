@@ -14,5 +14,7 @@ bool out_init(void);
 const ascii *out_name(int pin);
 u32 out_state(void);
 void out_set(u8 pin, bool state);
+void out_update(void);
+void out_table_reinit(void);
 
 #endif // ! OUT_H

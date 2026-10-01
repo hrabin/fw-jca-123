@@ -612,9 +612,9 @@ static bool _cmd_lock(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     // bypass the lock input to avoid alarm in armed state
     inp_set_bypass(INP_LOCK, true);
-    out_set(OUT_LOCK, true);
+    system_io_activate(SYSTEM_IO_LOCK);
     OS_DELAY(_LOCK_TIME);
-    out_set(OUT_LOCK, false);
+    system_io_deactivate(SYSTEM_IO_LOCK);
     OS_DELAY(10); // let some time for pullup resistor work
     inp_set_bypass(INP_LOCK, false);
     return (true);
@@ -627,9 +627,9 @@ static bool _cmd_unlock(buf_t *result, const cmd_t *cmd, access_t *access)
     {
         system_unset(access);
     }
-    out_set(OUT_UNLOCK, true);
+    system_io_activate(SYSTEM_IO_UNLOCK);
     OS_DELAY(_LOCK_TIME);
-    out_set(OUT_UNLOCK, false);
+    system_io_deactivate(SYSTEM_IO_UNLOCK);
     OS_DELAY(10);
     return (true);
 }

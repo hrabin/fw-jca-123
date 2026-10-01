@@ -11,6 +11,7 @@ typedef enum {
     CFG_ID_PASSWD_ADMIN = 2,
     CFG_ID_MAIN_SETUP   = 3,
     CFG_ID_MAIN_SWITCH  = 4,
+    CFG_ID_OUT_MAP      = 5,
     CFG_ID_SIM_PIN      = 10,
     CFG_ID_APN          = 11,
     CFG_ID_MODEM_BAND   = 12,

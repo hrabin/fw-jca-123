@@ -131,6 +131,19 @@ void system_inp_signal(unsigned int n, alarm_reaction_e signal)
     section_signal(&section, system_input_get(n), signal);
 }
 
+void system_io_activate(u32 bit)
+{   // raise the system_io_state signal
+    system_io_state |= bit;
+    // export to output according to setup
+    out_update();
+}
+
+void system_io_deactivate(u32 bit)
+{
+    system_io_state &= ~bit;
+    out_update();
+}
+
 void system_set(access_t *access)
 {
     if (section_set(&section, access))

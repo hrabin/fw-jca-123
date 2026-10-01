@@ -4,9 +4,11 @@
 #include "type.h"
 #include "alarm.h"
 #include "system_input.h"
+#include "out.h"
 #include "section.h"
 
 #define SYSTEM_INP_COUNT (INP_SIZE)
+#define SYSTEM_OUT_COUNT (OUT_SIZE)
 
 #define SYSTEM_IO_INP1    BIT(0)
 #define SYSTEM_IO_INP2    BIT(1)
@@ -16,6 +18,10 @@
 #define SYSTEM_IO_SHOCK   BIT(5)
 #define SYSTEM_IO_TRACING BIT(15)
 #define SYSTEM_IO_TRACK   BIT(16)
+#define SYSTEM_IO_LOCK    BIT(17)
+#define SYSTEM_IO_UNLOCK  BIT(18)
+#define SYSTEM_IO_SIREN   BIT(19)
+
 extern u32 system_io_state;
 
 #define SYSTEM_INT_POWER_FAIL BIT(0)
@@ -27,6 +33,8 @@ bool system_init(void);
 void system_inp_activated(unsigned int n);
 void system_inp_deactivated(unsigned int n);
 void system_inp_signal(unsigned int n, alarm_reaction_e signal);
+void system_io_activate(u32 bit);
+void system_io_deactivate(u32 bit);
 void system_int_state_update(u32 bit, bool status);
 section_state_t system_state(void);
 void system_set(access_t *access);
