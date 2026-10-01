@@ -12,7 +12,7 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_MAIN_SETUP,   ACCESS_USER,   ACCESS_ADMIN,  "5,0,0"}, // <siren beep time>,0,0
     {CFG_ID_MAIN_SWITCH,  ACCESS_USER,   ACCESS_ADMIN,  "0"}, // TBD
     {CFG_ID_OUT_MAP,      ACCESS_USER,   ACCESS_ADMIN,  "17,18,19"}, // <lock>,<unlock>,<siren> bit number of system_io_state
-    {CFG_ID_SIM_PIN,      ACCESS_ADMIN,  ACCESS_ADMIN,  "1234"}, // TODO: use PIN for SIM
+    {CFG_ID_SIM_PIN,      ACCESS_ADMIN,  ACCESS_ADMIN,  "1234"}, // PIN for SIM card
     {CFG_ID_APN,          ACCESS_USER,   ACCESS_ADMIN,  "internet"},
     // For modem band setup (BG95-M3: AT+QCFG="band",<text>)
     {CFG_ID_MODEM_BAND,   ACCESS_USER,   ACCESS_SYSTEM, "0xF,0x8080085,0x8080085"},

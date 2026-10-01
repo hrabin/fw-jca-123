@@ -138,14 +138,16 @@ static bool _init_sim(modem_t *m, const ascii *pin)
     }
 
     // SIM requires PIN — verify remaining attempts before entering it
-    if (_pin_attempts_left(m, &attempts))
+    if (! _pin_attempts_left(m, &attempts))
     {
-        if (attempts < 3)
-        {
-            m->sim = MODEM_SIM_ST_PIN_CNT;
-            LOG_ERROR("SIM PIN attempts low (%d)", attempts);
-            return (false);
-        }
+        LOG_ERROR("SIM PIN attempts read failed");
+        return (false);
+    }
+    if (attempts < 3)
+    {
+        m->sim = MODEM_SIM_ST_PIN_CNT;
+        LOG_ERROR("SIM PIN attempts low (%d)", attempts);
+        return (false);
     }
 
     if (! _pin_enter(m, pin))
