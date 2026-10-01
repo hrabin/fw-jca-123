@@ -274,7 +274,7 @@ __WEAK void cmd_main_ver(buf_t *result)
 static bool _cmd_ver(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     buf_append_str(result, cmd->text);
-    buf_append_fmt(result, ": %s v%d.%d.%d", HW_INFO.hw_name, SW_VERSION_MAJOR, SW_VERSION_MINOR, SW_VERSION_PATCH);
+    buf_append_fmt(result, ": %s %s", HW_INFO.hw_name, SW_VERSION_FULL);
     cmd_main_ver(result);
 
     cmd_nl(result);
