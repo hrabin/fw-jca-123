@@ -32,7 +32,7 @@ void system_input_init(void)
         _sys_inp[i].reaction = ALARM_REACTION_INSTANT;
         _sys_inp[i].postpone = 1 * _TICK_SECOND;
     }
-    _sys_inp[IO_INP1].reaction = ALARM_REACTION_DELAY;
+    _sys_inp[INP_INP1].reaction = ALARM_REACTION_DELAY;
 
 }
 

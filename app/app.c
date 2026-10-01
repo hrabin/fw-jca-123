@@ -9,11 +9,12 @@
 #include "event.h"
 #include "gps.h"
 #include "hardware.h"
-#include "io.h"
+#include "inp.h"
 #include "led.h"
 #include "log.h"
 #include "modem_main.h"
 #include "net.h"
+#include "out.h"
 #include "power.h"
 #include "rtc.h"
 #include "shock.h"
@@ -90,23 +91,23 @@ static void _led_update(void)
 static inline void _io_input_task(void)
 {
     u16 i;
-    u32 inp = io_get_inp();
+    u32 inp = inp_get();
 
     if (_inp_state == inp)
         return; // no change
 
-    for (i=0; i<IO_INPUT_SIZE; i++)
+    for (i=0; i<INP_SIZE; i++)
     {
         if ((_inp_state ^ inp) & (1 << i))
         {
             if (inp & (1 << i))
             {
-                LOG_INFO("%s ON", io_inp_name(i));
+                LOG_INFO("%s ON", inp_name(i));
                 system_inp_activated(i);
             }
             else
             {
-                LOG_INFO("%s OFF", io_inp_name(i));
+                LOG_INFO("%s OFF", inp_name(i));
                 system_inp_deactivated(i);
             }
         }
@@ -325,7 +326,8 @@ void app_main_init (void)
     APP_INIT ("INIT STORAGE  ... ", storage_init());
     APP_INIT ("INIT CFG      ... ", cfg_init());
     APP_INIT ("INIT POWER    ... ", power_init());
-    APP_INIT ("INIT IO       ... ", io_init());
+    APP_INIT ("INIT INP      ... ", inp_init());
+    APP_INIT ("INIT OUT      ... ", out_init());
     APP_INIT ("INIT CAN      ... ", can_init());
     APP_INIT ("INIT MODEM    ... ", modem_main_init());
     APP_INIT ("INIT EVENTS   ... ", event_init());
@@ -341,7 +343,7 @@ void app_main_init (void)
 
     app_main_reinit();
 
-    _inp_state = io_get_inp();
+    _inp_state = inp_get();
 
     OS_PUTTEXT(NL);
     modem_main_rq_state(MODEM_MAIN_STATE_NET_OK);
@@ -352,7 +354,7 @@ void app_main_init (void)
 
 void app_task_fast(void)
 {   // tasks may take up to 10ms
-    io_task();
+    inp_task();
     analog_task();
     system_task();
     gps_task();

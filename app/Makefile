@@ -46,9 +46,10 @@ C_SOURCES +=  \
   $(DIR_ROOT)/event_memory.c \
   $(DIR_ROOT)/gps.c \
   $(DIR_ROOT)/gps_io.c \
-  $(DIR_ROOT)/io.c \
+  $(DIR_ROOT)/inp.c \
   $(DIR_ROOT)/main.c \
   $(DIR_ROOT)/net.c \
+  $(DIR_ROOT)/out.c \
   $(DIR_ROOT)/power.c \
   $(DIR_ROOT)/section.c \
   $(DIR_ROOT)/server.c \

@@ -2,7 +2,7 @@
 #include "hardware.h"
 #include "analog.h"
 #include "event.h"
-#include "io.h"
+#include "inp.h"
 #include "system.h"
 #include "power.h"
 
@@ -273,7 +273,7 @@ void power_task (void)
     {
         if (voltage_main < V_VCC_LOST)
         {
-            io_enable(false);
+            inp_enable(false);
             LOG_WARNING("vcc fail");
             _power_ok = false;
         }
@@ -282,7 +282,7 @@ void power_task (void)
     {
         if (voltage_main > V_VCC_LOST + V_HISTERESIS)
         {
-            io_enable(true);
+            inp_enable(true);
             LOG_INFO("vcc restored");
             _power_ok = true;
         }

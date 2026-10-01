@@ -4,9 +4,9 @@
 #include "type.h"
 #include "event.h"
 #include "alarm.h"
-#include "io.h"
+#include "inp.h"
 
-#define SYSTEM_INP_COUNT (IO_INPUT_SIZE)
+#define SYSTEM_INP_COUNT (INP_SIZE)
 
 typedef struct {
     u8 nr; // input number

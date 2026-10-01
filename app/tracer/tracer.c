@@ -532,7 +532,7 @@ u8 _map_inputs(void)
 {
     u8 result = 0;
 
-    if (system_io_state & SYSTEM_IO_PANIC) // default IO_DOOR
+    if (system_io_state & SYSTEM_IO_PANIC) // default INP_DOOR
         result |= (1<<0);
     if (system_io_state & SYSTEM_IO_INP1) //
         result |= (1<<1);

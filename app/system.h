@@ -6,7 +6,7 @@
 #include "system_input.h"
 #include "section.h"
 
-#define SYSTEM_INP_COUNT (IO_INPUT_SIZE)
+#define SYSTEM_INP_COUNT (INP_SIZE)
 
 #define SYSTEM_IO_INP1    BIT(0)
 #define SYSTEM_IO_INP2    BIT(1)

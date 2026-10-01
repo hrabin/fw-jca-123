@@ -11,10 +11,11 @@
 #include "gpreg.h"
 #include "flash_lib.h"
 #include "hw_info.h"
-#include "io.h"
+#include "inp.h"
 #include "log.h"
 #include "modem_main.h"
 #include "net.h"
+#include "out.h"
 #include "parse.h"
 #include "power.h"
 #include "rtc.h"
@@ -568,12 +569,12 @@ static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
 
     buf_append_fmt(result, "%s: ", cmd->text);
 
-    inp = io_inp_state(); //  & ~IO_SHOCK_MASK;
-    out = io_out_state();
+    inp = inp_state(); //  & ~INP_SHOCK_MASK;
+    out = out_state();
 
     buf_append_str(result, "active: ");
 
-    for (i=0; i<IO_INPUT_SIZE; i++)
+    for (i=0; i<INP_SIZE; i++)
     {
         if ((inp & (1 << i)) == 0)
             continue;
@@ -581,11 +582,11 @@ static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
         if (next)
             buf_append_str(result, ",");
 
-        buf_append_str(result, io_inp_name(i));
+        buf_append_str(result, inp_name(i));
         next = true;
     }
 
-    for (i=0; i<IO_OUTPUT_SIZE; i++)
+    for (i=0; i<OUT_SIZE; i++)
     {
         if ((out & (1 << i)) == 0)
             continue;
@@ -593,7 +594,7 @@ static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
         if (next)
             buf_append_str(result, ",");
 
-        buf_append_str(result, io_out_name(i));
+        buf_append_str(result, out_name(i));
         next = true;
     }
     if (next == false)
@@ -601,7 +602,7 @@ static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
         buf_append_str(result, "none");
     }
 
-    // buf_append_fmt(result, "inp %04x", io_inp_state());
+    // buf_append_fmt(result, "inp %04x", inp_state());
 
     cmd_nl(result);
     return (true);
@@ -610,12 +611,12 @@ static bool _cmd_io(buf_t *result, const cmd_t *cmd, access_t *access)
 static bool _cmd_lock(buf_t *result, const cmd_t *cmd, access_t *access)
 {
     // bypass the lock input to avoid alarm in armed state
-    io_inp_set_bypass(IO_LOCK_IN, true);
-    io_set_out(IO_LOCK_OUT, true);
+    inp_set_bypass(INP_LOCK, true);
+    out_set(OUT_LOCK, true);
     OS_DELAY(_LOCK_TIME);
-    io_set_out(IO_LOCK_OUT, false);
+    out_set(OUT_LOCK, false);
     OS_DELAY(10); // let some time for pullup resistor work
-    io_inp_set_bypass(IO_LOCK_IN, false);
+    inp_set_bypass(INP_LOCK, false);
     return (true);
 }
 
@@ -626,9 +627,9 @@ static bool _cmd_unlock(buf_t *result, const cmd_t *cmd, access_t *access)
     {
         system_unset(access);
     }
-    io_set_out(IO_UNLOCK_OUT, true);
+    out_set(OUT_UNLOCK, true);
     OS_DELAY(_LOCK_TIME);
-    io_set_out(IO_UNLOCK_OUT, false);
+    out_set(OUT_UNLOCK, false);
     OS_DELAY(10);
     return (true);
 }

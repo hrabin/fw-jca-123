@@ -1,7 +1,7 @@
 #include "common.h"
 #include "alarm.h"
 #include "app.h"
-#include "io.h"
+#include "out.h"
 #include "log.h"
 
 LOG_DEF("ALARM");
@@ -25,7 +25,7 @@ static void _siren_on(void)
 
     _siren_tmr = _SIREN_TIME;
     _siren_state = ON;
-    io_set_out(IO_SIREN, _siren_state);
+    out_set(OUT_SIREN, _siren_state);
 }
 
 static void _siren_off(void)
@@ -35,7 +35,7 @@ static void _siren_off(void)
 
     _siren_tmr = 0;
     _siren_state = OFF;
-    io_set_out(IO_SIREN, _siren_state);
+    out_set(OUT_SIREN, _siren_state);
 }
 
 bool alarm_init(void)

@@ -2,7 +2,7 @@
 #include "alarm.h"
 #include "app.h"
 #include "cfg.h"
-#include "io.h"
+#include "inp.h"
 #include "log.h"
 #include "section.h"
 #include "system.h"
@@ -71,10 +71,10 @@ void system_inp_activated(unsigned int n)
 
     switch (n)
     {
-    case IO_INP1:  system_io_state |= SYSTEM_IO_INP1;  break;
-    case IO_DOOR:  system_io_state |= SYSTEM_IO_DOOR;  break;
-    case IO_KEY:   system_io_state |= SYSTEM_IO_KEY;   break;
-    case IO_SHOCK:
+    case INP_INP1:  system_io_state |= SYSTEM_IO_INP1;  break;
+    case INP_DOOR:  system_io_state |= SYSTEM_IO_DOOR;  break;
+    case INP_KEY:   system_io_state |= SYSTEM_IO_KEY;   break;
+    case INP_SHOCK:
         system_io_state |= SYSTEM_IO_SHOCK;
         app_main_led_single(APP_LED_SHOCK);
         break;
@@ -93,12 +93,12 @@ void system_inp_activated(unsigned int n)
     {
         switch (n)
         {
-        case IO_KEY:
+        case INP_KEY:
             // start tracking
             tracer_start();
             break;
 
-        case IO_SHOCK:
+        case INP_SHOCK:
             tracer_shock_start(true);
             break;
         }
@@ -109,15 +109,15 @@ void system_inp_deactivated(unsigned int n)
 {
     switch (n)
     {
-    case IO_INP1:  system_io_state &= ~SYSTEM_IO_INP1;  break;
-    case IO_DOOR:  system_io_state &= ~SYSTEM_IO_DOOR;  break;
-    case IO_KEY:
+    case INP_INP1:  system_io_state &= ~SYSTEM_IO_INP1;  break;
+    case INP_DOOR:  system_io_state &= ~SYSTEM_IO_DOOR;  break;
+    case INP_KEY:
         // stop tracking
         system_io_state &= ~SYSTEM_IO_KEY; 
         tracer_stop();
         break;
 
-    case IO_SHOCK:
+    case INP_SHOCK:
         system_io_state &= ~SYSTEM_IO_SHOCK;
         tracer_shock_start(false);
         break;
