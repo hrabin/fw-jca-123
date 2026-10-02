@@ -6,8 +6,8 @@
 LOG_DEF("UDP");
 
 bool udp_ready(void)
-{
-    return (modem_main_data());
+{   // UDP is usable only once the PDP/socket layer has been initialised
+    return (modem_main_data_up());
 }
 
 bool udp_tx(udp_packet_t *pkt)

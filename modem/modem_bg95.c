@@ -7,6 +7,7 @@
 #include "ip4.h"
 #include "udp.h"
 #include "cfg.h"
+#include "util.h"
 
 LOG_DEF("BG95");
 
@@ -146,22 +147,35 @@ static void _return_at_buf(buf_t *buf)
 static bool _qcfg(modem_t *m, const ascii *cfg, const ascii *value, const ascii *tail)
 {
     ascii buffer[128];
-    bool qcfg_ok = false;
+    ascii expect[128];
+    bool configured = false;
+
+    snprintf(expect, sizeof(expect), "+QCFG: \"%s\",%s", cfg, value);
 
     modem_at_lock(m);
+
     snprintf(buffer, sizeof(buffer), "AT+QCFG=\"%s\"", cfg);
     modem_at_cmd_nolock (m, buffer);
 
-    snprintf(buffer, sizeof(buffer), "+QCFG: \"%s\",%s", cfg, value);
-    LOG_INFO("set: %s", buffer);
-    if (modem_at_response (m, buffer, AT_ST_OK | AT_ST_ERROR, MODEM_TIMEOUT_S) & AT_ST_USER_STR)
-        qcfg_ok = true; // ok, dont need to write
+    // modem_at_response() matches a PREFIX of the answer, so a longer answer
+    // (e.g. the extra fields of '+QCFG: "band",<gsm>,<lte>,<nb>') used to be
+    // accepted as "already configured" and the write was skipped - the cfg
+    // value was never applied.  Compare the complete line instead.
+    if (modem_at_response (m, expect, AT_ST_OK | AT_ST_ERROR, MODEM_TIMEOUT_S) & AT_ST_USER_STR)
+    {   // at->response holds the whole matched line
+        if (stricmp(m->at.response, expect) == 0)
+            configured = true;
+    }
 
     modem_at_unlock(m);
 
-    if (qcfg_ok)
+    if (configured)
+    {
+        LOG_DEBUGL(1, "ok: %s", expect);
         return (true);
+    }
 
+    LOG_INFO("set: %s", expect);
     return (modem_at_ok_cmd_fmt(m, "AT+QCFG=\"%s\",%s%s", cfg, value, tail));
 }
 
@@ -291,7 +305,7 @@ bool modem_bg95_urc(modem_t *m)
 
     if ((p = modem_parse_pattern(src, "+QIURC: \"pdpdeact\",1")) != NULL)
     {
-        m->flags &= ~MODEM_FLAG_DATA_READY;
+        m->flags &= ~(MODEM_FLAG_DATA_READY | MODEM_FLAG_DATA_UP);
         _socket_clear();
         return (true);
     }
@@ -353,7 +367,6 @@ bool modem_bg95_urc(modem_t *m)
 bool modem_bg95_udp_init(modem_t *m)
 {
     buf_t *buf;
-    bool result = false;
 
     bzero(&udp_socket, sizeof(udp_socket));
 
@@ -367,15 +380,17 @@ bool modem_bg95_udp_init(modem_t *m)
 
     buf = _get_at_buf();
 
-    if (modem_at_cmd_get_response(m, buf, "AT+QIDNSCFG=1", "+QIDNSCFG: 1,"))
+    if (! modem_at_cmd_get_response(m, buf, "AT+QIDNSCFG=1", "+QIDNSCFG: 1,"))
     {   // +QIDNSCFG: 1,"123.66.165.1","123.66.165.2"
-        // TODO: parse DNS IP to be able resolve names
-        result = true;
+        // The DNS servers are not used -- we only ever talk to literal IPs
+        // (see net_get_target_ip()) -- so a failed read must not abort the
+        // whole data connection.
+        LOG_WARNING("QIDNSCFG read failed");
     }
     timer_rx_timeout = os_timer_get() + 60*OS_TIMER_SECOND;
     tx_cnt = 0;
     _return_at_buf(buf);
-    return (result);
+    return (true);
 }
 
 static u8 _socket_id(ip_addr_t *ip, u16 port)

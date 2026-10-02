@@ -13,7 +13,7 @@ const cfg_table_t CFG_TABLE[] = {
     {CFG_ID_MAIN_SWITCH,  ACCESS_USER,   ACCESS_ADMIN,  "0"}, // TBD
     {CFG_ID_OUT_MAP,      ACCESS_USER,   ACCESS_ADMIN,  "17,18,19"}, // <lock>,<unlock>,<siren> bit number of system_io_state
     {CFG_ID_SIM_PIN,      ACCESS_ADMIN,  ACCESS_ADMIN,  "1234"}, // PIN for SIM card
-    {CFG_ID_APN,          ACCESS_USER,   ACCESS_ADMIN,  "internet"},
+    {CFG_ID_APN,          ACCESS_USER,   ACCESS_ADMIN,  "internet"}, // mgr.sensor.net
     // For modem band setup (BG95-M3: AT+QCFG="band",<text>)
     {CFG_ID_MODEM_BAND,   ACCESS_USER,   ACCESS_SYSTEM, "0xF,0x8080085,0x8080085"},
     // SIA account number (monitoring center subscriber id, HEX)

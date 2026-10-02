@@ -41,6 +41,7 @@ bool modem_main_sms_send (sms_struct_t *sms);
 bool modem_main_at_cmd(buf_t *response, const char *text);
 
 bool modem_main_data(void);
+bool modem_main_data_up(void);
 bool modem_main_data_connect(const ascii *apn);
 void modem_main_data_disconnect(void);
 bool modem_main_udp_send(udp_packet_t *packet);

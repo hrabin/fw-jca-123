@@ -26,7 +26,8 @@ static const modem_config_t MODEM_CONFIG[] = {
 static void _set_offline(modem_t *m)
 {
     m->flags &= ~( MODEM_FLAG_NET_READY | MODEM_FLAG_DATA_READY|
-                   MODEM_FLAG_ROAMING | MODEM_FLAG_CALL_STOP | MODEM_FLAG_LTE );
+                   MODEM_FLAG_ROAMING | MODEM_FLAG_CALL_STOP | MODEM_FLAG_LTE |
+                   MODEM_FLAG_DATA_UP );
     m->error_counter+=1;
     m->signal_level=0;
 }
@@ -259,6 +260,21 @@ bool modem_parse_urc(modem_t *m)
         // but response "+CREG: a,n", where 'a' mode
         u8 creg = _reg_parse(p);
 
+        if (m->flags & MODEM_FLAG_LTE)
+        {   // The CS domain (+CREG) is meaningless while attached via LTE/NB-IoT
+            // and must not tear down the EPS registration tracked by +CEREG.
+            // Use it only to (re)assert readiness.
+            if ((creg == 1) || (creg == 5))
+            {
+                m->flags |= MODEM_FLAG_NET_READY;
+                if (creg == 5)
+                    m->flags |= MODEM_FLAG_ROAMING;
+                else
+                    m->flags &= ~MODEM_FLAG_ROAMING;
+            }
+            return (true);
+        }
+
         switch (creg)
         {
         case 0:
@@ -306,18 +322,25 @@ bool modem_parse_urc(modem_t *m)
         switch (cereg)
         {
         case 1: // home network
+            m->flags |= (MODEM_FLAG_LTE | MODEM_FLAG_DATA_READY | MODEM_FLAG_NET_READY);
+            m->flags &= ~MODEM_FLAG_ROAMING;
+            break;
+
         case 5: // roaming
-            m->flags |= MODEM_FLAG_LTE;
-            m->flags |= MODEM_FLAG_DATA_READY;
+            m->flags |= (MODEM_FLAG_LTE | MODEM_FLAG_DATA_READY |
+                         MODEM_FLAG_NET_READY | MODEM_FLAG_ROAMING);
             break;
 
         default:
             if (m->flags & MODEM_FLAG_LTE)
-            {
-                m->flags &= ~MODEM_FLAG_LTE;
-                m->flags &= ~MODEM_FLAG_DATA_READY;
+            {   // EPS registration lost. On LTE this is the authoritative source
+                // (the CS-domain +CREG is ignored while LTE is up), so drop the
+                // network state as well.
+                LOG_WARNING("LTE lost");
+                m->flags &= ~(MODEM_FLAG_NET_READY | MODEM_FLAG_DATA_READY |
+                              MODEM_FLAG_ROAMING | MODEM_FLAG_LTE | MODEM_FLAG_DATA_UP);
             }
-
+            break;
         }
         return(true);
     }
@@ -684,7 +707,7 @@ error:
 
 void modem_data_rx_process(modem_t * m)
 {
-    if (m->flags & MODEM_FLAG_DATA_READY)
+    if (m->flags & MODEM_FLAG_DATA_UP)
     {
         if (m->pfunc_udp_rx_task != NULL)
         {
@@ -714,6 +737,9 @@ bool modem_apn_init(modem_t *m, const ascii *apn)
 bool modem_data_connect(modem_t *m)
 {
     os_timer_t timeout;
+    bool attached = false;
+
+    m->flags &= ~MODEM_FLAG_DATA_UP; // the socket layer is re-initialised below
 
     if (! modem_at_ok_cmd(m, "@@AT+CGATT=1"))
         return (false);
@@ -737,25 +763,42 @@ bool modem_data_connect(modem_t *m)
     while (os_timer_get() <= timeout)
     {
         if (m->flags & MODEM_FLAG_LTE)
-            return (true); // In LTE network its OK
+        {   // on LTE there is no +CGREG; +CEREG already reported the attach
+            attached = true;
+            break;
+        }
 
         modem_at_ok_cmd(m, "!AT+CGREG?");
 
         if (m->flags & MODEM_FLAG_DATA_READY)
         {
-            if (m->pfunc_udp_init != NULL)
-                return (m->pfunc_udp_init(m));
-            return (true);
+            attached = true;
+            break;
         }
 
         OS_DELAY(500);
     }
 
-    return (false);
+    if (! attached)
+        return (false);
+
+    // Bring the socket layer up (context activation, data format, ...).
+    // Only when this succeeds is the data connection really usable, so the
+    // DATA_UP flag is what gates net_connect()/udp_ready().
+    if (m->pfunc_udp_init == NULL)
+        return (false);
+
+    if (! m->pfunc_udp_init(m))
+        return (false);
+
+    m->flags |= MODEM_FLAG_DATA_UP;
+    return (true);
 }
 
 void modem_data_disconnect(modem_t *m)
 {
+    m->flags &= ~MODEM_FLAG_DATA_UP;
+
     if ((m->flags & MODEM_FLAG_DATA_READY) == 0)
         return;
 

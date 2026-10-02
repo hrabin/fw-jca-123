@@ -24,6 +24,10 @@
 #define MODEM_FLAG_CCLK_RQ     (1 << 7)
 #define MODEM_FLAG_LTE         (1 << 8)
 #define MODEM_FLAG_FAIL        (1 << 9)
+// PDP/socket layer is initialised (pfunc_udp_init succeeded). Distinct from
+// DATA_READY, which only means "registered for PS" and is set by the
+// +CEREG/+CGREG URCs before any context/socket setup has run.
+#define MODEM_FLAG_DATA_UP     (1 << 10)
 #define MODEM_FLAG_TEST        (1 << 30)
 
 typedef enum {

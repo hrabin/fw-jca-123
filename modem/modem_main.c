@@ -484,13 +484,18 @@ void modem_echo_set(bool state)
 }
 
 bool modem_main_data(void)
-{
+{   // registered for packet data (network attach) - not necessarily usable yet
     return((MODEM.flags & MODEM_FLAG_DATA_READY) ? true : false);
+}
+
+bool modem_main_data_up(void)
+{   // PDP/socket layer initialised: UDP can actually be used
+    return((MODEM.flags & MODEM_FLAG_DATA_UP) ? true : false);
 }
 
 bool modem_main_data_connect(const ascii *apn)
 {
-    if (MODEM.flags & MODEM_FLAG_DATA_READY)
+    if (MODEM.flags & MODEM_FLAG_DATA_UP)
         return (true);
 
     if (_ms.state < MODEM_MAIN_STATE_NET_OK)

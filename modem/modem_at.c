@@ -4,6 +4,7 @@
 #include "util.h"
 #include "buf.h"
 #include "log.h"
+#include "wdog.h"
 
 #include <stdarg.h>
 
@@ -106,6 +107,21 @@ bool modem_at_cmd_nolock(modem_t *m, const ascii *at_cmd)
     return (true);
 }
 
+static void _at_keepalive(void)
+{   // Keep this task's watchdog fed while waiting for a modem response.
+    // The wait is bounded by the AT timeout, so it is progress, not a hang;
+    // without this a single long AT wait (up to MODEM_TIMEOUT_LL) would make
+    // the task look dead and reset the unit. Throttled to once a second.
+    static os_timer_t hb = 0;
+    os_timer_t now = OS_TIMER();
+
+    if (now < (hb + OS_TIMER_SECOND))
+        return;
+
+    hb = now;
+    wdog_task_feed_current();
+}
+
 u32 modem_at_response(modem_t *m, const ascii *user_str, u32 flags, u32 timeout)
 {
     modem_at_t *at = &(m->at);
@@ -123,6 +139,7 @@ u32 modem_at_response(modem_t *m, const ascii *user_str, u32 flags, u32 timeout)
         {   // opravdu prislo neco z toho na co cekam
             return (at->flags);
         }
+        _at_keepalive();
         OS_TASK_YIELD();
     }
     m->error_counter++;
@@ -263,6 +280,7 @@ u16 modem_at_read_line (modem_t *m, buf_t *dest, const ascii *user_str, u32 time
         }
         if (at->flags & AT_ST_ERROR)
             break;
+        _at_keepalive();
         OS_TASK_YIELD();
 
     }
