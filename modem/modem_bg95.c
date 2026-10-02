@@ -457,7 +457,7 @@ static bool _udp_bind(modem_t *m, u8 *socket_id, ip_addr_t *ip, u16 port)
     if (modem_at_ok_cmd(m, buf_data(buf)))
     {   // wait for URC +QIOPEN
         os_timer_t limit = now + 10*OS_TIMER_SECOND;
-        while (now <= limit)
+        while (os_timer_get() <= limit)
         {
             if (s->ready)
             {

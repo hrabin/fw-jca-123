@@ -18,7 +18,7 @@ bool net_connect(void)
     if (udp_ready())
         return (true);
 
-    ascii *apn = cfg_read_static(CFG_ID_MODEM_BAND);
+    ascii *apn = cfg_read_static(CFG_ID_APN);
     if (apn == NULL)
     {
         return (false);
