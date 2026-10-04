@@ -34,6 +34,7 @@ void tracer_driver_id_needed (void);
 bool tracer_set_id (u32 id);
 void tracer_comm_process (void);
 void tracer_start (void);
+void tracer_key_start (void);
 void tracer_stop (void);
 bool tracer_test (void);
 bool tracer_server_setup_ok (void);

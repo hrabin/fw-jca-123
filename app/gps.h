@@ -40,7 +40,6 @@ extern bool gps_fix_ok (void);
 extern void gps_maintenance (void);
 extern void gps_task (void);
 extern void gps_tick (void);
-extern void gps_temporary_start(void);
 extern void gps_temporary_start_tmout(u32 tm);
 extern u16 gps_get_speed (void);
 extern u8 gps_get_nbsat (bool in_use);

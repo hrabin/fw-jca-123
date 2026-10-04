@@ -2,6 +2,7 @@
 #include "app.h"
 #include "cfg.h"
 #include "gps.h"
+#include "parse.h"
 #include "tracer_buffer.h"
 #include "log.h"
 #include "modem_main.h"
@@ -19,20 +20,15 @@ LOG_DEF("tracer");
 #define LIMIT_TRACE_END      3600
 #define LIMIT_TRACE_INTERVAL 3600
 
-#define CFG_FORMAT "%" PRIu32 ",%d,%d,%d,%d,%d,%d"
-
 static u32  server_ip     = 0;
 static u16  server_port   = 0;
 
 static os_timer_t tracer_point_time = 0;
 static u16  tracer_store_period  = 0;
 
-#define TRACER_PERIOD_DEFAULT          (10*OS_TIMER_SECOND) // period of point storing
-static u16  tracer_store_period_normal  = TRACER_PERIOD_DEFAULT;
-#define TRACER_PERIOD_ROAMING_DEFAULT  (10*OS_TIMER_SECOND) // period of point storing in roaming
-static u16  tracer_store_period_roaming  = TRACER_PERIOD_ROAMING_DEFAULT;
-#define TRACER_END_WAIT_TIME_DEFAULT   (20*OS_TIMER_SECOND) //
-static u16  tracer_end_wait_time = TRACER_END_WAIT_TIME_DEFAULT;
+#define TRACER_PERIOD_DEFAULT          (10) // [s] period of point storing
+#define TRACER_PERIOD_ROAMING_DEFAULT  (10) // [s] period of point storing in roaming
+#define TRACER_END_WAIT_TIME_DEFAULT   (20) // [s] 
 #define TRACER_END_WAIT_POWER_FAIL     (20*OS_TIMER_SECOND) // waiting to finish tracking after main power loss
 
 #define TRACER_PROTO_H02  0 //
@@ -40,20 +36,57 @@ static u16  tracer_end_wait_time = TRACER_END_WAIT_TIME_DEFAULT;
 #define TRACER_PROTO_LAST TRACER_PROTO_SIA // number of supported protocols
 
 #define TRACER_PROTO_DEFAULT  (TRACER_PROTO_H02)
-static u8   tracer_protocol = 0;
+
+#define TRACER_UNIT_ID_MAX 0x7FFFFFFE // parse_number() is signed
 
 #define TRACER_START_SPEED_DEFAULT  3 // km/h - start track when speed reaches this limit
-static u8   tracer_start_speed = TRACER_START_SPEED_DEFAULT;
 
 #define TRACER_END_NORMAL     0 //
 #define TRACER_END_POWER_FAIL 1 // instant track end when main power lost
-#define TRACER_END_DEFAULT TRACER_END_POWER_FAIL
-static u8   tracer_end_mode = TRACER_END_DEFAULT;
+#define TRACER_END_DEFAULT TRACER_END_NORMAL
+static u8   tracer_end_mode = TRACER_END_DEFAULT; // not part of CFG_ID_TRACER_PARAM
 
 #define TRACER_SEND_MODE_ONLINE 0 // send online
 #define TRACER_SEND_MODE_BULK   1 // send complete track when finished
 #define TRACER_SEND_MODE_OFF    2 // dont send data
-static u8   tracer_send_mode = TRACER_SEND_MODE_ONLINE;
+
+#define TRACER_START_MODE_KEY   (1 << 0) // start tracking on ignition (KEY) input
+#define TRACER_START_MODE_SHOCK (1 << 1) // start tracking on shock/activity
+#define TRACER_START_MODE_ALL   (TRACER_START_MODE_KEY | TRACER_START_MODE_SHOCK)
+
+// Setup parameters, i.e. the layout of CFG_ID_TRACER_PARAM:
+//   <unit_id>,<period>,<period_roaming>,<wait_time>,<protocol>,<start_speed>,
+//   <send_mode>,<start_mode>
+// Times are kept in seconds, exactly as written in the config; use _sec() to
+// convert to OS timer units.
+typedef struct {
+    u32 unit_id;        // server/unit id
+    u16 period;         // [s] point storing period
+    u16 period_roaming; // [s] point storing period while roaming
+    u16 wait_time;      // [s] wait for the track to finish
+    u8  protocol;       // TRACER_PROTO_*
+    u8  start_speed;    // [km/h] start a track above this speed
+    u8  send_mode;      // TRACER_SEND_MODE_*
+    u8  start_mode;     // TRACER_START_MODE_* flags
+} tracer_param_t;
+
+#define TRACER_PARAM_DEFAULT {                       \
+    .unit_id        = 0,                             \
+    .period         = TRACER_PERIOD_DEFAULT ,        \
+    .period_roaming = TRACER_PERIOD_ROAMING_DEFAULT, \
+    .wait_time      = TRACER_END_WAIT_TIME_DEFAULT,  \
+    .protocol       = TRACER_PROTO_DEFAULT,          \
+    .start_speed    = TRACER_START_SPEED_DEFAULT,    \
+    .send_mode      = TRACER_SEND_MODE_ONLINE,       \
+    .start_mode     = TRACER_START_MODE_ALL,         \
+}
+
+static tracer_param_t _p = TRACER_PARAM_DEFAULT;
+
+static inline os_timer_t _sec(u16 s)
+{   // seconds -> OS timer units
+    return ((os_timer_t)s * OS_TIMER_SECOND);
+}
 
 static bool tracer_stop_rq=false;
 
@@ -74,8 +107,6 @@ static u16  new_track_id_set = 0;
 
 static os_timer_t driver_waiting_tmr = 0;
 static bool tracing_active = false;
-
-static u32  unit_id = 0;
 
 #if DEVICE_HAS_SHOCK_START == 1
 bool tracer_shock_trace_active  = false;
@@ -150,7 +181,7 @@ u16 tracer_get_track_id (void)
 
 static void tracer_server_reinit (u32 new_id)
 {
-    unit_id = new_id;
+    _p.unit_id = new_id;
 
     memset(tracer_packet_buffer, 0, sizeof(tracer_packet_buffer));
 
@@ -160,7 +191,57 @@ static void tracer_server_reinit (u32 new_id)
 
 u32 tracer_unit_id (void)
 {
-    return (unit_id);
+    return (_p.unit_id);
+}
+
+// ---- CFG_ID_TRACER_PARAM -------------------------------------------------
+// The config is a comma separated list of numbers, one per tracer_param_t
+// field, in the order declared above.  A field missing from the string keeps
+// its default, and an out of range value is reported and ignored while the
+// fields that follow are still applied.
+
+static bool _num_next(const char **s, parse_number_t *n)
+{   // move to the next number; false once the string is exhausted
+    const char *p = parse_number(n, *s);
+    const char *sep;
+
+    if (p == NULL)
+        return (false);
+
+    sep = parse_separator(p);
+    *s = (sep != NULL) ? sep : p;   // keep the tail for the terminator check
+    return (true);
+}
+
+static parse_number_t _num_get(const char **s, s32 min, s32 max, s32 def)
+{
+    parse_number_t n;
+
+    if (! _num_next(s, &n))
+        return (def);
+
+    if ((n < min) || (n > max))
+    {
+        return (def);
+    }
+    return (n);
+}
+
+static void _param_load(const ascii *value)
+{
+    const char *s = value;
+
+   _p.unit_id        = _num_get(&s, 0, TRACER_UNIT_ID_MAX,    0);
+   _p.period         = _num_get(&s, 1, LIMIT_TRACE_INTERVAL,  TRACER_PERIOD_DEFAULT);
+   _p.period_roaming = _num_get(&s, 1, LIMIT_TRACE_INTERVAL,  TRACER_PERIOD_ROAMING_DEFAULT);
+   _p.wait_time      = _num_get(&s, 1, LIMIT_TRACE_END,       TRACER_END_WAIT_TIME_DEFAULT);
+   _p.protocol       = _num_get(&s, 0, TRACER_PROTO_LAST,     TRACER_PROTO_DEFAULT);
+   _p.start_speed    = _num_get(&s, 1, 99,                    TRACER_START_SPEED_DEFAULT);
+   _p.send_mode      = _num_get(&s, 0, TRACER_SEND_MODE_OFF,  TRACER_SEND_MODE_ONLINE);
+   _p.start_mode     = _num_get(&s, 0, TRACER_START_MODE_ALL, TRACER_START_MODE_ALL);
+
+    if (! parse_terminator(s))
+        LOG_WARNING("tracer param: unexpected \"%s\"", s);
 }
 
 bool tracer_reinit (void)
@@ -168,83 +249,49 @@ bool tracer_reinit (void)
     ascii cfg[CFG_ITEM_SIZE];
     buf_t buf;
 
-    u32 a;
-    s32 b,c,d,r,s,e;
-
     buf_init(&buf, cfg, sizeof(cfg));
 
     if (cfg_read(&buf, CFG_ID_TRACER_ADDR, ACCESS_SYSTEM))
         net_get_target_ip (&server_ip, &server_port, cfg);
 
-    // some default to override invalid config
-    tracer_store_period_normal  = TRACER_PERIOD_DEFAULT;
-    tracer_store_period_roaming = TRACER_PERIOD_ROAMING_DEFAULT;
-    tracer_end_wait_time        = TRACER_END_WAIT_TIME_DEFAULT;
-    tracer_protocol             = TRACER_PROTO_DEFAULT;
-    tracer_start_speed          = TRACER_START_SPEED_DEFAULT;
-    tracer_send_mode            = TRACER_SEND_MODE_ONLINE;
-    tracer_point_time           = 0;
+    // start from the defaults, then let the config override them
+    _p = (tracer_param_t)TRACER_PARAM_DEFAULT;
+    tracer_point_time = 0;
 
     buf_clear(&buf);
     if (cfg_read(&buf, CFG_ID_TRACER_PARAM, ACCESS_SYSTEM))
-    {
-        a=0; b=0; c=0; d=0; r=0;
-        switch (sscanf(cfg, "%" SCNu32 ",%" SCNd32 ",%" SCNd32 ",%" SCNd32
-                       ",%" SCNd32 ",%" SCNd32 ",%" SCNd32,
-                       &a, &b, &r, &c, &d, &s, &e))
-        {
-        case 7:
-            if ((e>=0) && (e<=1))
-                tracer_send_mode = e;
-        case 6:
-            if ((s>0) && (s<100))
-                tracer_start_speed = s;
-        case 5:
-            if (d<=TRACER_PROTO_LAST)
-                tracer_protocol = d;
-        case 4:
-            if ((c>=1) && (c<=LIMIT_TRACE_END))
-                tracer_end_wait_time = c*OS_TIMER_SECOND;
-        case 3:
-            if ((r>=1) && (r<=LIMIT_TRACE_INTERVAL))
-                tracer_store_period_roaming = r*OS_TIMER_SECOND;
-        case 2:
-            if ((b>=1) && (b<=LIMIT_TRACE_INTERVAL))
-                tracer_store_period_normal = b*OS_TIMER_SECOND;
-        case 1:
-            // at least unit_id, its ok
-            break;
-        default:
-            LOG_ERROR("CFG mismatch");
-            break;
-        }
-    }
-    _LOG_DEBUGL("ID=%d, proto=%d, mode=%d", a, tracer_protocol, tracer_send_mode);
-    pfunc_reinit(tracer_protocol);
+        _param_load (buf_data(&buf));
 
-    tracer_server_reinit (a);
+    _LOG_DEBUGL("ID=%d, proto=%d, send=%d, start=%d",
+                (int)_p.unit_id, _p.protocol, _p.send_mode, _p.start_mode);
+
+    pfunc_reinit(_p.protocol);
+    tracer_server_reinit (_p.unit_id);
 
     tracer_packet_ack = false;
 
     return (true);
 }
 
-static bool tracer_save_config (u32 id, u16 period, u16 period_roaming,
-                                u16 wait_time, u8 protocol, u8 limit_speed,
-                                u8 end_mode)
+static bool tracer_save_config (const tracer_param_t *p)
 {
     ascii cfg[CFG_ITEM_SIZE];
-    buf_t buf;
+    buf_def(buf, CFG_ITEM_SIZE);
 
-    if (id>=0xFFFFFF)
+    if (p->unit_id > TRACER_UNIT_ID_MAX)
         return (false);
 
-    buf_init(&buf, cfg, sizeof(cfg));
+    // <unit_id>,<period>,<period_roaming>,<wait_time>,<protocol>,
+    // <start_speed>,<send_mode>,<start_mode>
+    snprintf (cfg, sizeof(cfg), "%" PRIu32 ",%u,%u,%u,%u,%u,%u,%u",
+              p->unit_id, p->period, p->period_roaming, p->wait_time,
+              p->protocol, p->start_speed, p->send_mode, p->start_mode);
 
-    sprintf (cfg, CFG_FORMAT, id, period, period_roaming, wait_time, protocol, limit_speed, end_mode);
-    cfg_write(CFG_ID_TRACER_PARAM, &buf, ACCESS_SYSTEM);
-    tracer_server_reinit (id);
+    buf_append_str(&buf, cfg);   // buf_init() alone leaves length 0
+    if (! cfg_write(CFG_ID_TRACER_PARAM, &buf, ACCESS_SYSTEM))
+        return (false);
 
+    tracer_server_reinit (p->unit_id);
     return (true);
 }
 
@@ -313,10 +360,11 @@ static void _tracer_stop_now (void)
         if (point == 0)
         {
             tracer_deactivate();
+            gps_sleep_enable (true);
             return;
         }
         // enable_stored_stamp = false;
-        tracer_stop_tmr = os_timer_get() + tracer_end_wait_time;
+        tracer_stop_tmr = os_timer_get() + _sec(_p.wait_time);
     }
     else
     {
@@ -328,6 +376,14 @@ void tracer_start (void)
 {
     if (_tracer_start_now())
         _external_start = true;
+}
+
+void tracer_key_start (void)
+{
+    if ((_p.start_mode & TRACER_START_MODE_KEY) == 0)
+        return;
+
+    tracer_start();
 }
 
 void tracer_stop (void)
@@ -344,7 +400,7 @@ bool tracer_test (void)
         return (false);
 
     tracer_start();
-    tracer_stop_tmr = os_timer_get() + 21*tracer_store_period_normal;
+    tracer_stop_tmr = os_timer_get() + 21 * _sec(_p.period);
     return (true);
 }
 
@@ -402,6 +458,7 @@ bool wait_for_ack (void)
         tmout = TMOUT_MAX;
     if (tmout < TMOUT_MIN)
         tmout = TMOUT_MIN;
+
     return (result);
 }
 
@@ -434,7 +491,7 @@ void tracer_comm_process (void)
 
     if (proto->packet_ready())
     {
-        switch (tracer_send_mode)
+        switch (_p.send_mode)
         {
         case TRACER_SEND_MODE_OFF:
             _LOG_DEBUGL("T:OFF");
@@ -596,11 +653,8 @@ bool tracer_packet_rx (u8 *data, u16 len, u16 port)
 
 bool tracer_set_id (u32 id)
 {
-    return (tracer_save_config(id, tracer_store_period_normal/OS_TIMER_SECOND,
-                               tracer_store_period_roaming/OS_TIMER_SECOND,
-                               tracer_end_wait_time/OS_TIMER_SECOND,
-                               tracer_protocol, tracer_start_speed,
-                               tracer_send_mode));
+    _p.unit_id = id;
+    return (tracer_save_config(&_p));
 }
 
 void tracer_set_user_id (u8 id)
@@ -633,6 +687,9 @@ void tracer_shock_start(bool state)
 {
     if (state)
     {   // activity detected
+        if ((_p.start_mode & TRACER_START_MODE_SHOCK) == 0)
+            return;
+
         if ((tracer_shock_trace_active == false)
          && (! tracer_power_stop()))
         {   // ok, lets wait for some speed
@@ -670,7 +727,7 @@ static __inline void tracer_shock_task(void)
     {
         gps_temporary_start_tmout(30); // keep GPS on
         if ((tracer_easy_fix  && (gps_fix_ok()))
-         || (gps_get_speed() >= tracer_start_speed))
+         || (gps_get_speed() >= _p.start_speed))
         {
             LOG_INFO("SHOCK START OK, speed=%d", gps_get_speed());
             tracer_shock_start_tmr = 0;
@@ -757,9 +814,9 @@ void tracer_task (void)
         return; // no time for new point yet
 
     if (modem_main_roaming())
-        tracer_store_period = tracer_store_period_roaming;
+        tracer_store_period = _sec(_p.period_roaming);
     else
-        tracer_store_period = tracer_store_period_normal;
+        tracer_store_period = _sec(_p.period);
 
     if (tracer_store_period < (1 * OS_TIMER_SECOND))
         tracer_store_period = (1 * OS_TIMER_SECOND); // this should never happen

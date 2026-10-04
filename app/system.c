@@ -95,7 +95,7 @@ void system_inp_activated(unsigned int n)
         {
         case INP_KEY:
             // start tracking
-            tracer_start();
+            tracer_key_start();
             break;
 
         case INP_SHOCK:

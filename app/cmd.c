@@ -145,6 +145,9 @@ static bool _cmd_dbg(buf_t *result, const struct _cmd_t *cmd,  const char **ppte
         event_debug();
         break;
 
+    case 60: uart4_init(9600); break;
+    case 61: uart4_init(115200); break;
+
     default:
             break;
     }
@@ -290,10 +293,12 @@ static bool _cmd_at(buf_t *result, const struct _cmd_t *cmd,  const char **pptex
 static bool _cmd_ble(buf_t *result, const struct _cmd_t *cmd,  const char **pptext, access_t *access)
 {
     // BLE=AT+VERSION
-    // BLE=AT+PIN
+    // BLE=AT+PIN (deafult "123456")
 
-    // for binding :
-    // BLE=AT+TYPE2
+    // setup 115200bps: BLE=AT+BAUD8 
+    // for binding :    BLE=AT+TYPE2
+    // BLE=AT+NAMEJCA123-1
+    //
 
     ble_cmd(*pptext);
     return (true);

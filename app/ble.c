@@ -92,7 +92,7 @@ bool ble_init(tty_parse_callback_t callback)
     HW_BLE_RST_LOW;
     HW_BLE_PWRC_INIT;
     HW_BLE_PWRC_HI;
-    HW_BLE_UART_INIT(115200);
+    HW_BLE_UART_INIT(115200); // The module default is 9600
     _rx_callback = callback;
     OS_DELAY(1);
     HW_BLE_RST_HI;
@@ -117,7 +117,10 @@ static void _process_response(char *data, size_t len)
     // +VERSION=JDY-25M-V1.731
 
     if (data[0] != '+')
+    {
+        LOG_DEBUGL(3, "BLE: %s", data);
         return; // dont mind any response which does not begin with "+"
+    }
 
     data++; // skip the "+"
     if (strcmp(data, "CONNECTED") == 0)
