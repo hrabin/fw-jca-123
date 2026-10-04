@@ -194,6 +194,8 @@ TEST(sia_build_zone_digits)
         {EVENT_SOURCE_KEY,      '1'},
         {EVENT_SOURCE_DOOR,     '2'},
         {EVENT_SOURCE_INPUT1,   '3'},
+        {EVENT_SOURCE_INPUT2,   'D'},
+        {EVENT_SOURCE_INPUT3,   'E'},
         {EVENT_SOURCE_SHOCK,    '4'},
         {EVENT_SOURCE_LOCK,     '5'},
         {EVENT_SOURCE_BATTERY,  '7'},

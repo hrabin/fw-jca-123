@@ -16,6 +16,7 @@
 #define SYSTEM_IO_KEY     BIT(3)
 #define SYSTEM_IO_PANIC   BIT(4)
 #define SYSTEM_IO_SHOCK   BIT(5)
+#define SYSTEM_IO_INP3    BIT(6)
 #define SYSTEM_IO_TRACING BIT(15)
 #define SYSTEM_IO_TRACK   BIT(16)
 #define SYSTEM_IO_LOCK    BIT(17)

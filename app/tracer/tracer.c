@@ -595,6 +595,8 @@ u8 _map_inputs(void)
         result |= (1<<1);
     if (system_io_state & SYSTEM_IO_INP2) //
         result |= (1<<2);
+    if (system_io_state & SYSTEM_IO_INP3) //
+        result |= (1<<6);
     if (system_io_state & SYSTEM_IO_KEY) //
         result |= (1<<3);
     if (system_io_state & SYSTEM_IO_DOOR) //

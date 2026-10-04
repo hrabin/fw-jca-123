@@ -43,6 +43,8 @@ typedef u8  access_auth_t;
 #define CFG_ID_TEXT_SOURCE_NAME_006  (1106)
 #define CFG_ID_TEXT_SOURCE_NAME_007  (1107)
 #define CFG_ID_TEXT_SOURCE_NAME_008  (1108)
+#define CFG_ID_TEXT_SOURCE_NAME_009  (1114)
+#define CFG_ID_TEXT_SOURCE_NAME_010  (1115)
 #define CFG_ID_ADMIN_NAME            (1109)
 #define CFG_ID_USER1_NAME            (1110)
 #define CFG_ID_USER2_NAME            (1111)

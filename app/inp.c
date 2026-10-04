@@ -53,6 +53,14 @@ static bool _inp_lo_level_active(u8 pin_id)
         if (HW_INP1_IN)
             return (true);
         break;
+    case INP_INP2:
+        if (HW_INP2_IN)
+            return (true);
+        break;
+    case INP_INP3:
+        if (HW_INP3_IN)
+            return (true);
+        break;
 
     case INP_SHOCK:
         if (shock_detected())
@@ -118,13 +126,16 @@ bool inp_init(void)
     u16 i;
 
     HW_INP1_INIT;
+    HW_INP2_INIT;
+    HW_INP3_INIT;
     HW_KEY_INIT;
     HW_DOOR_INIT;
     HW_LOCK_INIT;
     HW_UNLOCK_INIT;
 
     memset(&_inp_filter, 0, sizeof(_inp_filter));
-    _inp_direction = (1 << INP_LOCK) | (1 << INP_UNLOCK) | (1 << INP_DOOR) | (1 << INP_INP1);
+    _inp_direction = (1 << INP_LOCK) | (1 << INP_UNLOCK) | (1 << INP_DOOR)
+                   | (1 << INP_INP1) | (1 << INP_INP2) | (1 << INP_INP3);
 
     _inp_state = 0;
     _inp_bypass = 0;
@@ -151,6 +162,8 @@ const ascii *inp_name(int pin)
     case INP_UNLOCK:  return ("UNLOCK");
     case INP_DOOR:       return ("DOOR");
     case INP_INP1:       return ("INP");
+    case INP_INP2:       return ("INP2");
+    case INP_INP3:       return ("INP3");
     case INP_SHOCK:      return ("SHOCK");
     case INP_NONE: return ("none");
     default:            return ("unknown");

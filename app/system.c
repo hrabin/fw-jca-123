@@ -72,6 +72,8 @@ void system_inp_activated(unsigned int n)
     switch (n)
     {
     case INP_INP1:  system_io_state |= SYSTEM_IO_INP1;  break;
+    case INP_INP2:  system_io_state |= SYSTEM_IO_INP2;  break;
+    case INP_INP3:  system_io_state |= SYSTEM_IO_INP3;  break;
     case INP_DOOR:  system_io_state |= SYSTEM_IO_DOOR;  break;
     case INP_KEY:   system_io_state |= SYSTEM_IO_KEY;   break;
     case INP_SHOCK:
@@ -110,6 +112,8 @@ void system_inp_deactivated(unsigned int n)
     switch (n)
     {
     case INP_INP1:  system_io_state &= ~SYSTEM_IO_INP1;  break;
+    case INP_INP2:  system_io_state &= ~SYSTEM_IO_INP2;  break;
+    case INP_INP3:  system_io_state &= ~SYSTEM_IO_INP3;  break;
     case INP_DOOR:  system_io_state &= ~SYSTEM_IO_DOOR;  break;
     case INP_KEY:
         // stop tracking

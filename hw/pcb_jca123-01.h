@@ -109,6 +109,20 @@
 #define HW_BLE_PWRC_LOW             GPIO_BIT_CLR(HW_BLE_PWRC_PORT, HW_BLE_PWRC_BIT)
 #define HW_BLE_PWRC_HI              GPIO_BIT_SET(HW_BLE_PWRC_PORT, HW_BLE_PWRC_BIT)
 
+// Additional inputs (expansion connector), PC6, PC7
+// internal pull-down (idle state is LOW), no external pull
+#define HW_INP2_BIT                 6
+#define HW_INP2_PORT                GPIOC
+#define HW_INP2_INIT                { GPIO_MODE(HW_INP2_PORT, HW_INP2_BIT, GPIO_MODE_INPUT) \
+                                      GPIO_PUPDN(HW_INP2_PORT, HW_INP2_BIT, GPIO_PUPDN_DN); }
+#define HW_INP2_IN                  GPIO_IN(HW_INP2_PORT, HW_INP2_BIT)
+
+#define HW_INP3_BIT                 7
+#define HW_INP3_PORT                GPIOC
+#define HW_INP3_INIT                { GPIO_MODE(HW_INP3_PORT, HW_INP3_BIT, GPIO_MODE_INPUT) \
+                                      GPIO_PUPDN(HW_INP3_PORT, HW_INP3_BIT, GPIO_PUPDN_DN); }
+#define HW_INP3_IN                  GPIO_IN(HW_INP3_PORT, HW_INP3_BIT)
+
 // **** FLASH ****
 #define SPI1_ON                     1
 #define HW_FLASH_CS_BIT             (0)
@@ -124,9 +138,11 @@
 
 // **** INPUTS ****
 // HW_INP1_IN (PB1)
+// no internal pull (external pull-up on the board)
 #define HW_INP1_BIT                 1
 #define HW_INP1_PORT                GPIOB
-#define HW_INP1_INIT                GPIO_MODE(HW_INP1_PORT, HW_INP1_BIT, GPIO_MODE_INPUT)
+#define HW_INP1_INIT                { GPIO_MODE(HW_INP1_PORT, HW_INP1_BIT, GPIO_MODE_INPUT) \
+                                      GPIO_PUPDN(HW_INP1_PORT, HW_INP1_BIT, GPIO_PUPDN_NONE); }
 #define HW_INP1_IN                  GPIO_IN(HW_INP1_PORT, HW_INP1_BIT)
 
 // HW_KEY_KEY (PB0)

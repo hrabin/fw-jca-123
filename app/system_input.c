@@ -33,6 +33,8 @@ void system_input_init(void)
         _sys_inp[i].postpone = 1 * _TICK_SECOND;
     }
     _sys_inp[INP_INP1].reaction = ALARM_REACTION_DELAY;
+    _sys_inp[INP_INP2].reaction = ALARM_REACTION_DELAY;
+    _sys_inp[INP_INP3].reaction = ALARM_REACTION_DELAY;
 
 }
 
@@ -40,7 +42,7 @@ event_source_e system_input_source(system_input_id_t n)
 {
     const event_source_e INP_SOURCE[SYSTEM_INP_COUNT] = {
         EVENT_SOURCE_KEY, EVENT_SOURCE_LOCK, EVENT_SOURCE_LOCK, EVENT_SOURCE_DOOR,
-        EVENT_SOURCE_INPUT1, EVENT_SOURCE_SHOCK
+        EVENT_SOURCE_INPUT1, EVENT_SOURCE_INPUT2, EVENT_SOURCE_INPUT3, EVENT_SOURCE_SHOCK
     };
     OS_ASSERT(n<SYSTEM_INP_COUNT, "system_inp_source()");
     return (INP_SOURCE[n]);

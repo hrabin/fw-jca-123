@@ -21,6 +21,7 @@ typedef union {
 #define TRACER_INP_KEY     (1 << 3)
 #define TRACER_INP_DOOR    (1 << 4)
 #define TRACER_INP_SHOCK   (1 << 5)
+#define TRACER_INP_INP3    (1 << 6)
 
 #define TRACER_PACKET_BUFFER_SIZE (256)
 extern u8 tracer_packet_buffer[];

@@ -9,6 +9,8 @@ typedef enum {
     INP_UNLOCK,
     INP_DOOR,
     INP_INP1,
+    INP_INP2,
+    INP_INP3,
     INP_SHOCK,
     INP_SIZE // size limit
 #define INP_NONE INP_SIZE
@@ -19,6 +21,8 @@ typedef enum {
 #define    INP_UNLOCK_MASK (1 << INP_UNLOCK)
 #define    INP_DOOR_MASK   (1 << INP_DOOR)
 #define    INP_INP1_MASK   (1 << INP_INP1)
+#define    INP_INP2_MASK   (1 << INP_INP2)
+#define    INP_INP3_MASK   (1 << INP_INP3)
 #define    INP_SHOCK_MASK  (1 << INP_SHOCK)
 
 bool inp_init(void);
