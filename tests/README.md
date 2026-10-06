@@ -75,8 +75,11 @@ compile as-is on the host and are used directly from `../sdk/`.
 | Source | Tested by |
 |--------|-----------|
 | `lib/nmea/nmea.c` | `test_nmea.c` — GGA/RMC/GSV parsing, checksum |
-| `modem/modem.c`, `modem/modem_at.c` | `test_modem_at.c` — AT parameter extraction, URC pattern matching |
-| `sdk/common/parse.c`, `buf.c`, `util.c` | compiled as support code |
+| `modem/modem.c`, `modem/modem_at.c` | `test_modem_at.c`, `test_modem_urc.c` — AT/URC parsing, modem state |
+| `modem/modem_bg95.c` | `test_dns.c` — `+QIURC: "dnsgip"` DNS answer parsing |
+| `net/net_target.c` | `test_target.c` — `<host>:<port>` target classification |
+| `sdk/common/parse.c`, `buf.c`, `util.c`, `text_lib.c` | compiled as support code |
+| `net/udp.c` | linked as support code (routing not asserted yet) |
 
 ## Directory layout
 
@@ -87,13 +90,19 @@ tests/
 ├── test.h              # framework
 ├── test_main.c         # runner main()
 ├── test_nmea.c         # NMEA parser tests
-├── test_modem_at.c     # modem AT/URC parsing tests
+├── test_modem_at.c     # modem AT parsing tests
+├── test_modem_urc.c    # modem URC / state tests
+├── test_dns.c          # BG95 DNS (dnsgip) URC tests
+├── test_target.c       # net target string parsing tests
 ├── test_*.c            # additional test files (auto-discovered)
+├── mock_rtc.c          # shared rtc mock
+├── mock_modem.c        # shared modem mock
 └── stubs/              # host-compilation stubs
     ├── common.h
     ├── cfg.h
     ├── const.h
     ├── log.h
     ├── os.h
+    ├── wdog.h
     └── platform_setup.h
 ```

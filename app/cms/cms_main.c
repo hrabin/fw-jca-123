@@ -28,6 +28,8 @@ typedef struct {
 
 static cms_t _cms;
 
+static os_timer_t _resolve_tmr = 0; // throttle for the DNS retry below
+
 static event_buf_item_t _cms_items[CMS_BUF_SIZE];
 static event_buf_t _cms_buf;
 static u8 _packet_buf[CMS_MAX_PACKET_LEN];
@@ -158,7 +160,17 @@ void cms_main_process(void)
     os_timer_t now = os_timer_get();
 
     if ((_cms.server_ip.addr == 0) || (_cms.server_port == 0))
+    {   // Not configured (port 0), or a hostname that could not be resolved
+        // yet.  DNS runs over the data connection, so retry once the network
+        // is usable (cms_init() runs before the modem is online).
+        if ((_cms.server_port != 0) && (now >= _resolve_tmr))
+        {
+            _resolve_tmr = now + 60 * OS_TIMER_SECOND;
+            if (net_connect())
+                cms_reinit();
+        }
         return;  // not configured
+    }
 
     if (_cms.waiting)
     {   // waiting for ACK

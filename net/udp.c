@@ -20,7 +20,7 @@ void udp_rx(u8 *data, u16 len, ip_addr_t *addr, u16 port)
     udp_data_rx += len;
 
     if (port == 53)
-    {   // DNS — not implemented
+    {   // DNS is resolved by the modem (AT+QIDNSGIP), never dispatched here
         return;
     }
 

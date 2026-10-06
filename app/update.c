@@ -21,6 +21,7 @@ static bool _update_rq = false;
 static bool _packet_ack = false;
 static ip_addr_t _server_ip;
 static u16 _server_port;
+static ascii _server_addr_cfg[CFG_ITEM_SIZE];
 static u8 _aes_key[32];
 static int _phase;
 
@@ -195,7 +196,16 @@ bool update_start(void)
     if (! cfg_read(&buf, CFG_ID_UPDATE_SERVER_ADDR, ACCESS_SYSTEM))
         return (false);
 
-    net_get_target_ip (&_server_ip.addr, &_server_port, cfg);
+    snprintf(_server_addr_cfg, sizeof(_server_addr_cfg), "%s", cfg);
+
+    // Parse only (no DNS): the lookup is issued from update_task()
+    // (task_app_comm), the only task allowed to resolve.  A hostname leaves
+    // _server_ip zero and is resolved there before the first packet.
+    if (! net_parse_target_ip (&_server_ip.addr, &_server_port, _server_addr_cfg))
+    {
+        LOG_ERROR("update server not configured");
+        return (false);
+    }
 
     buf_clear(&buf);
     if (! cfg_read(&buf, CFG_ID_UPDATE_SERVER_KEY, ACCESS_SYSTEM))
@@ -232,6 +242,18 @@ void update_task(void)
     {
         _dly(30);
         return;
+    }
+
+    if (_server_ip.addr == 0)
+    {   // a hostname target — resolve it now that the data connection is up
+        net_get_target_ip (&_server_ip.addr, &_server_port, _server_addr_cfg);
+        if ((_server_ip.addr == 0) || (_server_port == 0))
+        {
+            _err_cnt++;
+            _dly(30);
+            return;
+        }
+        LOG_INFO("update server resolved");
     }
 
     LOG_DEBUG("update task %d", _phase);

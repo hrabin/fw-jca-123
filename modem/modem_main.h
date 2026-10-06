@@ -44,6 +44,7 @@ bool modem_main_data(void);
 bool modem_main_data_up(void);
 bool modem_main_data_connect(const ascii *apn);
 void modem_main_data_disconnect(void);
+bool modem_main_dns_resolve(const ascii *host, ip_addr_t *ip);
 bool modem_main_udp_send(udp_packet_t *packet);
 void modem_main_jamming(bool state);
 bool modem_main_roaming(void);

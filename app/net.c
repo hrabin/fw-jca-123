@@ -1,5 +1,6 @@
 #include "common.h"
 #include "net.h"
+#include "net_target.h"
 #include "udp.h"
 #include "cfg.h"
 #include "cms_main.h"
@@ -26,34 +27,57 @@ bool net_connect(void)
     return (modem_main_data_connect(apn));
 }
 
-bool _ip_parse (u32 *ip, u16 *port, const ascii * src)
+// Parse a target string without resolving it — no modem access.  Returns false
+// only when the string is not a usable "<host>:<port>".  A DNS name returns
+// true with *ip == 0 and *port set.  Safe to call from any task.
+bool net_parse_target_ip (u32 *ip, u16 *port, const ascii *url)
 {
-    s32 a,b,c,d,p;
+    char host[NET_TARGET_HOST_MAX];
 
-    if (sscanf(src, "%" SCNd32 ".%" SCNd32 ".%" SCNd32 ".%" SCNd32 ":%" SCNd32,
-               &a, &b, &c, &d, &p) == 5)
-    {
-        if ((a>255) || (b>255) || (c>255) || (d>255))
-            return (false);
-        if ((a==0) || (d==0))
-            return (false);
-        *ip = a + (b<<8) + (c<<16) + (d<<24);
-        *port = p;
-        return (true);
-    }
-    return (false);
+    *ip = 0;
+    return (net_target_parse (url, host, sizeof(host), port, ip) != NET_TARGET_INVALID);
 }
 
+// Resolve a configured target to an IPv4 address + port.
+//
+// The DNS lookup is issued over the modem, so this must only be called from
+// task_app_comm, the only task that owns the data connection.  Everything that
+// can run elsewhere parses with net_parse_target_ip() and defers the resolve
+// to its task_app_comm path (tracer_comm_process() / cms_main_process() /
+// update_task() / _reinit_task()).
 bool net_get_target_ip (u32 *ip, u16 *port, const ascii *url)
 {
+    char host[NET_TARGET_HOST_MAX];
+    net_target_type_e type;
+
     *ip = 0;
-    // Check if there is IP in format "177.78.98.199:8080"
-    if (_ip_parse (ip, port, url))
+
+    type = net_target_parse (url, host, sizeof(host), port, ip);
+
+    if (type == NET_TARGET_IP)
         return (true);
 
-    // it is not IP, it will need use DNS
-    // expected format "www.gmmultimedia.cz:8080"
-    LOG_ERROR("unsupported DNS resolv");
+    if (type == NET_TARGET_NAME)
+    {   // "host.name:8080" — resolve through the modem
+        ip_addr_t addr;
+
+        addr.addr = 0;
+        if (modem_main_dns_resolve (host, &addr) && (addr.addr != 0))
+        {
+            *ip = addr.addr;
+            LOG_INFO("DNS %s -> %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32,
+                     host, *ip & 0xFF, (*ip >> 8) & 0xFF,
+                     (*ip >> 16) & 0xFF, (*ip >> 24) & 0xFF);
+            return (true);
+        }
+
+        // *port was already set, so the caller can retry later (DNS needs an
+        // active data connection, which may not be up yet)
+        LOG_ERROR("unresolved DNS \"%s\"", host);
+        return (false);
+    }
+
+    LOG_ERROR("bad target \"%s\"", url);
     return (false);
 }
 

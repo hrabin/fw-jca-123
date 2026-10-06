@@ -35,10 +35,13 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../app/tracer/tracer_sia.c \
                  ../modem/modem.c \
                  ../modem/modem_at.c \
-                 ../modem/multi_sms.c
+                 ../modem/modem_bg95.c \
+                 ../modem/multi_sms.c \
+                 ../net/udp.c \
+                 ../net/net_target.c
 
 # Test source files (auto-discovered: test_*.c)
-TEST_SRCS      = $(wildcard test_*.c) test_main.c mock_rtc.c
+TEST_SRCS      = $(wildcard test_*.c) test_main.c mock_rtc.c mock_modem.c
 
 ALL_SRCS       = $(TEST_SRCS) $(SRC_UNDER_TEST)
 OBJECTS        = $(addprefix $(BUILD_DIR)/,$(notdir $(ALL_SRCS:.c=.o)))

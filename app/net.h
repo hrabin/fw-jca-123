@@ -8,6 +8,7 @@
 void net_init(void);
 bool net_ready(void);
 bool net_connect(void);
+bool net_parse_target_ip (u32 *ip, u16 *port, const ascii *url);
 bool net_get_target_ip (u32 *ip, u16 *port, const ascii *url);
 bool net_udp_tx(udp_packet_t *pkt);
 void net_udp_rx(udp_packet_t *pkt);

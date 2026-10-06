@@ -13,6 +13,8 @@ LOG_DEF("BG95");
 
 #define _RX_RETRY_TIME      (5 * OS_TIMER_SECOND)
 #define _SOCKET_TIMEOUT (15*60 * OS_TIMER_SECOND)
+#define _DNS_TIMEOUT    (15 * OS_TIMER_SECOND)
+#define _DNS_NAME_MAX   100 // "AT+QIDNSGIP=1,\"<host>\"" must fit
 
 static os_timer_t timer_rx_timeout = 0; // timeout reset by incoming data
 static u16 tx_cnt = 0; // number of sent packets from last received packet
@@ -239,6 +241,150 @@ static void _socket_clear(void)
     bzero(&udp_socket, sizeof(udp_socket));
 }
 
+// ---- DNS ---------------------------------------------------------------
+//
+// The BG95 resolves names itself, using the DNS server(s) of the active PDP
+// context, so no DNS client is needed in the firmware:
+//
+//   AT+QIDNSGIP=1,"host"              -> OK (the answer arrives asynchronously)
+//   +QIURC: "dnsgip",<err>,<count>,<ttl>   header, <err> != 0 means failure
+//   +QIURC: "dnsgip","<ip>"               one URC per resolved address
+//
+// Some firmware revisions merge the first address into the header line, so
+// both layouts are accepted.
+
+typedef struct {
+    bool active; // a resolve request is in flight
+    bool done;   // a result (success or error) is available
+    bool ok;
+    u32  ip;
+} dns_state_t;
+
+static dns_state_t _dns;
+
+// Parse the quoted IPv4 address in a dnsgip line (q points at the opening '"')
+static bool _dnsgip_ip (const char *q, u32 *ip)
+{
+    ascii ip_str[16];
+    u32 a, b, c, d;
+
+    if ((parse_string(ip_str, q, sizeof(ip_str)) == NULL)
+     || (sscanf(ip_str, "%" SCNu32 ".%" SCNu32 ".%" SCNu32 ".%" SCNu32,
+                &a, &b, &c, &d) != 4)
+     || (a > 255) || (b > 255) || (c > 255) || (d > 255))
+        return (false);
+
+    *ip = a + (b << 8) + (c << 16) + (d << 24);
+    return (true);
+}
+
+// Parse one "+QIURC: \"dnsgip\",..." line.  Returns true when the line is a
+// dnsgip URC; *done/*ok/*ip are updated on the last line of the answer.
+// Exposed for host tests (modem_bg95.h).
+bool modem_bg95_dnsgip_parse(const ascii *line, bool *done, bool *ok, u32 *ip)
+{
+    char *p;
+    const char *q;
+    parse_number_t err;
+
+    p = modem_parse_pattern(line, "+QIURC: \"dnsgip\",");
+    if (p == NULL)
+        return (false);
+
+    q = p;
+    while (*q == ' ')
+        q++;
+
+    if (*q != '"')
+    {   // the line starts with the error code (header or error line)
+        q = parse_number(&err, q);
+        if (q == NULL)
+            return (true); // malformed, but still a dnsgip line
+
+        if (err != 0)
+        {   // error code, no address follows
+            *ok = false;
+            *done = true;
+            return (true);
+        }
+
+        // Address(es) follow — either in this line or in the next URC(s)
+        q = strchr(q, '"');
+        if (q == NULL)
+            return (true); // header line, wait for the address URC(s)
+    }
+
+    if (_dnsgip_ip(q, ip))
+    {
+        *ok = true;
+        *done = true;
+    }
+    return (true);
+}
+
+bool modem_bg95_dns_resolve(modem_t *m, const ascii *host, ip_addr_t *ip)
+{
+    ascii cmd[128];
+    os_timer_t limit;
+    u32 response;
+    bool result = false;
+
+    if ((host == NULL) || (ip == NULL) || (host[0] == '\0'))
+        return (false);
+
+    if (strlen(host) >= _DNS_NAME_MAX)
+        return (false);
+
+    if ((m->flags & MODEM_FLAG_DATA_UP) == 0)
+    {   // DNS runs over the active PDP context
+        LOG_WARNING("DNS \"%s\": data not up", host);
+        return (false);
+    }
+
+    _dns.active = true;
+    _dns.done   = false;
+    _dns.ok     = false;
+    _dns.ip     = 0;
+
+    snprintf(cmd, sizeof(cmd), "AT+QIDNSGIP=1,\"%s\"", host);
+
+    modem_at_lock(m);
+    modem_at_cmd_nolock(m, cmd);
+    response = modem_at_response(m, NULL, AT_ST_OK | AT_ST_ERROR, MODEM_TIMEOUT_M);
+    modem_at_unlock(m);
+
+    if ((response & AT_ST_OK) == 0)
+    {   // ERROR or no answer — no dnsgip URC will arrive
+        _dns.active = false;
+        LOG_WARNING("DNS \"%s\" not accepted", host);
+        return (false);
+    }
+
+    // the module answers OK first and reports the addresses later
+    limit = os_timer_get() + _DNS_TIMEOUT;
+    while (os_timer_get() < limit)
+    {
+        if (_dns.done)
+        {
+            result = _dns.ok;
+            break;
+        }
+        OS_DELAY(10);
+    }
+
+    _dns.active = false;
+
+    if (result)
+    {
+        ip->addr = _dns.ip;
+    }
+    else
+    {
+        LOG_WARNING("DNS \"%s\" failed", host);
+    }
+    return (result);
+}
+
 bool modem_bg95_urc(modem_t *m)
 {
     os_timer_t now = os_timer_get();
@@ -307,6 +453,12 @@ bool modem_bg95_urc(modem_t *m)
     {
         m->flags &= ~(MODEM_FLAG_DATA_READY | MODEM_FLAG_DATA_UP);
         _socket_clear();
+        return (true);
+    }
+    if (modem_parse_pattern(src, "+QIURC: \"dnsgip\",") != NULL)
+    {   // DNS answer, possibly split over several lines
+        if (_dns.active)
+            modem_bg95_dnsgip_parse(src, &_dns.done, &_dns.ok, &_dns.ip);
         return (true);
     }
     if ((p = modem_parse_pattern(src, "+QIOPEN: ")) != NULL)

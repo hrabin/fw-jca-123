@@ -111,6 +111,7 @@ typedef struct _modem_t {
     bool (*pfunc_udp_init)(struct _modem_t *m);
     bool (*pfunc_udp_send)(struct _modem_t *m, udp_packet_t *packet);
     void (*pfunc_udp_rx_task)(struct _modem_t *m);
+    bool (*pfunc_dns_resolve)(struct _modem_t *m, const ascii *host, ip_addr_t *ip);
 
     // application notification (registered by modem_main)
     modem_event_callback_t pfunc_event;

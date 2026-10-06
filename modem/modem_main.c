@@ -152,6 +152,7 @@ bool modem_main_init(void)
     MODEM.pfunc_udp_init    = modem_bg95_udp_init;
     MODEM.pfunc_udp_send    = modem_bg95_udp_send;
     MODEM.pfunc_udp_rx_task = modem_bg95_udp_rx_task;
+    MODEM.pfunc_dns_resolve = modem_bg95_dns_resolve;
 
     // application notification
     MODEM.pfunc_event = _modem_event;
@@ -524,6 +525,14 @@ bool modem_main_udp_send(udp_packet_t *packet)
         return (false);
 
     return (MODEM.pfunc_udp_send(&MODEM, packet));
+}
+
+bool modem_main_dns_resolve(const ascii *host, ip_addr_t *ip)
+{
+    if (MODEM.pfunc_dns_resolve == NULL)
+        return (false);
+
+    return (MODEM.pfunc_dns_resolve(&MODEM, host, ip));
 }
 
 void modem_main_jamming(bool state)

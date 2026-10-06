@@ -181,6 +181,7 @@ void app_main_siren_beep(u32 mask, u8 length)
 #define _REINIT_MAIN   (1 << 0)
 #define _REINIT_TRACER (1 << 1)
 #define _REINIT_MODEM  (1 << 2)
+#define _REINIT_CMS    (1 << 3)
 
 static void _reinit_task(void)
 {
@@ -197,6 +198,9 @@ static void _reinit_task(void)
 
     if (mask & _REINIT_MODEM)
         modem_main_command(MODEM_COMMAND_RESET);
+
+    if (mask & _REINIT_CMS)
+        cms_reinit();
 
     _reinit_mask &= ~mask;
 }
@@ -303,7 +307,7 @@ void app_reinit_req(cfg_id_t id)
 
     case CFG_ID_CMS_SERVER_ADDR:
     case CFG_ID_CMS_ACCOUNT:
-        cms_reinit();
+        _reinit_mask |= _REINIT_CMS; // DNS only from task_app_comm
         break;
 
     case CFG_ID_OUT_MAP:

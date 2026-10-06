@@ -16,6 +16,7 @@ typedef u8  access_auth_t;
 #define CFG_ID_SIM_PIN      (0)
 #define CFG_ID_CMS_SERVER_ADDR  (0)
 #define CFG_ID_CMS_ACCOUNT  (0)
+#define CFG_ID_MODEM_BAND   (0)
 
 #define CFG_ID_TEXT_EVENT_NAME_000   (1000)
 #define CFG_ID_TEXT_EVENT_NAME_001   (1001)

@@ -102,6 +102,7 @@ C_SOURCES +=  \
   $(DIR_RTOS)/source/portable/GCC/ARM_CM4F/port.c \
   \
   $(DIR_NET)/udp.c \
+  $(DIR_NET)/net_target.c \
   \
   $(DIR_CMS)/cms_main.c \
   $(DIR_CMS)/cms_sia_ip.c \

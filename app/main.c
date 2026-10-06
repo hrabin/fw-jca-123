@@ -29,7 +29,8 @@ LOG_DEF("MAIN");
 #define TASK_TIMER_TMOUT                  500 // [ms]
 #define TASK_APP_FAST_TMOUT               500 //
 #define TASK_APP_SLOW_TMOUT           30*1000 //
-#define TASK_APP_COMM_TMOUT         5*60*1000 //
+#define TASK_APP_COMM_TMOUT         5*60*1000 // must cover the longest app_task_comm()
+                                              // run, incl. the modem DNS wait (15 s)
 #define TASK_APP_MODEM_TMOUT             1000 //
 
 static u8 reset_type = RESET_POWER_ON;
