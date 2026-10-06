@@ -102,13 +102,16 @@ bool ble_init(tty_parse_callback_t callback)
     // so the reply can be collected here directly.
     OS_DELAY(_BOOT_DELAY_MS);
 
-    if (! _ble_comm_test())
+    HW_BLE_PWRC_LOW;
+
+    bool result = _ble_comm_test();
+    if (! result)
     {
         LOG_ERROR("no answer to " _TEST_CMD);
-        return (false);
     }
+    HW_BLE_PWRC_HI;
 
-    return (true);
+    return (result);
 }
 
 static void _process_response(char *data, size_t len)
@@ -118,7 +121,7 @@ static void _process_response(char *data, size_t len)
 
     if (data[0] != '+')
     {
-        LOG_DEBUGL(3, "BLE: %s", data);
+        LOG_INFO("BLE: %s", data);
         return; // dont mind any response which does not begin with "+"
     }
 

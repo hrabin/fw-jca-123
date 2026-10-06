@@ -585,7 +585,10 @@ void gps_temporary_start_tmout(u32 seconds)
 
     if (tm > sleep_postpone)
     {   // pokud je volano vicekrat v kratke dobe, tak se vezme delsi cas
-        LOG_DEBUGL(2, "temporary start %d s", seconds);
+        if (tm > (sleep_postpone + 10))
+        {
+            LOG_DEBUGL(2, "temporary start %d s", seconds);
+        }
         sleep_postpone = tm;
     }
 }
