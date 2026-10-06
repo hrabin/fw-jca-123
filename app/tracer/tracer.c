@@ -92,6 +92,7 @@ static bool tracer_stop_rq=false;
 
 static os_timer_t tracer_stop_tmr = 0;    // timer for tracking end delay
 static os_timer_t comm_sleep_tmr = 0;
+static bool tracer_start_pending = false; // KEY start waiting for the DNS lookup
 static os_timer_t track_last_fix_tmr = 0; // time of last valid GPS point
 
 static bool tracer_packet_ack = false;
@@ -244,7 +245,10 @@ static void _param_load(const ascii *value)
         LOG_WARNING("tracer param: unexpected \"%s\"", s);
 }
 
-bool tracer_reinit (void)
+// Read the configured "<host|ip>:<port>" and resolve it.  The DNS lookup talks
+// to the modem, so this must only run in task_app_comm: tracer_reinit() via
+// _reinit_task(), or the retry in tracer_comm_process().
+static bool _tracer_resolve_server (void)
 {
     ascii cfg[CFG_ITEM_SIZE];
     buf_t buf;
@@ -254,11 +258,21 @@ bool tracer_reinit (void)
     if (cfg_read(&buf, CFG_ID_TRACER_ADDR, ACCESS_SYSTEM))
         net_get_target_ip (&server_ip, &server_port, cfg);
 
+    return (server_ip != 0);
+}
+
+bool tracer_reinit (void)
+{
+    ascii cfg[CFG_ITEM_SIZE];
+    buf_t buf;
+
+    _tracer_resolve_server();
+
     // start from the defaults, then let the config override them
     _p = (tracer_param_t)TRACER_PARAM_DEFAULT;
     tracer_point_time = 0;
 
-    buf_clear(&buf);
+    buf_init(&buf, cfg, sizeof(cfg));
     if (cfg_read(&buf, CFG_ID_TRACER_PARAM, ACCESS_SYSTEM))
         _param_load (buf_data(&buf));
 
@@ -335,9 +349,19 @@ static bool _tracer_start_now (void)
 
     if (! tracer_server_setup_ok())
     {
-        LOG_ERROR ("bad setup");
+        if ((server_ip == 0) && (server_port != 0))
+        {   // a configured name whose DNS lookup has not run yet; the comm
+            // task resolves it and tracer_task() retries the start
+            tracer_start_pending = true;
+            _LOG_DEBUGL("start pending, server unresolved");
+        }
+        else
+        {
+            LOG_ERROR ("bad setup");
+        }
         return (false);
     }
+    tracer_start_pending = false;
     gps_sleep_enable (false);
 
     track_last_fix_tmr = os_timer_get();
@@ -388,6 +412,7 @@ void tracer_key_start (void)
 
 void tracer_stop (void)
 {
+    tracer_start_pending = false;
     _tracer_stop_now();
     _external_start = false;
 }
@@ -484,9 +509,21 @@ void tracer_comm_process (void)
 
     if (! tracer_server_setup_ok())
     {
-        _LOG_DEBUGL("setup not ok");
-        tracer_comm_sleep(60);
-        return;
+        // A configured "<host>:<port>" whose DNS lookup has not completed yet.
+        // The lookup needs the data connection, and nothing brings it up while
+        // there is no packet to send, so do it here (task_app_comm owns the
+        // modem).  Without this a hostname server would never resolve.
+        if ((server_ip == 0) && (server_port != 0))
+        {
+            if (net_connect())
+                _tracer_resolve_server();
+        }
+        if (! tracer_server_setup_ok())
+        {
+            _LOG_DEBUGL("setup not ok");
+            tracer_comm_sleep(60);
+            return;
+        }
     }
 
     if (proto->packet_ready())
@@ -758,6 +795,19 @@ void tracer_task (void)
 {   // call aprox every 100ms
     os_timer_t now;
     tracer_shock_task();
+
+    if (tracer_start_pending)
+    {   // a KEY start was deferred until the server name resolved
+        if (tracer_server_setup_ok())
+        {
+            tracer_start_pending = false;
+            tracer_start();
+        }
+        else if (server_port == 0)
+        {   // target is no longer a valid "<host>:<port>"
+            tracer_start_pending = false;
+        }
+    }
 
     if (! tracer_is_active())
     {
