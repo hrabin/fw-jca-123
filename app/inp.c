@@ -79,10 +79,15 @@ static bool _inp_inverted(u8 pin_id)
 
 static bool _inp_power_needed(u8 pin_id)
 {
-    if (pin_id == INP_SHOCK)
-        return (false); // shock detector does not need main power
-
-    return (true);
+    switch (pin_id)
+    {
+    case INP_SHOCK: // shock detector does not need main power
+    case INP_INP2:  // expansion inputs must work regardless of main voltage
+    case INP_INP3:
+        return (false);
+    default:
+        return (true);
+    }
 }
 
 static void _inp_active (u8 pin_id)
