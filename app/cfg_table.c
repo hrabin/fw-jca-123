@@ -22,6 +22,9 @@ const cfg_table_t CFG_TABLE[] = {
     // setup server for tracking (i.e. Traccar)
     {CFG_ID_TRACER_ADDR,  ACCESS_USER,   ACCESS_ADMIN,  "0.0.0.0:5013"}, // <IP|host>:<port>
     // id, period, period_roaming, wait_time, protocol, limit_speed, send_mode, start_mode
+    // period/period_roaming are the point store interval in [s].  period == 0 selects the
+    // dynamic period: up to 30 s, but a change of the movement direction (accelerometer)
+    // stores a point immediately, at most one per second; period_roaming is unused then.
     {CFG_ID_TRACER_PARAM, ACCESS_USER,   ACCESS_ADMIN,  "000000,10,30,300,0,3,0,3"},
 
     // security center (SIA over IP)

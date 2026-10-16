@@ -7,6 +7,7 @@
 #include "log.h"
 #include "modem_main.h"
 #include "net.h"
+#include "shock.h"
 #include "system.h"
 #include "tracer.h"
 #include "tracer_proto.h"
@@ -26,8 +27,14 @@ static u16  server_port   = 0;
 static os_timer_t tracer_point_time = 0;
 static u16  tracer_store_period  = 0;
 
+static os_timer_t tracer_point_last = 0;           // time of the last stored point
+static u8   tracer_dyn_dir = SHOCK_DIRECTION_NONE; // movement direction at that point
+
 #define TRACER_PERIOD_DEFAULT          (10) // [s] period of point storing
 #define TRACER_PERIOD_ROAMING_DEFAULT  (10) // [s] period of point storing in roaming
+#define TRACER_PERIOD_DYNAMIC          (0)  // [s] period 0 selects the dynamic storing
+#define TRACER_PERIOD_DYNAMIC_MAX      (30) // [s] longest store interval in dynamic mode
+#define TRACER_PERIOD_DYNAMIC_MIN      (1)  // [s] shortest store interval in dynamic mode
 #define TRACER_END_WAIT_TIME_DEFAULT   (20) // [s] 
 #define TRACER_END_WAIT_POWER_FAIL     (20*OS_TIMER_SECOND) // waiting to finish tracking after main power loss
 
@@ -233,7 +240,7 @@ static void _param_load(const ascii *value)
     const char *s = value;
 
    _p.unit_id        = _num_get(&s, 0, TRACER_UNIT_ID_MAX,    0);
-   _p.period         = _num_get(&s, 1, LIMIT_TRACE_INTERVAL,  TRACER_PERIOD_DEFAULT);
+   _p.period         = _num_get(&s, 0, LIMIT_TRACE_INTERVAL,  TRACER_PERIOD_DEFAULT); // 0 -> dynamic
    _p.period_roaming = _num_get(&s, 1, LIMIT_TRACE_INTERVAL,  TRACER_PERIOD_ROAMING_DEFAULT);
    _p.wait_time      = _num_get(&s, 1, LIMIT_TRACE_END,       TRACER_END_WAIT_TIME_DEFAULT);
    _p.protocol       = _num_get(&s, 0, TRACER_PROTO_LAST,     TRACER_PROTO_DEFAULT);
@@ -271,6 +278,8 @@ bool tracer_reinit (void)
     // start from the defaults, then let the config override them
     _p = (tracer_param_t)TRACER_PARAM_DEFAULT;
     tracer_point_time = 0;
+    tracer_point_last = 0;
+    tracer_dyn_dir = SHOCK_DIRECTION_NONE;
 
     buf_init(&buf, cfg, sizeof(cfg));
     if (cfg_read(&buf, CFG_ID_TRACER_PARAM, ACCESS_SYSTEM))
@@ -371,6 +380,8 @@ static bool _tracer_start_now (void)
 
     // set first point time
     tracer_point_time = os_timer_get() + (5 * OS_TIMER_SECOND);
+    tracer_point_last = os_timer_get();
+    tracer_dyn_dir = SHOCK_DIRECTION_NONE;
 
     tracer_activate();
     return (true);
@@ -425,7 +436,8 @@ bool tracer_test (void)
         return (false);
 
     tracer_start();
-    tracer_stop_tmr = os_timer_get() + 21 * _sec(_p.period);
+    // in dynamic mode the period is 0, give the test track the longest interval
+    tracer_stop_tmr = os_timer_get() + 21 * _sec(_p.period ? _p.period : TRACER_PERIOD_DYNAMIC_MAX);
     return (true);
 }
 
@@ -791,6 +803,30 @@ static __inline void tracer_shock_task(void)
 #endif // ~DEVICE_HAS_SHOCK_START != 1
 
 
+// Dynamic period (period == 0): the store interval stretches up to
+// TRACER_PERIOD_DYNAMIC_MAX, but a change of the movement direction reported by
+// the accelerometer stores a point right away.  The direction is compared with
+// the one the last stored point was taken with and the shortest interval still
+// applies, so turning (a roundabout) yields one point per second while going
+// straight yields one per TRACER_PERIOD_DYNAMIC_MAX.  period_roaming is not
+// used in this mode.  Returns true when a point should be stored now.
+static bool _tracer_dynamic_point (os_timer_t now)
+{
+    u8 dir;
+
+    if (point == 0)
+        return (false); // the first point of a track keeps its own delay
+
+    if (now - tracer_point_last < _sec(TRACER_PERIOD_DYNAMIC_MIN))
+        return (false); // the shortest interval has not passed yet
+
+    dir = shock_movement_direction();
+    if ((dir == SHOCK_DIRECTION_NONE) || (tracer_dyn_dir == SHOCK_DIRECTION_NONE))
+        return (false); // no movement, or nothing to compare with yet
+
+    return (dir != tracer_dyn_dir);
+}
+
 void tracer_task (void)
 {   // call aprox every 100ms
     os_timer_t now;
@@ -815,6 +851,10 @@ void tracer_task (void)
     }
 
     now = os_timer_get();
+
+    if ((_p.period == TRACER_PERIOD_DYNAMIC) && _tracer_dynamic_point(now))
+        tracer_point_time = now; // movement direction changed, store now
+
     if (driver_waiting_tmr)
     {
         if (now > driver_waiting_tmr)
@@ -865,7 +905,15 @@ void tracer_task (void)
     if (now < tracer_point_time)
         return; // no time for new point yet
 
-    if (modem_main_roaming())
+    if (_p.period == TRACER_PERIOD_DYNAMIC)
+    {
+        u8 dir = shock_movement_direction();
+
+        if (dir != SHOCK_DIRECTION_NONE)
+            tracer_dyn_dir = dir; // direction this point is stored with
+        tracer_store_period = _sec(TRACER_PERIOD_DYNAMIC_MAX);
+    }
+    else if (modem_main_roaming())
         tracer_store_period = _sec(_p.period_roaming);
     else
         tracer_store_period = _sec(_p.period);
@@ -879,6 +927,7 @@ void tracer_task (void)
         tracer_point_time = now + tracer_store_period; // too big delay reset time
 
     tracer_new_point();
+    tracer_point_last = now;
 
     if (tracer_stop_rq)
     {

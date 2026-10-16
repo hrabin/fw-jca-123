@@ -15,6 +15,7 @@ TARGET     = $(BUILD_DIR)/test_runner
 INCLUDES   = -I./stubs \
              -I../sdk/common \
              -I../sdk/drv_g4 \
+             -I../sdk/hal \
              -I../lib/nmea \
              -I../lib/pdu \
              -I../modem \
@@ -29,6 +30,7 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../sdk/common/buf.c \
                  ../sdk/common/util.c \
                  ../sdk/common/text_lib.c \
+                 ../sdk/hal/shock.c \
                  ../lib/pdu/pdu.c \
                  ../app/cms/cms_sia_ip.c \
                  ../app/tracer/tracer_h02.c \
@@ -41,7 +43,7 @@ SRC_UNDER_TEST = ../lib/nmea/nmea.c \
                  ../net/net_target.c
 
 # Test source files (auto-discovered: test_*.c)
-TEST_SRCS      = $(wildcard test_*.c) test_main.c mock_rtc.c mock_modem.c
+TEST_SRCS      = $(wildcard test_*.c) test_main.c mock_rtc.c mock_modem.c mock_shock.c
 
 ALL_SRCS       = $(TEST_SRCS) $(SRC_UNDER_TEST)
 OBJECTS        = $(addprefix $(BUILD_DIR)/,$(notdir $(ALL_SRCS:.c=.o)))
